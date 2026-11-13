@@ -26,6 +26,26 @@ describe("daemonCommands", () => {
     expect(result.setupCmd).toBe("multica setup");
     expect(result.tokenCmd).toContain("server_url https://api.multica.ai");
     expect(result.tokenCmd).toContain("app_url https://multica.ai");
+    expect(result.installCmds.macosLinux).toContain("scripts/install.sh | bash");
+    expect(result.installCmds.windows).toContain("scripts/install.ps1 | iex");
+  });
+
+  it("installs the self-host CLI from the server it will connect to", () => {
+    const result = daemonCommands({
+      status: "ready",
+      target: "self_host",
+      serverUrl: "https://api.example.com/",
+      appUrl: "https://app.example.com",
+    });
+    if (result.status !== "ready") {
+      throw new Error("expected self-host commands");
+    }
+    expect(result.installCmds).toEqual({
+      macosLinux:
+        "curl -fsSL https://api.example.com/api/cli/install.sh | bash -s -- https://api.example.com",
+      windows:
+        '$env:MULTICA_SERVER_URL="https://api.example.com"; irm https://api.example.com/api/cli/install.ps1 | iex',
+    });
   });
 
   it("returns self-host commands with the configured URLs", () => {

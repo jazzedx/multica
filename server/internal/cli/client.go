@@ -291,6 +291,34 @@ func (c *APIClient) GetJSON(ctx context.Context, path string, out any) error {
 	return wrapBodyRead(req, json.NewDecoder(resp.Body).Decode(out))
 }
 
+// GetBytes reads an authenticated response body and fails once it exceeds limit.
+func (c *APIClient) GetBytes(ctx context.Context, path string, limit int64) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+path, nil)
+	if err != nil {
+		return nil, err
+	}
+	c.setHeaders(req)
+
+	resp, err := c.HTTPClient.Do(req)
+	err = wrapTransport(req, err)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return nil, newHTTPError(http.MethodGet, path, resp)
+	}
+	data, err := io.ReadAll(io.LimitReader(resp.Body, limit+1))
+	if err != nil {
+		return nil, wrapBodyRead(req, err)
+	}
+	if int64(len(data)) > limit {
+		return nil, fmt.Errorf("GET %s exceeded %d bytes", path, limit)
+	}
+	return data, nil
+}
+
 // GetJSONWithHeaders performs a GET request, decodes the JSON response, and
 // returns the response headers. Useful when callers need header values like
 // X-Total-Count for pagination.

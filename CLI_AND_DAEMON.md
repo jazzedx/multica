@@ -10,6 +10,25 @@ The `multica` CLI connects your local machine to Multica. It handles authenticat
 brew install multica-ai/tap/multica
 ```
 
+### From a self-hosted server
+
+A server built from this repository hands out the CLI from its own build, for
+macOS, Linux and Windows on amd64 and arm64. The machine needs to reach only
+that server:
+
+```bash
+curl -fsSL https://multica.example.com/api/cli/install.sh | bash -s -- https://multica.example.com
+```
+
+```powershell
+$env:MULTICA_SERVER_URL="https://multica.example.com"; irm https://multica.example.com/api/cli/install.ps1 | iex
+```
+
+The script verifies the download against the checksum the server sends and
+installs to `~/.local/bin` (`%USERPROFILE%\.multica\bin` on Windows);
+`MULTICA_INSTALL_DIR` changes that. The app shows the same command, with its
+own address filled in, wherever it asks you to connect a machine.
+
 ### Build from Source
 
 ```bash
@@ -159,6 +178,30 @@ MULTICA_DAEMON_AUTO_RELOAD=0 multica daemon start
 multica daemon start --no-auto-reload
 # or persist it
 multica config set disable_auto_reload true
+```
+
+#### Updating to the self-hosted server's build
+
+A daemon logged in to a self-hosted server compares its build commit with the
+server's every ten minutes. When they differ it does not replace anything on
+its own; it says so, and the update is yours to start:
+
+- The runtime's page in the web app shows the server's version next to the
+  machine's, with an **Update** button. Pressing it asks that machine's daemon
+  to download the CLI the server ships, verify its checksum, replace its binary
+  and restart. It is refused while a task is running, so retry when the machine
+  is idle.
+- On the machine itself, `multica daemon status` shows the same notice and
+  `multica update` installs the server's build instead of the GitHub release.
+
+A server that ships no CLI, or one built for another platform, leaves the local
+binary in place.
+
+To have a daemon install the server's build without being asked, as soon as no
+task is running:
+
+```bash
+MULTICA_DAEMON_FOLLOW_SERVER=1 multica daemon start
 ```
 
 Agent CLIs (codex, claude, ...) are handled differently: when one of them is

@@ -180,6 +180,32 @@ func TestPrintDaemonStatusExplainsDeferredRestart(t *testing.T) {
 	}
 }
 
+// A self-hosted server shipping a build this daemon does not run is worth one
+// row and the command that takes it; otherwise the row is absent.
+func TestPrintDaemonStatusOffersTheServersBuild(t *testing.T) {
+	t.Parallel()
+
+	health := map[string]any{
+		"status":      "running",
+		"pid":         float64(1234),
+		"uptime":      "1h2m3s",
+		"cli_version": "v0.9.0-1-gold",
+	}
+
+	var current bytes.Buffer
+	printDaemonStatusReport(&current, "Daemon", health)
+	if strings.Contains(current.String(), "multica update") {
+		t.Errorf("status output = %q, want no update row when the server has nothing newer", current.String())
+	}
+
+	health["server_cli_update"] = "v0.9.0-2-gnew"
+	var behind bytes.Buffer
+	printDaemonStatusReport(&behind, "Daemon", health)
+	if !strings.Contains(behind.String(), "v0.9.0-2-gnew") || !strings.Contains(behind.String(), "multica update") {
+		t.Errorf("status output = %q, want the server's version and the update command", behind.String())
+	}
+}
+
 // TestPrintDaemonStatusOmitsVersionWhenMissing pins the back-compat contract:
 // when the daemon doesn't report cli_version (older daemon paired with a newer
 // CLI) or reports an empty string, the CLI must skip the line entirely instead

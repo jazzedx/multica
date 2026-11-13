@@ -108,6 +108,7 @@ type Config struct {
 	RuntimeName                    string
 	CLIVersion                     string                // multica CLI version (e.g. "0.1.13")
 	CLICommit                      string                // full build revision embedded in the running CLI; empty/unknown if unavailable
+	CLIShortCommit                 string                // short revision embedded as main.commit; compared with the server's /health commit
 	LaunchedBy                     string                // "desktop" when spawned by the Electron app, empty for standalone
 	Profile                        string                // profile name (empty = default)
 	Agents                         map[string]AgentEntry // keyed by provider: claude, codebuddy, codex, copilot, opencode, codearts, deveco, openclaw, hermes, pi, cursor, kimi, reasonix, dsh, kiro, antigravity, qoder, qoderclicn, traecli, grok, qwen, qwenpaw, droid, amp, mcode, muse, devin, dim, zeroclaw, museapp (plus built-in runtime identities from agent.BuiltinRuntimes, e.g. omp)
@@ -130,6 +131,7 @@ type Config struct {
 	AutoUpdateEnabled              bool                  // periodically check for a newer CLI release and self-update when idle (default: true on Multica Cloud, false on self-host)
 	AutoUpdateCheckInterval        time.Duration         // how often the auto-update loop polls for a new release (default: 6h)
 	AutoReloadEnabled              bool                  // restart when the multica binary on disk no longer matches the running version (default: true for CLI-launched daemons)
+	FollowServerCLI                bool                  // self-host: replace this CLI with the build shipped by the logged-in server on its own instead of only reporting it (default: false; MULTICA_DAEMON_FOLLOW_SERVER=true turns it on)
 	PollInterval                   time.Duration
 	WSClaimPollInterval            time.Duration // upper bound for healthy WS batch-claim safety polls; actual sleeps use downward-only jitter
 	HeartbeatInterval              time.Duration
@@ -643,6 +645,7 @@ func LoadConfig(overrides Overrides) (Config, error) {
 	if overrides.DisableAutoReload {
 		autoReloadEnabled = false
 	}
+	followServerCLI := boolFromEnv("MULTICA_DAEMON_FOLLOW_SERVER", false)
 
 	return Config{
 		ServerBaseURL:                   serverBaseURL,
@@ -669,6 +672,7 @@ func LoadConfig(overrides Overrides) (Config, error) {
 		AutoUpdateEnabled:               autoUpdateEnabled,
 		AutoUpdateCheckInterval:         autoUpdateInterval,
 		AutoReloadEnabled:               autoReloadEnabled,
+		FollowServerCLI:                 followServerCLI,
 		HealthPort:                      healthPort,
 		MaxConcurrentTasks:              maxConcurrentTasks,
 		PollInterval:                    pollInterval,
@@ -713,6 +717,11 @@ func isOfficialCloudServer(baseURL string) bool {
 		return false
 	}
 	return strings.EqualFold(u.Hostname(), officialCloudHost)
+}
+
+// IsOfficialCloudServer exposes isOfficialCloudServer to the CLI commands.
+func IsOfficialCloudServer(baseURL string) bool {
+	return isOfficialCloudServer(baseURL)
 }
 
 // NormalizeServerBaseURL converts a WebSocket or HTTP URL to a base HTTP URL.

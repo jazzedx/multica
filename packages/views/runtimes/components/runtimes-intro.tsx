@@ -20,7 +20,7 @@ const MACHINE = "studio-mbp";
 const REMOTE_MACHINE = "ci-runner-02";
 const DETECTED = ["claude", "codex", "cursor", "copilot"];
 const SETUP_COMMANDS = [
-  "curl -fsSL …/multica/main/scripts/n | bash",
+  "curl -fsSL …/api/cli/install.sh | bash",
   "multica setup",
 ];
 const CLOUD_NODES = [

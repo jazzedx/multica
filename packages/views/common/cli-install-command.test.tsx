@@ -1,10 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import {
-  CLI_INSTALL_COMMANDS,
-  CliInstallCommand,
-} from "./cli-install-command";
+import { CliInstallCommand } from "./cli-install-command";
+
+const CLI_INSTALL_COMMANDS = {
+  macosLinux: "curl -fsSL https://multica.example.com/api/cli/install.sh | bash",
+  windows: "irm https://multica.example.com/api/cli/install.ps1 | iex",
+};
 
 const LABELS = {
   group: "Choose your platform",
@@ -14,7 +16,7 @@ const LABELS = {
 
 function renderSwitch() {
   return render(
-    <CliInstallCommand labels={LABELS}>
+    <CliInstallCommand commands={CLI_INSTALL_COMMANDS} labels={LABELS}>
       {(command) => <code>{command}</code>}
     </CliInstallCommand>,
   );

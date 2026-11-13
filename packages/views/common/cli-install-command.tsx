@@ -7,24 +7,9 @@ import {
   TabsList,
   TabsTrigger,
 } from "@multica/ui/components/ui/tabs";
+import type { CliInstallCommands } from "@multica/core/runtimes";
 
-/**
- * The Multica CLI install commands, one per platform family.
- *
- * Three surfaces render install instructions — the runtimes "add computer"
- * dialog, onboarding's CLI card, and the landing download page. They read the
- * commands from here instead of each hardcoding a string, which is how Windows
- * silently went missing from all of them while scripts/install.ps1 sat in the
- * repo. The scripts' own headers are the source of truth.
- */
-export const CLI_INSTALL_COMMANDS = {
-  macosLinux:
-    "curl -fsSL https://raw.githubusercontent.com/multica-ai/multica/main/scripts/install.sh | bash",
-  windows:
-    "irm https://raw.githubusercontent.com/multica-ai/multica/main/scripts/install.ps1 | iex",
-} as const;
-
-export type CliInstallPlatform = keyof typeof CLI_INSTALL_COMMANDS;
+export type CliInstallPlatform = keyof CliInstallCommands;
 
 /** Tab order. macOS / Linux stays first so the default matches the old single command. */
 const PLATFORMS = [
@@ -41,7 +26,8 @@ export interface CliInstallCommandLabels {
 
 /**
  * Platform switch for the install command, built on the shared Tabs primitive
- * so tab semantics and arrow-key navigation come for free.
+ * so tab semantics and arrow-key navigation come for free. The commands come
+ * from `useDaemonSetupCommands`, which knows which server the CLI installs from.
  *
  * The switch is the only shared UI: `children` receives the selected command
  * and renders it, so each surface keeps its own command row — the product
@@ -49,10 +35,12 @@ export interface CliInstallCommandLabels {
  * its marketing palette with a spelled-out one.
  */
 export function CliInstallCommand({
+  commands,
   labels,
   classNames,
   children,
 }: {
+  commands: CliInstallCommands;
   labels: CliInstallCommandLabels;
   /** Palette overrides for surfaces that do not use the product tokens. */
   classNames?: { list?: string; trigger?: string };
@@ -77,7 +65,7 @@ export function CliInstallCommand({
       </TabsList>
       {PLATFORMS.map((platform) => (
         <TabsContent key={platform} value={platform}>
-          {children(CLI_INSTALL_COMMANDS[platform])}
+          {children(commands[platform])}
         </TabsContent>
       ))}
     </Tabs>

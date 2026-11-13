@@ -1625,6 +1625,13 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 	r.Get("/readyz", health.readyHandler)
 	r.Get("/healthz", health.readyHandler)
 
+	// First install of the CLI. The machine holds no credentials yet, so these
+	// take no login. They serve the CLI from the server's own build and no
+	// instance data.
+	r.Get("/api/cli/install.sh", handleCLIInstallShell)
+	r.Get("/api/cli/install.ps1", handleCLIInstallPowerShell)
+	r.Get("/api/cli/download/{goos}/{goarch}", handleCLIReleaseArchive)
+
 	// Realtime subsystem metrics — connection counts, slow-client evictions,
 	// and per-event-type send QPS counters. Exposed as JSON so it can be
 	// scraped by ops or surfaced in the admin UI without adding a Prometheus
@@ -1870,6 +1877,11 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 		r.Get("/api/theme-store/themes/{themeId}/package", h.GetStoreThemePackage)
 		r.Get("/api/theme-store/themes/{themeId}/screenshots/{mode}", h.GetStoreThemeScreenshot)
 		r.Get("/api/me", h.GetMe)
+		// The CLI on a self-hosted machine collects the binary from the server's
+		// own build here; the goos / goarch query parameters pick the platform.
+		// Uses the same login session as /api/me.
+		r.Get("/api/cli/release", handleCLIRelease)
+		r.Get("/api/cli/release/archive", handleCLIReleaseArchive)
 		r.Patch("/api/me", h.UpdateMe)
 		r.Patch("/api/me/onboarding", h.PatchOnboarding)
 		r.Post("/api/me/onboarding/complete", h.CompleteOnboarding)

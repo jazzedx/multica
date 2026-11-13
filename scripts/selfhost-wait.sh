@@ -95,5 +95,11 @@ echo "Log in: configure RESEND_API_KEY in .env for email codes,"
 echo "        or read the generated code from backend logs when Resend is unset."
 echo ""
 echo "Next — install the CLI and connect your machine:"
-echo "  brew install multica-ai/tap/multica"
+if [ "$mode" = "build" ]; then
+  # A locally built server hands out the CLI from its own build, so the
+  # install needs no route to the public internet.
+  echo "  curl -fsSL ${frontend_url}/api/cli/install.sh | bash -s -- ${frontend_url}"
+else
+  echo "  brew install multica-ai/tap/multica"
+fi
 echo "  multica setup self-host"
