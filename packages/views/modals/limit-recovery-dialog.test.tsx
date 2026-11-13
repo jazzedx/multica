@@ -206,7 +206,7 @@ describe("LimitRecoveryDialog", () => {
     expect(queryRecoveryDialog()).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Checking the billing actions available for this workspace...",
+        "Wait for the current allowance to reset, or contact your workspace administrator.",
       ),
     ).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "Close" })).toHaveLength(1);
@@ -229,7 +229,7 @@ describe("LimitRecoveryDialog", () => {
     ).toBeInTheDocument();
     expect(
       await screen.findByText(
-        "Upgrade to Pro to raise the monthly limit and restore autopilot runs, or wait for the allowance to reset.",
+        "Wait for the current allowance to reset, or contact your workspace administrator.",
       ),
     ).toBeInTheDocument();
 
@@ -247,6 +247,13 @@ describe("LimitRecoveryDialog", () => {
     summaryState.value = { availableActions: actions({ checkout: true }) };
     renderPrompt({ layered: true });
     const user = await openPrompt();
+    // Escape goes to whichever dialog holds focus, and focus moves into the
+    // recovery dialog a tick after it opens.
+    await waitFor(() =>
+      expect(queryRecoveryDialog()).toContainElement(
+        document.activeElement as HTMLElement,
+      ),
+    );
 
     await user.keyboard("{Escape}");
 
@@ -310,97 +317,6 @@ describe("LimitRecoveryDialog", () => {
     expect(queryRecoveryDialog()).not.toBeInTheDocument();
   });
 
-  it("offers Upgrade to Pro only when Cloud authorizes checkout", async () => {
-    summaryState.value = { availableActions: actions({ checkout: true }) };
-    renderPrompt();
-    const user = await openPrompt();
-
-    await user.click(
-      await screen.findByRole("button", { name: "Upgrade to Pro" }),
-    );
-
-    expect(mockPush).toHaveBeenCalledWith("/ws-test/settings?tab=billing");
-    await waitFor(() => expect(queryRecoveryDialog()).not.toBeInTheDocument());
-  });
-
-  it("opens Billing Portal for a past-due manager authorized for portal", async () => {
-    summaryState.value = { availableActions: actions({ portal: true }) };
-    renderPrompt();
-    const user = await openPrompt();
-
-    await user.click(
-      await screen.findByRole("button", { name: "Open Billing Portal" }),
-    );
-
-    await waitFor(() => expect(mockCreatePortal).toHaveBeenCalledTimes(1));
-    expect(mockCreatePortal.mock.calls[0]?.[0]).toMatch(
-      /^limit-recovery-portal-ws-test-/,
-    );
-    await waitFor(() => {
-      expect(mockOpenExternal).toHaveBeenCalledWith(
-        "https://billing.example/portal",
-        { webTarget: "same-tab" },
-      );
-    });
-    await waitFor(() => expect(queryRecoveryDialog()).not.toBeInTheDocument());
-  });
-
-  it("keeps a Billing recovery action when Portal cannot be opened", async () => {
-    summaryState.value = { availableActions: actions({ portal: true }) };
-    mockCreatePortal.mockRejectedValue(new Error("portal unavailable"));
-    renderPrompt();
-    const user = await openPrompt();
-
-    await user.click(
-      await screen.findByRole("button", { name: "Open Billing Portal" }),
-    );
-
-    expect(
-      await screen.findByRole("button", { name: "View Billing" }),
-    ).toBeInTheDocument();
-    expect(queryRecoveryDialog()).toBeInTheDocument();
-  });
-
-  it("asks for an administrator only when Cloud authorizes no management action", async () => {
-    summaryState.value = { availableActions: actions() };
-    renderPrompt();
-    await openPrompt();
-
-    expect(
-      await screen.findByText(
-        "Ask a workspace owner or admin to upgrade the plan, or wait for the allowance to reset.",
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", {
-        name: /Upgrade|Billing Portal|View Billing/,
-      }),
-    ).not.toBeInTheDocument();
-  });
-
-  it("keeps another Cloud-authorized management action reachable in Billing", async () => {
-    summaryState.value = {
-      availableActions: actions({ purchaseSeats: true }),
-    };
-    renderPrompt();
-    await openPrompt();
-
-    expect(
-      await screen.findByRole("button", { name: "View Billing" }),
-    ).toBeInTheDocument();
-  });
-
-  it("uses one background attempt and keeps Billing as the recovery path", async () => {
-    summaryState.error = new Error("cloud unavailable");
-    renderPrompt();
-    await openPrompt();
-
-    expect(
-      await screen.findByRole("button", { name: "View Billing" }),
-    ).toBeInTheDocument();
-    expect(mockSummaryQuery).toHaveBeenCalledTimes(1);
-  });
-
   it("does not expose a dead Billing link when the Billing surface is disabled", async () => {
     featureState.billingEnabled = false;
     renderPrompt();
@@ -415,83 +331,5 @@ describe("LimitRecoveryDialog", () => {
       screen.queryByRole("button", { name: "View Billing" }),
     ).not.toBeInTheDocument();
     expect(mockSummaryQuery).not.toHaveBeenCalled();
-  });
-
-  it("offers Pro managers more runs first and Business as the alternative", async () => {
-    summaryState.value = {
-      availableActions: actions({
-        portal: true,
-        purchaseSeats: true,
-        changePlan: true,
-        purchaseAutopilotRuns: true,
-      }),
-      entitlement: { plan: "pro" },
-      autopilotAddon: { purchasedRuns: 0 },
-    };
-    renderPrompt();
-    const user = await openPrompt();
-
-    expect(
-      await screen.findByText(
-        "Buy more runs to restore autopilot runs this month, or wait for the allowance to reset.",
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Open Billing Portal" }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Upgrade to Business" }),
-    ).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Buy more runs" }));
-    await waitFor(() => expect(queryRecoveryDialog()).not.toBeInTheDocument());
-    expect(
-      screen.getByRole("dialog", { name: "Buy more autopilot runs" }),
-    ).toBeInTheDocument();
-  });
-
-  it("offers Business managers more runs without another upgrade", async () => {
-    summaryState.value = {
-      availableActions: actions({
-        portal: true,
-        changePlan: true,
-        purchaseAutopilotRuns: true,
-      }),
-      entitlement: { plan: "business" },
-      autopilotAddon: { purchasedRuns: 1000 },
-    };
-    renderPrompt();
-    await openPrompt();
-
-    expect(
-      await screen.findByRole("button", { name: "Buy more runs" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Upgrade to Business" }),
-    ).not.toBeInTheDocument();
-  });
-
-  it.each([
-    [
-      "pro",
-      "Ask a workspace owner or admin to buy more runs or upgrade the plan, or wait for the allowance to reset.",
-    ],
-    [
-      "business",
-      "Ask a workspace owner or admin to buy more runs, or wait for the allowance to reset.",
-    ],
-  ])("tells a %s member what to ask an admin for, without a payment action", async (plan, text) => {
-    summaryState.value = {
-      availableActions: actions(),
-      entitlement: { plan },
-      autopilotAddon: { purchasedRuns: 0 },
-    };
-    renderPrompt();
-    await openPrompt();
-
-    expect(await screen.findByText(text)).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: /Buy|Upgrade|Billing/ }),
-    ).not.toBeInTheDocument();
   });
 });

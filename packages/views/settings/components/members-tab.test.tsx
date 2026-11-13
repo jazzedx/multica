@@ -250,91 +250,25 @@ describe("MembersTab", () => {
     expect(screen.getByRole("dialog", { name: "Invite member" })).toBeInTheDocument();
   });
 
-  it("links seat usage to billing when subscriptions are on", () => {
+  it("does not link seat usage to billing", () => {
     configStore
       .getState()
       .setFeatureFlags({ [BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG]: true });
     data.summary = { seatCapacity: { used: 3, reserved: 1, purchased: 5 } };
     renderWithI18n(<MembersTab />);
 
-    expect(screen.getByText(/4 of 5 seats used/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Manage seats" })).toHaveAttribute(
-      "href",
-      "/acme/settings?tab=billing",
-    );
+    expect(screen.queryByText(/4 of 5 seats used/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Manage seats" })).not.toBeInTheDocument();
   });
 
   describe("member limit", () => {
     const LIMIT_KEY = ["workspaces", "ws-1", "members", "limit"];
-    const enableBilling = () =>
-      configStore.getState().setFeatureFlags({ [BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG]: true });
     const openInvite = async (user: ReturnType<typeof userEvent.setup>, email = "sarah@acme.dev") => {
       await user.click(screen.getByRole("button", { name: "Invite member" }));
       const dialog = await screen.findByRole("dialog", { name: "Invite member" });
       await user.type(within(dialog).getByRole("textbox", { name: "Email" }), email);
       return dialog;
     };
-
-    it("turns a full enforced limit into upgrade and invite, holding the invitation for that checkout", async () => {
-      enableBilling();
-      data.memberLimit = { action: "enforce", limit: 5, members: 4, pendingInvitations: 1 };
-      const user = userEvent.setup();
-      renderWithI18n(<MembersTab />);
-
-      const dialog = await openInvite(user);
-      expect(within(dialog).getByRole("alert")).toHaveTextContent(
-        "This plan allows up to 5 members. The workspace is full.",
-      );
-      expect(within(dialog).getByRole("alert")).toHaveTextContent("Pending invitations take a slot too (1 now)");
-      expect(within(dialog).getByText("5 / 5 members")).toBeInTheDocument();
-      expect(within(dialog).queryByRole("button", { name: "Invite" })).toBeNull();
-
-      await user.click(within(dialog).getByRole("button", { name: "Upgrade and invite" }));
-
-      expect(mockCreateMember).not.toHaveBeenCalled();
-      const params = new URLSearchParams(url.get());
-      expect(params.get("tab")).toBe("billing");
-      expect(params.get("upgrade")).toBe("pro");
-      const token = params.get("held_invite");
-      expect(token).toBeTruthy();
-      expect(readUpgradeInvite("acme", token!)).toMatchObject({ email: "sarah@acme.dev", role: "member", checkout: null });
-    });
-
-    it.each([
-      ["not-an-email", "Enter a valid email address."],
-      ["ada@acme.dev", "ada@acme.dev is already a member of this workspace."],
-      ["LINUS@acme.dev", "An invitation to LINUS@acme.dev is already pending."],
-    ])("does not start an upgrade for %s, which could not be invited after paying", async (email, message) => {
-      enableBilling();
-      data.memberLimit = { action: "enforce", limit: 5, members: 4, pendingInvitations: 1 };
-      const user = userEvent.setup();
-      renderWithI18n(<MembersTab />);
-
-      const dialog = await openInvite(user, email);
-      await user.click(within(dialog).getByRole("button", { name: "Upgrade and invite" }));
-
-      expect(toast.error).toHaveBeenCalledWith(message);
-      expect(new URLSearchParams(url.get()).get("tab")).toBe("members");
-      expect(localStorage.getItem("multica:upgrade_invite:acme")).toBeNull();
-      expect(screen.getByRole("dialog", { name: "Invite member" })).toBeInTheDocument();
-    });
-
-    it("waits for the invitation list before an upgrade can buy a seat", async () => {
-      enableBilling();
-      data.memberLimit = { action: "enforce", limit: 5, members: 4, pendingInvitations: 1 };
-      data.invitationsLoaded = false;
-      const user = userEvent.setup();
-      renderWithI18n(<MembersTab />);
-
-      const dialog = await openInvite(user, "linus@acme.dev");
-      const upgrade = within(dialog).getByRole("button", { name: "Upgrade and invite" });
-      expect(upgrade).toBeDisabled();
-      await user.click(upgrade);
-      await user.keyboard("{Enter}");
-
-      expect(new URLSearchParams(url.get()).get("tab")).toBe("members");
-      expect(localStorage.getItem("multica:upgrade_invite:acme")).toBeNull();
-    });
 
     it("offers no upgrade when Billing is off, only ways to free a slot", async () => {
       data.memberLimit = { action: "enforce", limit: 5, members: 5, pendingInvitations: 0 };
@@ -350,7 +284,6 @@ describe("MembersTab", () => {
     });
 
     it("stays out of the way while the limit is only observed", async () => {
-      enableBilling();
       data.memberLimit = { action: "observe", limit: 5, members: 6, pendingInvitations: 0 };
       const user = userEvent.setup();
       renderWithI18n(<MembersTab />);
@@ -416,26 +349,6 @@ describe("MembersTab", () => {
       const dialog = screen.getByRole("dialog", { name: "Invite member" });
       expect(within(dialog).getByRole("textbox", { name: "Email" })).toHaveValue("sarah@acme.dev");
       expect(readUpgradeInvite("acme", token)).not.toBeNull();
-    });
-
-    it("sends a full workspace with a lapsed subscription to Billing, holding nothing", async () => {
-      enableBilling();
-      data.summary = { availableActions: { checkout: false } };
-      data.memberLimit = { action: "enforce", limit: 5, members: 5, pendingInvitations: 0 };
-      const user = userEvent.setup();
-      renderWithI18n(<MembersTab />);
-
-      const dialog = await openInvite(user);
-      expect(within(dialog).getByRole("alert")).toHaveTextContent(
-        "The workspace's subscription needs attention. Restore it in Billing to add members",
-      );
-      expect(within(dialog).queryByRole("button", { name: "Upgrade and invite" })).toBeNull();
-      await user.click(within(dialog).getByRole("button", { name: "Open Billing" }));
-
-      const params = new URLSearchParams(url.get());
-      expect(params.get("tab")).toBe("billing");
-      expect(params.has("upgrade")).toBe(false);
-      expect(localStorage.getItem("multica:upgrade_invite:acme")).toBeNull();
     });
 
     it("refreshes the limit once a revoked invitation frees its slot", async () => {

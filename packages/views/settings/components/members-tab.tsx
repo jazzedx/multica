@@ -92,10 +92,7 @@ import {
 } from "@multica/core/billing";
 import { useWorkspaceId } from "@multica/core/hooks";
 import { useFeatureEnabled } from "@multica/core/config";
-import {
-  BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG,
-  WORKSPACE_GUESTS_FLAG,
-} from "@multica/core/feature-flags";
+import { WORKSPACE_GUESTS_FLAG } from "@multica/core/feature-flags";
 import { useCurrentWorkspace } from "@multica/core/paths";
 import {
   invitationListOptions,
@@ -591,7 +588,7 @@ export function MembersTab() {
   // Only owners/admins may list share links; skip the request for plain
   // members (the server would 403) once the current member's role is known.
   const { data: shareLinks = [] } = useQuery(shareLinkListOptions(wsId, canManageWorkspace));
-  const billingEnabled = useFeatureEnabled(BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG, false);
+  const billingEnabled = false;
   const subscriptionSummary = useQuery({
     ...workspaceSubscriptionSummaryOptions(wsId),
     enabled: billingEnabled && canManageWorkspace,

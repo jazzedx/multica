@@ -13,8 +13,6 @@ import {
   resolveBillingRecovery,
   type AutopilotQuotaAdminAsk,
 } from "@multica/core/billing/recovery";
-import { useFeatureEnabled } from "@multica/core/config";
-import { BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG } from "@multica/core/feature-flags";
 import { useWorkspaceId } from "@multica/core/hooks";
 import {
   useModalStore,
@@ -65,10 +63,7 @@ export function LimitRecoveryDialog() {
   const visible = recoveryWorkspaceId === wsId;
   const paths = useWorkspacePaths();
   const navigation = useNavigation();
-  const billingEnabled = useFeatureEnabled(
-    BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG,
-    false,
-  );
+  const billingEnabled = false;
   const summaryQuery = useQuery({
     ...workspaceSubscriptionSummaryOptions(wsId),
     enabled: visible && billingEnabled,

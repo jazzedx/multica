@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   Bell,
   Blocks,
-  CreditCard,
   FolderGit2,
   Keyboard,
   KeyRound,
@@ -28,10 +27,7 @@ import { prefersReducedMotion } from "@multica/core/appearance";
 import { useCurrentWorkspace, useWorkspacePaths } from "@multica/core/paths";
 import { useFeatureEnabled } from "@multica/core/config";
 import { useCurrentMember } from "@multica/core/permissions";
-import {
-  BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG,
-  PLUGINS_V1_FLAG,
-} from "@multica/core/feature-flags";
+import { PLUGINS_V1_FLAG } from "@multica/core/feature-flags";
 import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
 import { cn } from "@multica/ui/lib/utils";
 import { movedAppsHref, resolveSettingsLocation, settingsHref } from "./settings-navigation";
@@ -55,7 +51,6 @@ import { localVoiceAPI } from "../../platform/local-voice";
 import { VoiceInputTab } from "./voice-input-tab";
 import { PluginsTab } from "./plugins-tab";
 import { McpTab } from "./mcp-tab";
-import { BillingTab } from "./billing-tab";
 import {
   SETTINGS_ANCHOR_ATTR,
   SettingsHeaderContext,
@@ -136,10 +131,6 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
   const paths = useWorkspacePaths();
   const listCollapsed = useListColumnCollapsed();
   const pluginsEnabled = useFeatureEnabled(PLUGINS_V1_FLAG, false);
-  const billingEnabled = useFeatureEnabled(
-    BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG,
-    false,
-  );
   const voiceInputAvailable = localVoiceAPI() !== undefined;
   const entry = (
     value: string,
@@ -204,16 +195,6 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
             entry("members", t(($) => $.page.tabs.members), Users, <MembersTab />, {
               adminOnly: true,
             }),
-            ...(billingEnabled
-              ? [
-                  entry(
-                    "billing",
-                    t(($) => $.page.tabs.billing),
-                    CreditCard,
-                    <BillingTab />,
-                  ),
-                ]
-              : []),
           ],
         },
         {
@@ -297,8 +278,7 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
     if (wakeupsMoved) replace(wakeupsTarget);
     else if (appsMoved) replace(appsTarget);
   }, [wakeupsMoved, wakeupsTarget, appsMoved, appsTarget, replace]);
-  const candidate =
-    location.tab === "billing" && !billingEnabled ? "workspace" : location.tab;
+  const candidate = location.tab === "billing" ? "workspace" : location.tab;
   const active =
     allEntries.find((item) => item.value === candidate) ?? allEntries[0]!;
   const href = (value: string) =>
