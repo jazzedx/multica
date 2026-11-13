@@ -5,7 +5,6 @@ import { SidebarProvider } from "@multica/ui/components/ui/sidebar";
 import { WorkspaceTrialNotices } from "../billing/trial-notices";
 import { AppearanceSync } from "../common/appearance-sync";
 import { ModalRegistry } from "../modals/registry";
-import { SourceBackfillModal } from "../onboarding";
 import { AppRail } from "./app-rail";
 import { AppBottomBar } from "./bottom-bar";
 import { AppShellProvider } from "./app-shell-context";
@@ -75,7 +74,6 @@ export function DashboardLayout({
                   <WorkspaceTrialNotices />
                   {children}
                   <ModalRegistry />
-                  <SourceBackfillModal />
                   {extra}
                 </AppShellCard>
                 <AppBottomBar />

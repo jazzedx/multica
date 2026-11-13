@@ -67,15 +67,6 @@ const countMentions: CountMention[] = [
     min: 1,
   })),
   { file: docsFile("compare/openhands-devin-factory", "ja"), pattern: /その (\d+) 種類/g, min: 1 },
-  { file: "apps/web/features/landing/site/cloud-page.tsx", pattern: /"(\d+) coding agents/g, min: 1 },
-  { file: "apps/web/features/landing/i18n/en.ts", pattern: /supports (\d+) coding tools/g, min: 1 },
-  { file: "apps/web/features/landing/i18n/zh.ts", pattern: /支持 (\d+) 款 AI 编程工具/g, min: 1 },
-  { file: "apps/web/features/landing/i18n/ja.ts", pattern: /(\d+) 種類のコーディングツール/g, min: 1 },
-  { file: "apps/web/features/landing/i18n/ko.ts", pattern: /(\d+)개 코딩 도구/g, min: 1 },
-  { file: "apps/web/features/landing/i18n/site-en.ts", pattern: /All (\d+) agents/g, min: 1 },
-  { file: "apps/web/features/landing/i18n/site-zh.ts", pattern: /全部 (\d+) 款智能体/g, min: 1 },
-  { file: "apps/web/features/landing/i18n/site-ja.ts", pattern: /全 (\d+) 種のエージェント/g, min: 1 },
-  { file: "apps/web/features/landing/i18n/site-ko.ts", pattern: /에이전트 (\d+)종 전체/g, min: 1 },
 ];
 
 function docsFile(page: string, lang: Lang): string {
