@@ -36,6 +36,7 @@ export
 MULTICA_ARGS ?= $(ARGS)
 
 COMPOSE := docker compose
+SELFHOST_BUILD_COMPOSE_FILES ?= -f docker-compose.selfhost.yml -f docker-compose.selfhost.build.yml
 
 define REQUIRE_ENV
 	@if [ ! -f "$(ENV_FILE)" ]; then \
@@ -149,8 +150,13 @@ selfhost-build: ## Build backend/web from the current checkout and start the sel
 # Internal: see selfhost-start.
 selfhost-build-start:
 	@echo "==> Building Multica from the current checkout..."
-	$(COMPOSE) -f docker-compose.selfhost.yml -f docker-compose.selfhost.build.yml up -d --build
+	$(COMPOSE) $(SELFHOST_BUILD_COMPOSE_FILES) up -d --build
 	@bash scripts/selfhost-wait.sh build
+
+.PHONY: selfhost-build-mirror
+selfhost-build-mirror: ## Like selfhost-build, with build dependencies fetched from China mirrors
+	@$(MAKE) selfhost-build \
+		SELFHOST_BUILD_COMPOSE_FILES="-f docker-compose.selfhost.yml -f docker-compose.selfhost.build.yml -f docker-compose.selfhost.build.mirror.yml"
 
 selfhost-stop: ## Stop the self-hosted Docker Compose stack
 	$(REQUIRE_COMPOSE)
