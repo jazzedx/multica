@@ -22,7 +22,7 @@ for (const [name, files, selected] of [
   ["release creation", [".goreleaser.yml"], ["scripts"]],
   ["docs only", ["apps/docs/content/docs/guide.mdx"], ["quality", "docs"]],
   ["docs test", ["apps/docs/lib/unrendered-bold.test.ts"], ["quality", "docs"]],
-  ["web changelog", ["apps/web/features/landing/i18n/en.ts"], ["frontend", "quality"]],
+  ["web changelog", ["apps/web/app/(auth)/login/page.tsx"], ["frontend", "quality"]],
   ["migration only", ["server/migrations/999_example.up.sql"], ["backend", "sqlc"]],
   ["agent process code", ["server/pkg/agent/cursor_background.go"], ["backend", "runtime"]],
   ["daemon dependency", ["server/internal/skill/service.go"], ["backend", "runtime"]],

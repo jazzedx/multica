@@ -5,8 +5,6 @@ import { DashboardLayout } from "@multica/views/layout";
 import { MulticaIcon } from "@multica/ui/components/common/multica-icon";
 import { SearchCommand } from "@multica/views/search";
 import { FloatingChat } from "@multica/views/chat/floating-chat";
-import { StarPrompt } from "@multica/views/star-prompt";
-import { WhatsNewDeck } from "@multica/views/whats-new";
 import { WebNotificationBridge } from "@/components/web-notification-bridge";
 import { WorkspaceDocumentTitle } from "@/platform/workspace-document-title";
 
@@ -26,8 +24,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <SearchCommand />
             <WebNotificationBridge />
             <FloatingChat />
-            <StarPrompt />
-            <WhatsNewDeck />
           </>
         }
       >

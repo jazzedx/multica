@@ -13,6 +13,7 @@ import {
 } from "./lib/landing-locale-path";
 import { runtimeRewriteDestination } from "./config/runtime-urls";
 import { isOfficialMarketingHost } from "./lib/public-host";
+import { redirectHiddenLanding } from "./lib/hidden-landing";
 
 // Old workspace-scoped route segments that existed before the URL refactor
 // (pre-#1131). Any URL with these as the FIRST segment is a legacy URL that
@@ -132,6 +133,9 @@ export function proxy(req: NextRequest) {
     url.search = "";
     return NextResponse.redirect(url);
   }
+
+  const hiddenLanding = redirectHiddenLanding(req, hasSession, lastSlug);
+  if (hiddenLanding) return hiddenLanding;
 
   // --- Root path: redirect logged-in users to their last workspace ---
   // The official cloud host also serves the public marketing site. Visiting

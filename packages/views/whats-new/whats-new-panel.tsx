@@ -1,20 +1,15 @@
 "use client";
 
-import { ArrowUpRight, X } from "@multica/ui/icons";
+import { X } from "@multica/ui/icons";
 import { useConfigStore } from "@multica/core/config";
 import { IconButton } from "@multica/ui/components/common/icon-button";
 import { cn } from "@multica/ui/lib/utils";
 import { useT } from "../i18n";
-import { CHANGELOG_URL } from "../layout/help-links";
 import { HighlightActionButton } from "./highlight-action";
 import { highlightCopy, type WhatsNewRelease } from "./releases";
 
 export function versionLabel(version: string) {
   return `v${version}`;
-}
-
-function releaseAnchor(version: string) {
-  return `${CHANGELOG_URL}#release-${version.replace(/\./g, "-")}`;
 }
 
 export function formatReleaseDate(date: string, language: string) {
@@ -91,36 +86,18 @@ export function WhatsNewPanel({
                   );
                 })}
               </ul>
-              <a
-                href={releaseAnchor(release.version)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3.5 inline-flex items-center gap-0.5 text-caption font-medium text-muted-foreground hover:text-foreground"
-              >
-                {t(($) => $.whats_new.panel.release_notes, { version: release.version })}
-                <ArrowUpRight className="size-3 text-faint-foreground" />
-              </a>
             </section>
           );
         })}
       </div>
 
-      <div className="flex h-11 shrink-0 items-center gap-3 border-t border-border px-4">
-        {serverVersion && (
+      {serverVersion && (
+        <div className="flex h-11 shrink-0 items-center gap-3 border-t border-border px-4">
           <span className="min-w-0 truncate text-caption text-muted-foreground">
             {t(($) => $.help.server_version, { version: serverVersion })}
           </span>
-        )}
-        <a
-          href={CHANGELOG_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="ml-auto inline-flex shrink-0 items-center gap-0.5 text-label font-medium hover:underline"
-        >
-          {t(($) => $.whats_new.panel.full_changelog)}
-          <ArrowUpRight className="size-3.5 text-faint-foreground" />
-        </a>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

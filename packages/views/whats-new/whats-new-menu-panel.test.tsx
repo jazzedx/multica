@@ -189,10 +189,7 @@ describe("What's new from the Help menu", () => {
     expect(mocks.markWhatsNewSeen).toHaveBeenCalledWith("0.3.0");
     expect(release("0.3.0")).toHaveTextContent("New");
     expect(release("0.2.0")).not.toHaveTextContent("New");
-    expect(screen.getByRole("link", { name: /v0.2.0 release notes/ })).toHaveAttribute(
-      "href",
-      "https://multica.ai/changelog#release-0-2-0",
-    );
+    expect(screen.queryByRole("link", { name: /release notes/ })).not.toBeInTheDocument();
   });
 
   it("tags the menu entry with the newest unread version until the panel is opened", () => {
@@ -209,7 +206,7 @@ describe("What's new from the Help menu", () => {
     expect(openHelpMenu()).not.toHaveTextContent("v0.3.0");
   });
 
-  it("shows the server version next to the changelog link when it is known", () => {
+  it("shows the server version when it is known", () => {
     configStore.getState().setServerVersion("v0.3.0");
     signIn({ whats_new_seen_version: "0.3.0" });
     render(<HelpLauncher />);

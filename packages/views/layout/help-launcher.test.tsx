@@ -1,24 +1,10 @@
 import { cloneElement, type ReactElement, type ReactNode } from "react";
-import { fireEvent, render as rtlRender, screen } from "@testing-library/react";
+import { render as rtlRender, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { configStore } from "@multica/core/config";
-import { githubStarsOptions } from "@multica/core/github/stars";
-import { markStarPromptStarred } from "@multica/core/star-prompt";
 import enLayout from "../locales/en/layout.json";
-import { isDesktopShell } from "../platform/local-directory";
 import { HelpLauncher } from "./help-launcher";
-
-// The download entry is gated on the desktop-shell probe, which reads a
-// preload-injected bridge that jsdom never has. Mock it so both platforms are
-// reachable from the same suite.
-vi.mock("../platform/local-directory", () => ({
-  isDesktopShell: vi.fn(() => false),
-}));
-
-vi.mock("@multica/core/star-prompt", () => ({
-  markStarPromptStarred: vi.fn(() => Promise.resolve()),
-}));
 
 // The What's new entry is covered with the real menu in whats-new-menu-panel.test.tsx.
 vi.mock("../whats-new/whats-new-menu-panel", () => ({
@@ -100,7 +86,6 @@ function render(ui: ReactElement) {
 
 beforeEach(() => {
   qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  vi.mocked(isDesktopShell).mockReturnValue(false);
   i18nState.language = "en";
 });
 
@@ -121,13 +106,9 @@ describe("HelpLauncher", () => {
     expect(screen.getByText("Server version 1.2.3")).toBeInTheDocument();
   });
 
-  // MUL-6462: after web onboarding the desktop download CTA was unreachable —
-  // no entry anywhere in the app, so users had to remember the URL or detour
-  // through the marketing site. The Help menu is the persistent home for it.
-  it("links to the download page on web", () => {
+  it("offers no desktop download entry", () => {
     render(<HelpLauncher />);
-    const link = screen.getByRole("link", { name: /Desktop app/ });
-    expect(link).toHaveAttribute("href", "https://multica.ai/download");
+    expect(screen.queryByText("Desktop app")).not.toBeInTheDocument();
   });
 
   it.each([
@@ -144,27 +125,8 @@ describe("HelpLauncher", () => {
     );
   });
 
-  // AppSidebar is shared: apps/desktop renders the same component tree. Without
-  // this gate the desktop app would offer to download the desktop app.
-  it("hides the download entry inside the desktop shell", () => {
-    vi.mocked(isDesktopShell).mockReturnValue(true);
+  it("offers no Star on GitHub entry", () => {
     render(<HelpLauncher />);
-    expect(screen.queryByText("Desktop app")).not.toBeInTheDocument();
-    // The rest of the menu is unaffected by the gate.
-    expect(screen.getByText("Docs")).toBeInTheDocument();
-  });
-
-  it("links to the GitHub repo and retires the star prompt on click", () => {
-    render(<HelpLauncher />);
-    const link = screen.getByRole("link", { name: /Star on GitHub/ });
-    expect(link).toHaveAttribute("href", "https://github.com/multica-ai/multica");
-    fireEvent.click(link);
-    expect(markStarPromptStarred).toHaveBeenCalledTimes(1);
-  });
-
-  it("shows the star count once it is known", () => {
-    qc.setQueryData(githubStarsOptions().queryKey, 37_612);
-    render(<HelpLauncher />);
-    expect(screen.getByRole("link", { name: /Star on GitHub/ })).toHaveTextContent("37.6k");
+    expect(screen.queryByText("Star on GitHub")).not.toBeInTheDocument();
   });
 });
