@@ -46,16 +46,16 @@ describe("CliInstallInstructions", () => {
     resetConfigStore();
   });
 
-  it("does not offer a setup command before connection settings resolve", () => {
+  it("offers neither command before connection settings resolve", () => {
     renderInstructions();
     expect(screen.queryByText("multica setup")).not.toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Copy" })).toHaveLength(1);
+    expect(screen.queryAllByRole("button", { name: "Copy" })).toHaveLength(0);
     expect(screen.getByRole("status")).toHaveTextContent(
       "Loading connection settings",
     );
   });
 
-  it("withholds setup after a failure, then copies only the late-arriving self-host command", async () => {
+  it("withholds both commands after a failure, then copies the late-arriving self-host commands", async () => {
     const user = userEvent.setup();
     renderInstructions();
     act(() => configStore.getState().setDaemonConfigStatus("error"));
@@ -63,17 +63,22 @@ describe("CliInstallInstructions", () => {
       "Couldn't load connection settings",
     );
     expect(screen.queryByText("multica setup")).not.toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Copy" })).toHaveLength(1);
+    expect(screen.queryAllByRole("button", { name: "Copy" })).toHaveLength(0);
     act(() => configStore.getState().setDaemonConfig({
       daemonSetupTarget: "self_host",
       daemonServerUrl: "https://api.example.com",
       daemonAppUrl: "https://app.example.com",
     }));
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    await user.click(screen.getAllByRole("button", { name: "Copy" })[0]!);
+    expect(clipboard.copyText).toHaveBeenLastCalledWith(
+      "curl -fsSL https://api.example.com/api/cli/install.sh | bash -s -- https://api.example.com",
+    );
     await user.click(screen.getAllByRole("button", { name: "Copy" })[1]!);
-    expect(clipboard.copyText).toHaveBeenCalledExactlyOnceWith(
+    expect(clipboard.copyText).toHaveBeenLastCalledWith(
       "multica setup self-host --server-url https://api.example.com --app-url https://app.example.com",
     );
+    expect(clipboard.copyText).toHaveBeenCalledTimes(2);
   });
 
   // The switch itself is covered in common/cli-install-command.test.tsx; this

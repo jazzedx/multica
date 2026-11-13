@@ -194,9 +194,12 @@ describe("ConnectRemoteDialog", () => {
     expect(baseElement).toHaveTextContent(
       "multica config set app_url https://app.example.com",
     );
+    expect(baseElement).toHaveTextContent(
+      "curl -fsSL https://api.example.com/api/cli/install.sh | bash -s -- https://api.example.com",
+    );
   });
 
-  it("withholds setup and token commands until config recovers", () => {
+  it("withholds every command until config recovers", () => {
     const { baseElement } = renderDialog({}, "loading");
     expect(screen.getByRole("status")).toHaveTextContent(
       "Loading connection settings",
@@ -230,7 +233,7 @@ describe("ConnectRemoteDialog", () => {
     expect(screen.getByRole("alert")).toBeInTheDocument();
     expect(baseElement).not.toHaveTextContent("multica setup");
     expect(baseElement).not.toHaveTextContent("multica config set");
-    expect(screen.getAllByRole("button", { name: "Copy" })).toHaveLength(1);
+    expect(screen.queryAllByRole("button", { name: "Copy" })).toHaveLength(0);
   });
 
   // The install command is OS-specific, so the dialog can't hardcode one.

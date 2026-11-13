@@ -25,6 +25,17 @@ ARG COMMIT=unknown
 ARG DATE=unknown
 RUN cd server && CGO_ENABLED=0 go build -ldflags "-s -w -X main.version=${VERSION} -X main.commit=${COMMIT}" -o bin/server ./cmd/server
 RUN cd server && CGO_ENABLED=0 go build -ldflags "-s -w -X main.version=${VERSION} -X main.commit=${COMMIT} -X main.date=${DATE}" -o bin/multica ./cmd/multica
+# The CLI for each platform, which the server hands to the machines that
+# connect to it, from the same build as the server. Left empty, only the
+# image's own platform is served (bin/multica above).
+ARG CLI_PLATFORMS="linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64"
+RUN cd server && mkdir -p bin/cli && for platform in ${CLI_PLATFORMS}; do \
+      goos="${platform%/*}"; goarch="${platform#*/}"; ext=""; \
+      if [ "$goos" = "windows" ]; then ext=".exe"; fi; \
+      CGO_ENABLED=0 GOOS="$goos" GOARCH="$goarch" go build \
+        -ldflags "-s -w -X main.version=${VERSION} -X main.commit=${COMMIT} -X main.date=${DATE}" \
+        -o "bin/cli/${goos}-${goarch}/multica${ext}" ./cmd/multica || exit 1; \
+    done
 RUN cd server && CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/migrate ./cmd/migrate
 RUN cd server && CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/maintenance ./cmd/maintenance
 RUN cd server && CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/backfill_task_usage_hourly ./cmd/backfill_task_usage_hourly
@@ -41,6 +52,7 @@ WORKDIR /app
 
 COPY --from=builder /src/server/bin/server .
 COPY --from=builder /src/server/bin/multica .
+COPY --from=builder /src/server/bin/cli ./cli
 COPY --from=builder /src/server/bin/migrate .
 COPY --from=builder /src/server/bin/maintenance .
 COPY --from=builder /src/server/bin/backfill_task_usage_hourly .
