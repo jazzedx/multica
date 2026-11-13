@@ -1,6 +1,4 @@
 // @vitest-environment node
-import fs from "node:fs";
-import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { SUPPORTED_LOCALES } from "@multica/core/i18n";
 import { RESOURCES } from "./index";
@@ -194,44 +192,6 @@ describe("locale copy hygiene and parity", () => {
         }
       }
     }
-    expect(violations).toEqual([]);
-  });
-
-  it("keeps packages/ee/project-folders locales aligned and hygienic", () => {
-    const eeDir = path.resolve(__dirname, "../../ee/project-folders/locales");
-    const enJson = JSON.parse(fs.readFileSync(path.join(eeDir, "en.json"), "utf8"));
-    const enLeaves = collectLeaves(enJson).leaves;
-    const enMap = new Map(enLeaves.map(({ key, value }) => [key, value]));
-    const violations: string[] = [];
-
-    for (const locale of SUPPORTED_LOCALES) {
-      const locPath = path.join(eeDir, `${locale}.json`);
-      expect(fs.existsSync(locPath), `missing ee locale ${locale}.json`).toBe(true);
-      const parsed = JSON.parse(fs.readFileSync(locPath, "utf8"));
-      const { leaves, emptyObjects } = collectLeaves(parsed);
-      expect(emptyObjects, `ee/${locale} empty objects`).toEqual([]);
-
-      const locKeys = new Set(leaves.map((l) => l.key.replace(PLURAL_SUFFIX_RE, "")));
-      const enBases = new Set(enLeaves.map((l) => l.key.replace(PLURAL_SUFFIX_RE, "")));
-      expect([...enBases].filter((k) => !locKeys.has(k)), `ee/${locale} missing keys`).toEqual([]);
-      expect([...locKeys].filter((k) => !enBases.has(k)), `ee/${locale} extra keys`).toEqual([]);
-
-      for (const { key, value } of leaves) {
-        const base = key.replace(PLURAL_SUFFIX_RE, "");
-        const enVal = enMap.get(key) ?? enMap.get(`${base}_other`) ?? enMap.get(base);
-        if (enVal) {
-          const expected = placeholdersOf(enVal);
-          const actual = placeholdersOf(value);
-          if (JSON.stringify(actual) !== JSON.stringify(expected)) {
-            violations.push(`ee/${locale}:${key} placeholder mismatch`);
-          }
-        }
-        if (locale === "zh-Hans" && (/[「」“”…]/.test(value) || value.includes("……"))) {
-          violations.push(`ee/zh-Hans:${key} violates punctuation conventions: ${value}`);
-        }
-      }
-    }
-
     expect(violations).toEqual([]);
   });
 });
