@@ -110,7 +110,7 @@ export function StepWelcome({
                   <Loader2 className="h-4 w-4 animate-spin" />
                 )}
                 {isWeb
-                  ? t(($) => $.welcome.continue_on_web)
+                  ? t(($) => $.common.continue)
                   : t(($) => $.welcome.start_exploring)}
                 <ArrowRight className="h-4 w-4" />
               </Button>

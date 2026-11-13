@@ -384,7 +384,7 @@
     "unassigned": "未設定",
     "no_results": "沒有匹配的快捷鍵操作。",
     "conflict_error": "已被\"{{action}}\"使用。",
-    "reserved_error": "該快捷鍵已被瀏覽器或桌面視窗占用。",
+    "reserved_error": "該快捷鍵已被瀏覽器占用。",
     "send_error": "傳送只能使用 Enter 或 Mod + Enter。",
     "unsafe_error": "這個按鍵會干擾文字輸入或基礎鍵盤導航。",
     "unrecognized_error": "無法錄製這個組合鍵，請換一個試試。",
@@ -501,7 +501,7 @@
     },
     "fixed": {
       "title": "固定的系統快捷鍵",
-      "description": "不可自定義；縮放和標籤頁快捷鍵僅用於桌面端。",
+      "description": "不可自定義。",
       "open_settings": "開啟設定",
       "close_tab": "關閉當前標籤頁",
       "select_tab_1_to_8": "選擇第 1–8 個標籤頁",

@@ -18,9 +18,8 @@
     "headline_line2": "在",
     "headline_emphasis": "同一個工作區。",
     "lede": "像給同事派活一樣把任務交給它們——它們會接手、更新狀態，做完還會留下評論。",
-    "lede_web": "桌面端自帶執行時，無需安裝。在 web 端繼續可以連線你自己的 CLI。",
+    "lede_web": "接下來用 CLI 連線你自己的電腦，讓它們有地方幹活。",
     "download_desktop": "下載桌面端",
-    "continue_on_web": "在 web 端繼續",
     "start_exploring": "開始探索",
     "skip_existing": "我已經用過了",
     "illustration": {
@@ -216,9 +215,7 @@
     "stage_midway_suffix": " 開啟的瀏覽器標籤頁——需要批准登入後，你的電腦才能連線。",
     "stage_slow_prefix": "比平時慢一些。請檢查執行 ",
     "stage_slow_suffix": " 的終端是否有錯誤。",
-    "stage_stalled_prefix": "目前還沒有收到連線。如果你不太習慣終端，",
-    "stage_stalled_term": "桌面端",
-    "stage_stalled_suffix": " 更順手——一鍵搞定，這臺電腦就連線好了。關閉這個對話方塊選擇桌面端，或點跳過繼續。"
+    "stage_stalled": "目前還沒有收到連線。請檢查執行命令的終端是否有錯誤，或點跳過，稍後再連線這臺電腦。"
   },
   "errors": {
     "skip_failed": "完成上手引導失敗",

@@ -660,8 +660,8 @@
     "description": "运行时是智能体真正执行任务的地方：你的电脑、一台服务器，或者云服务。",
     "slides": {
       "local": {
-        "title": "这台电脑，自动连接",
-        "description": "下载桌面端并登录，这台电脑上的 Claude Code、Codex 等会自动出现。"
+        "title": "先连上这台电脑",
+        "description": "装好 CLI 并运行 multica setup，这台电脑上的 Claude Code、Codex 等会自动出现。"
       },
       "remote": {
         "title": "其他机器，两条命令",
@@ -673,7 +673,7 @@
       }
     },
     "art": {
-      "this_computer": "这台电脑 · 桌面端",
+      "this_computer": "这台电脑",
       "detected": "自动识别到的 harness",
       "run_there": "在那台机器上运行",
       "connected": "{{name}} 已连接到 Multica"

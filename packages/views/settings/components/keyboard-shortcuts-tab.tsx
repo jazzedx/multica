@@ -34,6 +34,7 @@ import {
 } from "@multica/core/shortcuts";
 import { isImeComposing } from "@multica/core/utils";
 import { useT } from "../../i18n";
+import { isDesktopShell } from "../../platform";
 import { ShortcutKeycaps } from "../../common/shortcut-keycaps";
 import {
   SettingsCard,
@@ -205,12 +206,18 @@ export function KeyboardShortcutsTab() {
       >
         <SettingsCard>
           <FixedShortcutRow label={t(($) => $.shortcuts.fixed.open_settings)} shortcut={createShortcutChord(",", { primary: true })} />
-          <FixedShortcutRow label={t(($) => $.shortcuts.fixed.close_tab)} shortcut={createShortcutChord("W", { primary: true })} />
-          <FixedShortcutRow label={t(($) => $.shortcuts.fixed.select_tab_1_to_8)} shortcut={createShortcutChord("1–8", { primary: true })} />
-          <FixedShortcutRow label={t(($) => $.shortcuts.fixed.select_last_tab)} shortcut={createShortcutChord("9", { primary: true })} />
-          <FixedShortcutRow label={t(($) => $.shortcuts.fixed.zoom_in)} shortcut={createShortcutChord("Plus", { primary: true })} />
-          <FixedShortcutRow label={t(($) => $.shortcuts.fixed.zoom_out)} shortcut={createShortcutChord("Minus", { primary: true })} />
-          <FixedShortcutRow label={t(($) => $.shortcuts.fixed.reset_zoom)} shortcut={createShortcutChord("0", { primary: true })} />
+          {/* Tabs and zoom belong to the desktop window; in a browser those
+              chords are the browser's own. */}
+          {isDesktopShell() && (
+            <>
+              <FixedShortcutRow label={t(($) => $.shortcuts.fixed.close_tab)} shortcut={createShortcutChord("W", { primary: true })} />
+              <FixedShortcutRow label={t(($) => $.shortcuts.fixed.select_tab_1_to_8)} shortcut={createShortcutChord("1–8", { primary: true })} />
+              <FixedShortcutRow label={t(($) => $.shortcuts.fixed.select_last_tab)} shortcut={createShortcutChord("9", { primary: true })} />
+              <FixedShortcutRow label={t(($) => $.shortcuts.fixed.zoom_in)} shortcut={createShortcutChord("Plus", { primary: true })} />
+              <FixedShortcutRow label={t(($) => $.shortcuts.fixed.zoom_out)} shortcut={createShortcutChord("Minus", { primary: true })} />
+              <FixedShortcutRow label={t(($) => $.shortcuts.fixed.reset_zoom)} shortcut={createShortcutChord("0", { primary: true })} />
+            </>
+          )}
           <FixedShortcutRow label={t(($) => $.shortcuts.fixed.close_dialog)} shortcut={createShortcutChord("Escape")} />
         </SettingsCard>
       </SettingsSection>

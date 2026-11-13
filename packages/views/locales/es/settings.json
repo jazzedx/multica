@@ -390,7 +390,7 @@
     "unassigned": "Sin asignar",
     "no_results": "Ninguna acción de atajo coincide.",
     "conflict_error": "Ya lo usa {{action}}.",
-    "reserved_error": "Reservado por el navegador o la ventana de escritorio.",
+    "reserved_error": "Reservado por el navegador.",
     "send_error": "Enviar solo puede usar Enter o Mod+Enter.",
     "unsafe_error": "Esta tecla interferiría con la escritura o la navegación básica del teclado.",
     "unrecognized_error": "No se puede grabar esta combinación. Prueba con otra.",
@@ -507,7 +507,7 @@
     },
     "fixed": {
       "title": "Atajos de sistema fijos",
-      "description": "No personalizables. Los atajos de zoom y pestañas solo se aplican en la app de escritorio.",
+      "description": "No personalizables.",
       "open_settings": "Abrir Configuración",
       "close_tab": "Cerrar pestaña activa",
       "select_tab_1_to_8": "Seleccionar pestaña 1-8",

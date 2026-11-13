@@ -390,7 +390,7 @@
     "unassigned": "Non attribué",
     "no_results": "Aucune action de raccourci correspondante.",
     "conflict_error": "Déjà utilisé par {{action}}.",
-    "reserved_error": "Réservé par le navigateur ou la fenêtre de bureau.",
+    "reserved_error": "Réservé par le navigateur.",
     "send_error": "Envoyer ne peut utiliser que Entrée ou Mod+Entrée.",
     "unsafe_error": "Cette touche gênerait la saisie ou la navigation clavier de base.",
     "unrecognized_error": "Impossible d'enregistrer cette combinaison. Essayez-en une autre.",
@@ -507,7 +507,7 @@
     },
     "fixed": {
       "title": "Raccourcis système fixes",
-      "description": "Non personnalisables. Les raccourcis de zoom et d’onglets sont réservés à Desktop.",
+      "description": "Non personnalisables.",
       "open_settings": "Ouvrir les paramètres",
       "close_tab": "Fermer l'onglet actif",
       "select_tab_1_to_8": "Sélectionner l'onglet 1 à 8",

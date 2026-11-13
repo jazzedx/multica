@@ -660,8 +660,8 @@
     "description": "ランタイムは、エージェントが実際にタスクを実行する場所です。手元のコンピューター、サーバー、またはクラウドサービスを使えます。",
     "slides": {
       "local": {
-        "title": "このコンピューターは自動で接続",
-        "description": "デスクトップアプリをダウンロードしてサインインすると、このコンピューターの Claude Code や Codex などが自動的に表示されます。"
+        "title": "まずはこのコンピューターから",
+        "description": "CLI をインストールして multica setup を実行すると、このコンピューターの Claude Code や Codex などが自動的に表示されます。"
       },
       "remote": {
         "title": "ほかのマシンはコマンド 2 つ",
@@ -673,7 +673,7 @@
       }
     },
     "art": {
-      "this_computer": "このコンピューター · デスクトップ",
+      "this_computer": "このコンピューター",
       "detected": "検出された harness",
       "run_there": "そのマシンで実行",
       "connected": "{{name}} が Multica に接続されました"

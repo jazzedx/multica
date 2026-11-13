@@ -384,7 +384,7 @@
     "unassigned": "지정되지 않음",
     "no_results": "일치하는 단축키 동작이 없습니다.",
     "conflict_error": "이미 {{action}}에서 사용 중입니다.",
-    "reserved_error": "브라우저 또는 데스크톱 창에서 예약된 단축키입니다.",
+    "reserved_error": "브라우저에서 예약된 단축키입니다.",
     "send_error": "보내기는 Enter 또는 Mod+Enter만 사용할 수 있습니다.",
     "unsafe_error": "이 키는 텍스트 입력이나 기본 키보드 탐색을 방해합니다.",
     "unrecognized_error": "이 키 조합은 기록할 수 없습니다. 다른 조합을 사용해 보세요.",
@@ -501,7 +501,7 @@
     },
     "fixed": {
       "title": "고정 시스템 단축키",
-      "description": "변경할 수 없습니다. 확대 및 탭 단축키는 데스크톱 전용입니다.",
+      "description": "변경할 수 없습니다.",
       "open_settings": "설정 열기",
       "close_tab": "활성 탭 닫기",
       "select_tab_1_to_8": "1~8번째 탭 선택",

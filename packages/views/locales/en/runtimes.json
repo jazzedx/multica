@@ -680,8 +680,8 @@
     "description": "A runtime is where agents actually run their work: your computer, a server, or a cloud service.",
     "slides": {
       "local": {
-        "title": "This computer connects itself",
-        "description": "Download the desktop app and sign in. Claude Code, Codex and the other CLIs on this computer show up on their own."
+        "title": "Start with this computer",
+        "description": "Install the CLI and run multica setup. Claude Code, Codex and the other CLIs on this computer show up on their own."
       },
       "remote": {
         "title": "Another machine, two commands",
@@ -693,7 +693,7 @@
       }
     },
     "art": {
-      "this_computer": "This computer · Desktop",
+      "this_computer": "This computer",
       "detected": "Detected harnesses",
       "run_there": "Run on that machine",
       "connected": "{{name}} connected to Multica"

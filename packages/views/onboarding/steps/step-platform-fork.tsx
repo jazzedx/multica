@@ -411,9 +411,7 @@ function CliWaitingStatus({ dialogOpen }: { dialogOpen: boolean }) {
         )}
         {stage === "stalled" && (
           <>
-            {t(($) => $.step_platform.stage_stalled_prefix)}
-            <span className="font-medium text-foreground">{t(($) => $.step_platform.stage_stalled_term)}</span>
-            {t(($) => $.step_platform.stage_stalled_suffix)}
+            {t(($) => $.step_platform.stage_stalled)}
           </>
         )}
       </p>

@@ -18,9 +18,8 @@
     "headline_line2": "in",
     "headline_emphasis": "one workspace.",
     "lede": "Assign them work like you'd assign a colleague — they pick it up, update status, and comment when done.",
-    "lede_web": "Desktop bundles the runtime — nothing to install. Continue on web to connect your own CLI.",
+    "lede_web": "Next, connect your own computer with the CLI so your agents have somewhere to work.",
     "download_desktop": "Download Desktop",
-    "continue_on_web": "Continue on web",
     "start_exploring": "Start exploring",
     "skip_existing": "I've done this before",
     "illustration": {
@@ -218,9 +217,7 @@
     "stage_midway_suffix": " opened — it needs you to approve sign-in before your computer can connect.",
     "stage_slow_prefix": "Taking longer than usual. Check the terminal where you ran ",
     "stage_slow_suffix": " for errors.",
-    "stage_stalled_prefix": "Nothing coming through yet. If you're not comfortable with the terminal, ",
-    "stage_stalled_term": "Desktop",
-    "stage_stalled_suffix": " is the smoother path — one click and this computer is connected. Close this dialog and pick Desktop, or hit Skip to continue."
+    "stage_stalled": "Nothing coming through yet. Check the terminal where you ran the command for errors, or hit Skip and connect this computer later."
   },
   "errors": {
     "skip_failed": "Failed to finish onboarding",
