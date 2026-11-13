@@ -131,7 +131,8 @@ func (d *Daemon) autoUpdateLoop(ctx context.Context) {
 	if !reloadEnabled {
 		d.logger.Info("auto-reload: disabled")
 	}
-	if !pullEnabled && !reloadEnabled {
+	followEnabled := d.serverCLIFollowEnabled()
+	if !pullEnabled && !reloadEnabled && !followEnabled {
 		return
 	}
 
@@ -148,6 +149,10 @@ func (d *Daemon) autoUpdateLoop(ctx context.Context) {
 		d.logger.Info("auto-reload: watching the multica binary on disk",
 			"interval", selfReloadCheckInterval, "current", d.cfg.CLIVersion)
 	}
+	if followEnabled {
+		d.logger.Info("server cli: following the logged-in server build",
+			"interval", selfReloadCheckInterval, "commit", d.cfg.CLIShortCommit)
+	}
 
 	if err := sleepWithContext(ctx, autoUpdateInitialDelay); err != nil {
 		return
@@ -157,6 +162,9 @@ func (d *Daemon) autoUpdateLoop(ctx context.Context) {
 	}
 	if reloadEnabled {
 		d.trySelfReload(ctx)
+	}
+	if followEnabled {
+		d.tryFollowServerCLI(ctx)
 	}
 
 	// Tickers start only now, after the first check. Starting them before the
@@ -170,7 +178,7 @@ func (d *Daemon) autoUpdateLoop(ctx context.Context) {
 		defer ticker.Stop()
 		pullTick = ticker.C
 	}
-	if reloadEnabled {
+	if reloadEnabled || followEnabled {
 		ticker := time.NewTicker(selfReloadCheckInterval)
 		defer ticker.Stop()
 		reloadTick = ticker.C
@@ -183,7 +191,12 @@ func (d *Daemon) autoUpdateLoop(ctx context.Context) {
 		case <-pullTick:
 			d.tryAutoUpdate(ctx)
 		case <-reloadTick:
-			d.trySelfReload(ctx)
+			if reloadEnabled {
+				d.trySelfReload(ctx)
+			}
+			if followEnabled {
+				d.tryFollowServerCLI(ctx)
+			}
 		}
 	}
 }

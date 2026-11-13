@@ -1135,6 +1135,7 @@ func runDaemonForeground(cmd *cobra.Command) error {
 	cfg.CLIVersion = version
 	// Report this process's embedded revision, never the binary currently on disk.
 	cfg.CLICommit = buildCommit
+	cfg.CLIShortCommit = commit
 	// Set by the Electron Desktop app when it spawns the CLI so the server
 	// can mark those runtimes as "managed" and hide CLI self-update UI.
 	cfg.LaunchedBy = os.Getenv("MULTICA_LAUNCHED_BY")

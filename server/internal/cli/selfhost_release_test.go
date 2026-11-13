@@ -1,0 +1,97 @@
+package cli
+
+import (
+	"os"
+	"path/filepath"
+	"runtime"
+	"testing"
+)
+
+func TestApplyServerCLIReplacesBinaryWhenCommitDiffers(t *testing.T) {
+	target := filepath.Join(t.TempDir(), "multica")
+	if err := os.WriteFile(target, []byte("old-cli"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	orig := resolveInstallTarget
+	resolveInstallTarget = func() (string, error) { return target, nil }
+	t.Cleanup(func() { resolveInstallTarget = orig })
+
+	_, archive, sum, err := BuildCLIArchive([]byte("new-cli"), "v0.9.0-1-gabc", runtime.GOOS, runtime.GOARCH)
+	if err != nil {
+		t.Fatal(err)
+	}
+	updated, err := ApplyServerCLI("oldcommit", &ServerCLIRelease{
+		Commit: "newcommit",
+		GOOS:   runtime.GOOS,
+		GOARCH: runtime.GOARCH,
+		SHA256: sum,
+	}, archive)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !updated {
+		t.Fatal("expected the binary to be replaced")
+	}
+	got, err := os.ReadFile(target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != "new-cli" {
+		t.Fatalf("binary = %q, want new-cli", got)
+	}
+}
+
+func TestApplyServerCLILeavesBinaryWhenCommitMatches(t *testing.T) {
+	target := filepath.Join(t.TempDir(), "multica")
+	if err := os.WriteFile(target, []byte("old-cli"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	orig := resolveInstallTarget
+	resolveInstallTarget = func() (string, error) { return target, nil }
+	t.Cleanup(func() { resolveInstallTarget = orig })
+
+	updated, err := ApplyServerCLI("same", &ServerCLIRelease{
+		Commit: "same",
+		GOOS:   runtime.GOOS,
+		GOARCH: runtime.GOARCH,
+		SHA256: "unused",
+	}, []byte("not-an-archive"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if updated {
+		t.Fatal("matching commit must not replace the binary")
+	}
+	got, err := os.ReadFile(target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != "old-cli" {
+		t.Fatalf("binary = %q, want old-cli", got)
+	}
+}
+
+func TestInstallVerifiedArchiveRejectsChecksumMismatch(t *testing.T) {
+	target := filepath.Join(t.TempDir(), "multica")
+	if err := os.WriteFile(target, []byte("old-cli"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	orig := resolveInstallTarget
+	resolveInstallTarget = func() (string, error) { return target, nil }
+	t.Cleanup(func() { resolveInstallTarget = orig })
+
+	_, archive, _, err := BuildCLIArchive([]byte("new-cli"), "v0.9.0", runtime.GOOS, runtime.GOARCH)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := InstallVerifiedArchive(archive, "0000000000000000000000000000000000000000000000000000000000000000"); err == nil {
+		t.Fatal("checksum mismatch must fail")
+	}
+	got, err := os.ReadFile(target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != "old-cli" {
+		t.Fatalf("binary = %q, want old-cli", got)
+	}
+}

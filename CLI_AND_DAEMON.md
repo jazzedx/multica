@@ -161,6 +161,19 @@ multica daemon start --no-auto-reload
 multica config set disable_auto_reload true
 ```
 
+#### Following the self-hosted server's build
+
+A daemon logged in to a self-hosted server also compares its build commit with
+the server's. When they differ it downloads the CLI that server ships from its
+own build, verifies the checksum, replaces its binary and restarts once no task
+is running. `multica update` takes the same path instead of the GitHub release.
+A server that ships no CLI, or one built for another platform, leaves the local
+binary in place. To turn it off:
+
+```bash
+MULTICA_DAEMON_FOLLOW_SERVER=0 multica daemon start
+```
+
 Agent CLIs (codex, claude, ...) are handled differently: when one of them is
 upgraded in place, the daemon re-probes its version and re-registers the runtime
 **without restarting**, so subsequent tasks pick up the new CLI while Multica's
