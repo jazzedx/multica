@@ -13,8 +13,6 @@ import {
   resolveBrowserWsUrl,
   resolveDevRemoteApiUrl,
 } from "@/config/runtime-urls";
-import { resolveGoogleAnalyticsId } from "@/config/google-analytics";
-import { GoogleAnalytics } from "@/components/google-analytics";
 import "./globals.css";
 
 // Inter is the Latin UI face. next/font produces a hashed family (`__Inter_xxx`)
@@ -143,8 +141,6 @@ export default async function RootLayout({
   const locale = await getRequestLocale();
   const apiBaseUrl = resolveBrowserApiBaseUrl(process.env);
   const wsUrl = resolveBrowserWsUrl(process.env);
-  // Opt-in Google Analytics: omitted entirely unless GOOGLE_ANALYTICS_ID is set.
-  const googleAnalyticsId = resolveGoogleAnalyticsId(process.env);
   // Dev toolbar: a status bar pinned to the bottom of the window. Opt-in per
   // developer with VITE_DEV_TOOLBAR=1. Without an explicit API URL the browser
   // goes through the dev proxy, so the toolbar reports the proxy's upstream.
@@ -189,7 +185,6 @@ export default async function RootLayout({
           </WebProviders>
           <Toaster />
         </ThemeProvider>
-        {googleAnalyticsId && <GoogleAnalytics measurementId={googleAnalyticsId} />}
       </body>
     </html>
   );

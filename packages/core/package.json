@@ -220,7 +220,6 @@
     "i18next": "catalog:",
     "mdast-util-from-markdown": "catalog:",
     "micromark-util-sanitize-uri": "catalog:",
-    "posthog-js": "catalog:",
     "react-i18next": "catalog:",
     "yaml": "catalog:",
     "zod": "catalog:",

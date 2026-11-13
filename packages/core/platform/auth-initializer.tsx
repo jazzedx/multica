@@ -8,7 +8,6 @@ import { useAuthStore } from "../auth";
 import {
   captureSignupSource,
   identify as identifyAnalytics,
-  initAnalytics,
 } from "../analytics";
 import { configStore } from "../config";
 import { normalizeCommandURL } from "../runtimes/commands";
@@ -123,14 +122,6 @@ export function AuthInitializer({
             cfg.comment_delete_keep_replies_supported === true,
           );
         configStore.getState().setThemeStoreEnabled(cfg.theme_store_enabled === true);
-        if (cfg.posthog_key) {
-          initAnalytics({
-            key: cfg.posthog_key,
-            host: cfg.posthog_host || "",
-            appVersion: identity?.version,
-            environment: cfg.analytics_environment,
-          });
-        }
         configLoadedRef.current = true;
         return true;
       })
