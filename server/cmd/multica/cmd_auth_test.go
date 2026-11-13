@@ -109,7 +109,15 @@ func TestResolveAppURL(t *testing.T) {
 	})
 }
 
+func stubRunningInWSL(t *testing.T, inWSL bool) {
+	t.Helper()
+	orig := runningInWSL
+	runningInWSL = func() bool { return inWSL }
+	t.Cleanup(func() { runningInWSL = orig })
+}
+
 func TestResolveCallbackBinding(t *testing.T) {
+	stubRunningInWSL(t, false)
 	// Fake outbound detector: pretends the CLI has a fixed LAN IP regardless
 	// of which server it dials.
 	fixed := func(ip string) func(string) net.IP {
@@ -214,6 +222,32 @@ func TestResolveCallbackBinding(t *testing.T) {
 				t.Errorf("bind addr = %q, want %q", gotBind, tc.wantBind)
 			}
 		})
+	}
+}
+
+// Inside WSL the browser is the Windows one on the same machine, and it reaches
+// the distro through loopback only. With mirrored networking the distro's
+// outbound address is the Windows host's own LAN address, so a callback that
+// names it never arrives.
+func TestResolveCallbackBindingInsideWSLUsesLoopback(t *testing.T) {
+	stubRunningInWSL(t, true)
+	hostLANIP := func(string) net.IP { return net.ParseIP("192.168.0.47").To4() }
+
+	callback, bind, err := resolveCallbackBinding("", "http://192.168.0.28:3000", "http://192.168.0.28:3000", hostLANIP)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if callback != "127.0.0.1" || bind != "127.0.0.1" {
+		t.Fatalf("callback = %q on %q, want 127.0.0.1 on 127.0.0.1", callback, bind)
+	}
+
+	// The flag still wins, for a browser on another machine.
+	callback, bind, err = resolveCallbackBinding("192.168.0.47", "http://192.168.0.28:3000", "http://192.168.0.28:3000", hostLANIP)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if callback != "192.168.0.47" || bind != "0.0.0.0" {
+		t.Fatalf("explicit host: callback = %q on %q, want 192.168.0.47 on 0.0.0.0", callback, bind)
 	}
 }
 
