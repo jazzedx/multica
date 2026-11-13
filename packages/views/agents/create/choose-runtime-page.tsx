@@ -7,7 +7,6 @@ import { agentBuilderSessionListOptions } from "@multica/core/agents";
 import { useAuthStore } from "@multica/core/auth";
 import { useWorkspaceId } from "@multica/core/hooks";
 import { useWorkspacePaths } from "@multica/core/paths";
-import { qoderOptions } from "@multica/core/runtimes/qoder";
 import { runtimeKeys, runtimeListOptions } from "@multica/core/runtimes/queries";
 import { useWSEvent } from "@multica/core/realtime";
 import { memberListOptions } from "@multica/core/workspace/queries";
@@ -16,20 +15,15 @@ import { Input } from "@multica/ui/components/ui/input";
 import { useBackOrReplace, useNavigation } from "../../navigation";
 import { useT } from "../../i18n";
 import { ConnectRemoteDialog } from "../../runtimes/components/connect-remote-dialog";
-import { RemoteRuntimeDialog } from "../../runtimes/components/remote-runtime-dialog";
-import { QODER_RUNTIME_LOCATOR } from "../../runtimes/components/qoder-detail-page";
 import { buildRuntimeMachines } from "../../runtimes/components/runtime-machines";
 import { CreateFlowFooter } from "./create-agent-footer";
 import { AgentCreateShell } from "./create-shell";
 import { buildRuntimeChoiceGroups, type HarnessOption } from "./runtime-choice";
-import { RuntimeChoiceList, qoderChoiceState } from "./runtime-choice-list";
+import { RuntimeChoiceList } from "./runtime-choice-list";
 import { createPathWithParams } from "./squad-param";
 import { UnfinishedDraftsBanner } from "./unfinished-drafts";
 
-type Selection = { kind: "runtime"; runtimeId: string } | { kind: "qoder" } | null;
-
-/** How often a starting Qoder runtime is re-fetched while this screen shows it. */
-const QODER_REGISTER_POLL_MS = 3_000;
+type Selection = { kind: "runtime"; runtimeId: string } | null;
 
 export interface ChooseRuntimePageProps {
   /** Desktop-only: the daemon running on this device. */
@@ -66,7 +60,6 @@ export function ChooseRuntimePage({
     runtimeListOptions(wsId),
   );
   const { data: members = [] } = useQuery(memberListOptions(wsId));
-  const { data: qoderConnection } = useQuery(qoderOptions(wsId));
   const { data: sessions = [] } = useQuery(agentBuilderSessionListOptions(wsId));
 
   useWSEvent("daemon:register", () => {
@@ -84,22 +77,12 @@ export function ChooseRuntimePage({
     return buildRuntimeChoiceGroups(machines, currentUserId);
   }, [runtimes, localDaemonId, localMachineName, currentUserId, hasLocalMachine]);
 
-  const member = members.find((m) => m.user_id === currentUserId);
-  const canManage = member?.role === "owner" || member?.role === "admin";
   const ownerName = (ownerId: string | null) =>
     members.find((m) => m.user_id === ownerId)?.name ?? null;
-
-  const qoder = qoderConnection ?? null;
-  const qoderRuntime = groups.qoderRuntime;
-  const qoderState = qoder
-    ? qoderChoiceState(qoder, qoderRuntime?.status === "online")
-    : null;
 
   const [selection, setSelection] = useState<Selection>(null);
   const [query, setQuery] = useState("");
   const [showConnectRemote, setShowConnectRemote] = useState(false);
-  const [qoderDialogOpen, setQoderDialogOpen] = useState(false);
-  const [selectQoderWhenReady, setSelectQoderWhenReady] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
   const options = useMemo(() => {
@@ -109,25 +92,20 @@ export function ChooseRuntimePage({
         byId.set(option.runtime.id, { option, where: device.machine.title });
       }
     }
-    const cloudTitle = t(($) => $.creation_studio.runtime_step.groups.cloud);
-    for (const option of groups.cloud) {
-      byId.set(option.runtime.id, { option, where: cloudTitle });
-    }
     return byId;
-  }, [groups, t]);
+  }, [groups]);
 
-  // `?runtime=` comes back from step 2's "change runtime" and from the Qoder
-  // card on the runtimes page; it preselects once the list can resolve it.
+  // `?runtime=` comes back from step 2's "change runtime" and preselects once
+  // the list can resolve it.
   const seeded = useRef(false);
   useEffect(() => {
     if (seeded.current || runtimesLoading) return;
     seeded.current = true;
     if (!runtimeParam) return;
-    if (qoderRuntime?.id === runtimeParam) setSelection({ kind: "qoder" });
-    else if (options.has(runtimeParam)) {
+    if (options.has(runtimeParam)) {
       setSelection({ kind: "runtime", runtimeId: runtimeParam });
     }
-  }, [runtimeParam, runtimesLoading, options, qoderRuntime]);
+  }, [runtimeParam, runtimesLoading, options]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -141,36 +119,12 @@ export function ChooseRuntimePage({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  // A fresh connection registers its runtime asynchronously; keep the list
-  // current while Qoder starts, and select it once it can take tasks.
-  useEffect(() => {
-    if (qoderState !== "starting") return;
-    const timer = setInterval(() => {
-      void qc.invalidateQueries({ queryKey: runtimeKeys.all(wsId) });
-    }, QODER_REGISTER_POLL_MS);
-    return () => clearInterval(timer);
-  }, [qoderState, qc, wsId]);
-
-  useEffect(() => {
-    if (!selectQoderWhenReady) return;
-    if (qoderState === "ready") {
-      setSelectQoderWhenReady(false);
-      setSelection({ kind: "qoder" });
-    } else if (qoderState === "error" || qoderState === "stopped") {
-      setSelectQoderWhenReady(false);
-    }
-  }, [selectQoderWhenReady, qoderState]);
-
   const selected =
     selection?.kind === "runtime" ? options.get(selection.runtimeId) ?? null : null;
   const nextRuntimeId =
-    selection?.kind === "qoder"
-      ? qoderState === "ready"
-        ? qoderRuntime?.id ?? null
-        : null
-      : selected && selected.option.runtime.status === "online"
-        ? selected.option.runtime.id
-        : null;
+    selected && selected.option.runtime.status === "online"
+      ? selected.option.runtime.id
+      : null;
 
   const goNext = (runtimeId: string) =>
     navigation.push(
@@ -185,12 +139,7 @@ export function ChooseRuntimePage({
       createPathWithParams(paths.newAgentAiSession(sessionId), { squad: squadId }),
     );
 
-  const summary =
-    selection?.kind === "qoder"
-      ? "Qoder Cloud Agents"
-      : selected
-        ? `${selected.option.label} · ${selected.where}`
-        : null;
+  const summary = selected ? `${selected.option.label} · ${selected.where}` : null;
 
   return (
     <AgentCreateShell
@@ -241,18 +190,12 @@ export function ChooseRuntimePage({
           <div className="mt-5">
             <RuntimeChoiceList
               local={groups.local}
-              localAvailable={hasLocalMachine}
               localStarting={bootstrapping}
               remotes={groups.remotes}
               hiddenRemoteCount={groups.hiddenRemoteCount}
-              cloud={groups.cloud}
-              qoder={qoder}
-              qoderState={qoderState}
-              qoderSelected={selection?.kind === "qoder"}
               selectedRuntimeId={selection?.kind === "runtime" ? selection.runtimeId : null}
               query={query}
               currentUserId={currentUserId}
-              canManage={canManage}
               ownerName={ownerName}
               onSelect={(runtimeId) =>
                 setSelection((current) =>
@@ -260,13 +203,6 @@ export function ChooseRuntimePage({
                     ? null
                     : { kind: "runtime", runtimeId },
                 )
-              }
-              onSelectQoder={() =>
-                setSelection((current) => (current?.kind === "qoder" ? null : { kind: "qoder" }))
-              }
-              onConnectQoder={() => setQoderDialogOpen(true)}
-              onManageQoder={() =>
-                navigation.push(paths.runtimeDetail(QODER_RUNTIME_LOCATOR))
               }
               onAddRemote={() => setShowConnectRemote(true)}
             />
@@ -294,12 +230,6 @@ export function ChooseRuntimePage({
       </CreateFlowFooter>
       {showConnectRemote ? (
         <ConnectRemoteDialog onClose={() => setShowConnectRemote(false)} />
-      ) : null}
-      {qoderDialogOpen ? (
-        <RemoteRuntimeDialog
-          onConnected={() => setSelectQoderWhenReady(true)}
-          onClose={() => setQoderDialogOpen(false)}
-        />
       ) : null}
     </AgentCreateShell>
   );

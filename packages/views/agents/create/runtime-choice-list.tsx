@@ -4,8 +4,6 @@ import { useState, type ReactNode } from "react";
 import {
   ChevronDown,
   ChevronRight,
-  Cloud,
-  Download,
   Laptop,
   Loader2,
   Lock,
@@ -15,14 +13,12 @@ import {
   TriangleAlert,
 } from "@multica/ui/icons";
 import type { QoderConnection } from "@multica/core/runtimes/qoder";
-import { Button, buttonVariants } from "@multica/ui/components/ui/button";
 import { cn } from "@multica/ui/lib/utils";
 import { useT } from "../../i18n";
 import { ProviderLogo } from "../../runtimes/components/provider-logo";
 import { HealthDot, useHealthLabel } from "../../runtimes/components/shared";
 import {
   filterDevice,
-  harnessMatches,
   HARNESS_PREVIEW_COUNT,
   LOGO_STACK_LIMIT,
   previewOptions,
@@ -46,13 +42,6 @@ export function qoderChoiceState(
   if (connection.status === "error") return "error";
   return runtimeOnline && connection.status === "online" ? "ready" : "starting";
 }
-
-const QODER_NAME = "Qoder Cloud Agents";
-
-const COMING_SOON = [
-  { provider: "cursor", name: "Cursor Cloud Agents", vendor: "Cursor" },
-  { provider: "claude", name: "Claude Managed Agents", vendor: "Anthropic" },
-];
 
 const ROW = "flex w-full min-w-0 items-center gap-3 px-4 text-left";
 const INTERACTIVE =
@@ -382,168 +371,33 @@ function MachineBlock({
   );
 }
 
-function QoderRow({
-  connection,
-  state,
-  selected,
-  canManage,
-  query,
-  onSelect,
-  onConnect,
-  onManage,
-}: {
-  connection: QoderConnection;
-  state: QoderChoiceState;
-  selected: boolean;
-  canManage: boolean;
-  query: string;
-  onSelect: () => void;
-  onConnect: () => void;
-  onManage: () => void;
-}) {
-  const { t } = useT("agents");
-  const ready = state === "ready";
-  const dot = {
-    ready: "bg-success",
-    starting: "bg-warning",
-    not_configured: "bg-warning",
-    error: "bg-destructive",
-    stopped: "bg-muted-foreground/40",
-  }[state];
-  const errorText = state === "error" ? connection.lastError : null;
-  const status = (
-    <Badge
-      tone={
-        ready
-          ? "success"
-          : state === "error"
-            ? "destructive"
-            : state === "stopped"
-              ? "muted"
-              : "warning"
-      }
-    >
-      {state === "starting" ? (
-        <Loader2 aria-hidden="true" className="size-3 animate-spin" />
-      ) : null}
-      {t(($) => $.creation_studio.runtime_step.qoder_status[state])}
-    </Badge>
-  );
-
-  let trailing: ReactNode = status;
-  if (state === "not_configured" || state === "error" || state === "stopped") {
-    const unconfigured = state === "not_configured";
-    trailing = canManage ? (
-      <>
-        {unconfigured ? null : status}
-        <Button size="sm" variant="outline" onClick={unconfigured ? onConnect : onManage}>
-          {unconfigured
-            ? t(($) => $.creation_studio.runtime_step.connect)
-            : t(($) => $.creation_studio.runtime_step.settings)}
-        </Button>
-      </>
-    ) : (
-      <>
-        {status}
-        <span className="text-caption text-muted-foreground">
-          {unconfigured
-            ? t(($) => $.creation_studio.runtime_step.member_connect)
-            : t(($) => $.creation_studio.runtime_step.member_fix)}
-        </span>
-      </>
-    );
-  }
-
-  const body = (
-    <>
-      <Radio checked={selected} disabled={!ready} />
-      <Tile dot={<span className={cn("size-2 rounded-full", TILE_DOT, dot)} />}>
-        <ProviderLogo provider="qoder_cloud" className="size-4" />
-      </Tile>
-      <span className="min-w-0 flex-1">
-        <span className={cn("block truncate text-body", selected && "font-medium")}>
-          <Highlight text={QODER_NAME} query={query} />
-        </span>
-        <span
-          className={cn(
-            "block truncate text-caption",
-            errorText ? "text-destructive" : "text-muted-foreground",
-          )}
-        >
-          {errorText ||
-            t(($) => $.creation_studio.runtime_step.hosted_by, { vendor: "Qoder" })}
-        </span>
-      </span>
-    </>
-  );
-
-  if (ready) {
-    return (
-      <button
-        type="button"
-        aria-pressed={selected}
-        onClick={onSelect}
-        className={cn(ROW, INTERACTIVE, "min-h-13 py-2", selected && SELECTED)}
-      >
-        {body}
-        {trailing}
-      </button>
-    );
-  }
-  return (
-    <div className={cn(ROW, "min-h-13 py-2")}>
-      {body}
-      <span className="flex shrink-0 items-center gap-2">{trailing}</span>
-    </div>
-  );
-}
-
 export interface RuntimeChoiceListProps {
   local: DeviceOption | null;
-  /** False on web, where no harness can run on the device in use. */
-  localAvailable: boolean;
   localStarting: boolean;
   remotes: DeviceOption[];
   hiddenRemoteCount: number;
-  cloud: HarnessOption[];
-  qoder: QoderConnection | null;
-  qoderState: QoderChoiceState | null;
-  qoderSelected: boolean;
   selectedRuntimeId: string | null;
   query: string;
   currentUserId: string | null;
-  canManage: boolean;
   ownerName: (ownerId: string | null) => string | null;
   onSelect: (runtimeId: string) => void;
-  onSelectQoder: () => void;
-  onConnectQoder: () => void;
-  onManageQoder: () => void;
   onAddRemote: () => void;
 }
 
 /**
- * Every place an agent can run, as one list: machines (this one first, open)
- * and cloud services. A machine folds to a single row until opened.
+ * Every place an agent can run, as one list of machines. This device is first
+ * and open. A machine folds to a single row until opened.
  */
 export function RuntimeChoiceList({
   local,
-  localAvailable,
   localStarting,
   remotes,
   hiddenRemoteCount,
-  cloud,
-  qoder,
-  qoderState,
-  qoderSelected,
   selectedRuntimeId,
   query,
   currentUserId,
-  canManage,
   ownerName,
   onSelect,
-  onSelectQoder,
-  onConnectQoder,
-  onManageQoder,
   onAddRemote,
 }: RuntimeChoiceListProps) {
   const { t } = useT("agents");
@@ -552,7 +406,6 @@ export function RuntimeChoiceList({
   );
   const [showAllIds, setShowAllIds] = useState<ReadonlySet<string>>(() => new Set());
   const searching = query.trim().length > 0;
-  const q = query.trim().toLowerCase();
 
   const devices = [...(local ? [local] : []), ...remotes];
   const matchedDevices = searching
@@ -560,16 +413,9 @@ export function RuntimeChoiceList({
         .map((device) => filterDevice(device, query))
         .filter((device): device is DeviceOption => device !== null)
     : devices;
-  const showWebRow = !localAvailable && !searching;
+  const showMachines = matchedDevices.length > 0 || !searching;
 
-  const showQoder = !!qoder && !!qoderState && (!q || QODER_NAME.toLowerCase().includes(q));
-  const matchedCloud = cloud.filter((option) => harnessMatches(option, "", query));
-  const soon = COMING_SOON.filter((item) => !q || item.name.toLowerCase().includes(q));
-
-  const showMachines = matchedDevices.length > 0 || showWebRow || !searching;
-  const showCloud = showQoder || matchedCloud.length > 0 || soon.length > 0;
-
-  if (!showMachines && !showCloud) {
+  if (!showMachines) {
     return (
       <div className="rounded-lg border border-dashed px-4 py-6 text-center text-label text-muted-foreground">
         {t(($) => $.creation_studio.runtime_step.no_match, { query })}
@@ -605,25 +451,6 @@ export function RuntimeChoiceList({
             title={t(($) => $.creation_studio.runtime_step.groups.machines)}
             count={matchedDevices.length}
           />
-          {showWebRow ? (
-            <div className={cn(ROW, "min-h-12 py-2")}>
-              <Tile>
-                <Laptop aria-hidden="true" className="size-3.5 text-muted-foreground" />
-              </Tile>
-              <span className="min-w-0 flex-1 text-label text-muted-foreground">
-                {t(($) => $.creation_studio.runtime_step.web_local_title)}
-              </span>
-              <a
-                href="/download"
-                target="_blank"
-                rel="noreferrer"
-                className={buttonVariants({ size: "sm", variant: "outline" })}
-              >
-                <Download aria-hidden="true" className="size-3.5" />
-                {t(($) => $.creation_studio.runtime_step.download_desktop)}
-              </a>
-            </div>
-          ) : null}
           {matchedDevices.map((device) => {
             const id = device.machine.id;
             const ownerId = device.harnesses[0]?.runtime.owner_id ?? null;
@@ -675,60 +502,6 @@ export function RuntimeChoiceList({
               </button>
             </div>
           ) : null}
-        </>
-      ) : null}
-      {showCloud ? (
-        <>
-          <GroupHeader
-            icon={Cloud}
-            title={t(($) => $.creation_studio.runtime_step.groups.cloud)}
-            count={(showQoder ? 1 : 0) + matchedCloud.length}
-          />
-          {showQoder && qoder && qoderState ? (
-            <QoderRow
-              connection={qoder}
-              state={qoderState}
-              selected={qoderSelected}
-              canManage={canManage}
-              query={query}
-              onSelect={onSelectQoder}
-              onConnect={onConnectQoder}
-              onManage={onManageQoder}
-            />
-          ) : null}
-          {matchedCloud.map((option) => (
-            <HarnessRow
-              key={option.runtime.id}
-              option={option}
-              query={query}
-              selected={option.runtime.id === selectedRuntimeId}
-              indent={false}
-              onSelect={() => onSelect(option.runtime.id)}
-            />
-          ))}
-          {soon.map((item) => (
-            <div
-              key={item.provider}
-              aria-disabled="true"
-              className={cn(ROW, "min-h-13 py-2 text-muted-foreground")}
-            >
-              <Radio checked={false} disabled />
-              <Tile>
-                <ProviderLogo provider={item.provider} className="size-4 opacity-50 grayscale" />
-              </Tile>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-body">
-                  <Highlight text={item.name} query={query} />
-                </span>
-                <span className="block truncate text-caption text-faint-foreground">
-                  {t(($) => $.creation_studio.runtime_step.hosted_by, {
-                    vendor: item.vendor,
-                  })}
-                </span>
-              </span>
-              <Badge>{t(($) => $.creation_studio.runtime_step.coming_soon)}</Badge>
-            </div>
-          ))}
         </>
       ) : null}
     </div>
