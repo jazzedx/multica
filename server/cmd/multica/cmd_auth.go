@@ -153,6 +153,8 @@ func runAuthLogin(cmd *cobra.Command, args []string) error {
 //   - self-host, CLI on server box: same as above.
 //   - self-host, CLI on a different LAN box: the callback URL must point at
 //     the CLI's own LAN IP, not the server's.
+//   - self-host, CLI inside WSL: the browser is the Windows one on the same
+//     machine, so loopback is the address that works.
 //   - routes through a virtual adapter: the detected address may not be a
 //     supported callback host; ask the user to supply --callback-host.
 //
@@ -174,6 +176,14 @@ func resolveCallbackBinding(flagHost, serverURL, appURL string, detectOutbound f
 		// Loopback is the only safe default — on hosted/public setups the
 		// browser and CLI live on the same machine.
 		return "localhost", "127.0.0.1", nil
+	}
+
+	// Inside WSL the browser is the Windows one on the same machine, and it
+	// reaches this listener through loopback only. The distro's outbound
+	// address is no use: with mirrored networking it is the Windows host's
+	// own LAN address, which Windows does not route into the distro.
+	if runningInWSL() {
+		return "127.0.0.1", "127.0.0.1", nil
 	}
 
 	// app_url is a private LAN IP. Figure out whether the CLI is on that
@@ -381,6 +391,25 @@ func runAuthLoginBrowser(cmd *cobra.Command) error {
 
 	fmt.Fprintf(os.Stderr, "Authenticated as %s (%s)\nToken saved to config.\n", me.Name, me.Email)
 	return nil
+}
+
+// runningInWSL reports whether this process runs inside Windows Subsystem for
+// Linux. Tests replace it.
+var runningInWSL = detectWSL
+
+func detectWSL() bool {
+	if runtime.GOOS != "linux" {
+		return false
+	}
+	for _, key := range []string{"WSL_DISTRO_NAME", "WSL_INTEROP"} {
+		if strings.TrimSpace(os.Getenv(key)) != "" {
+			return true
+		}
+	}
+	// The variables are dropped by sudo and by services; the kernel release
+	// still names Microsoft.
+	release, err := os.ReadFile("/proc/sys/kernel/osrelease")
+	return err == nil && strings.Contains(strings.ToLower(string(release)), "microsoft")
 }
 
 func runningInSSHSession() bool {
