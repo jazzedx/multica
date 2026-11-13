@@ -18,9 +18,8 @@
     "headline_line2": "dans",
     "headline_emphasis": "un seul espace de travail.",
     "lede": "Confiez-leur du travail comme à un collègue — ils s'en saisissent, mettent à jour le statut et commentent une fois terminé.",
-    "lede_web": "L'application de bureau inclut le runtime local — aucune configuration CLI requise. Continuez sur le web pour connecter votre propre CLI.",
+    "lede_web": "Ensuite, connectez votre propre ordinateur avec la CLI pour que vos agents aient où travailler.",
     "download_desktop": "Télécharger l'application de bureau",
-    "continue_on_web": "Continuer sur le web",
     "start_exploring": "Commencer l'exploration",
     "skip_existing": "Je l'ai déjà fait",
     "illustration": {
@@ -195,6 +194,7 @@
     "continue": "Commencer avec Mika"
   },
   "step_platform": {
+    "stage_stalled": "Rien ne remonte pour l'instant. Vérifiez le terminal où vous avez lancé la commande pour d'éventuelles erreurs, ou cliquez sur Ignorer et connectez cet ordinateur plus tard.",
     "headline": "Connectez un ordinateur pour exécuter votre agent.",
     "lede": "Connectez un ordinateur pour que Mika puisse travailler.",
     "hint_default": "Vous pouvez vous connecter plus tard.",
@@ -217,10 +217,7 @@
     "stage_midway_prefix": "Toujours à l'écoute. Vérifiez que vous avez bien terminé dans l'onglet de navigateur ouvert par ",
     "stage_midway_suffix": " — votre approbation y est nécessaire avant que votre ordinateur puisse se connecter.",
     "stage_slow_prefix": "Cela prend plus de temps que d'habitude. Vérifiez le terminal où vous avez lancé ",
-    "stage_slow_suffix": " pour d'éventuelles erreurs.",
-    "stage_stalled_prefix": "Rien ne remonte pour l'instant. Si le terminal ne vous met pas à l'aise, ",
-    "stage_stalled_term": "l'application de bureau",
-    "stage_stalled_suffix": " est la voie la plus simple — un clic et cet ordinateur est connecté. Fermez cette fenêtre et choisissez l'application de bureau, ou cliquez sur Ignorer pour continuer."
+    "stage_slow_suffix": " pour d'éventuelles erreurs."
   },
   "errors": {
     "skip_failed": "Échec de la finalisation de la prise en main",

@@ -18,9 +18,8 @@
     "headline_line2": "하나의",
     "headline_emphasis": "워크스페이스에서.",
     "lede": "동료에게 일을 맡기듯 태스크를 할당하세요. 에이전트가 이를 맡고, 상태를 업데이트하고, 끝나면 댓글을 남깁니다.",
-    "lede_web": "데스크톱 앱에는 로컬 런타임이 포함되어 있어 별도의 CLI 설정이 필요 없습니다. 직접 CLI를 연결하려면 웹에서 계속하세요.",
+    "lede_web": "이제 CLI로 내 컴퓨터를 연결해 에이전트가 일할 곳을 마련하세요.",
     "download_desktop": "데스크톱 다운로드",
-    "continue_on_web": "웹에서 계속",
     "start_exploring": "둘러보기 시작",
     "skip_existing": "이미 해봤습니다",
     "illustration": {
@@ -194,6 +193,7 @@
     "continue": "Mika와 시작"
   },
   "step_platform": {
+    "stage_stalled": "아직 아무 것도 들어오지 않습니다. 명령을 실행한 터미널에서 오류가 있는지 확인하거나, 건너뛰기를 눌러 나중에 이 컴퓨터를 연결하세요.",
     "headline": "에이전트를 실행할 컴퓨터를 연결하세요.",
     "lede": "컴퓨터를 연결해 Mika가 작업을 시작하게 하세요.",
     "hint_default": "나중에 연결할 수 있습니다.",
@@ -215,10 +215,7 @@
     "stage_midway_prefix": "아직 기다리는 중입니다. ",
     "stage_midway_suffix": "이(가) 연 브라우저 탭에서 로그인을 승인했는지 확인하세요. 그래야 컴퓨터가 연결됩니다.",
     "stage_slow_prefix": "평소보다 오래 걸리고 있습니다. ",
-    "stage_slow_suffix": "을(를) 실행한 터미널에서 오류가 있는지 확인하세요.",
-    "stage_stalled_prefix": "아직 아무 것도 들어오지 않습니다. 터미널이 익숙하지 않다면 ",
-    "stage_stalled_term": "데스크톱",
-    "stage_stalled_suffix": "이 더 부드러운 경로입니다. 한 번 클릭하면 이 컴퓨터가 연결됩니다. 이 대화상자를 닫고 데스크톱을 선택하거나, 건너뛰기를 눌러 계속하세요."
+    "stage_slow_suffix": "을(를) 실행한 터미널에서 오류가 있는지 확인하세요."
   },
   "errors": {
     "skip_failed": "온보딩을 마치지 못했습니다",

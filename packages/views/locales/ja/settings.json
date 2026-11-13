@@ -383,7 +383,7 @@
     "unassigned": "未設定",
     "no_results": "一致するショートカット操作はありません。",
     "conflict_error": "すでに{{action}}で使用されています。",
-    "reserved_error": "ブラウザまたはデスクトップウィンドウで予約されています。",
+    "reserved_error": "ブラウザで予約されています。",
     "send_error": "送信には Enter または Cmd/Ctrl+Enter のみ使用できます。",
     "unsafe_error": "このキーは文字入力や基本的なキーボード操作と競合します。",
     "unrecognized_error": "このキーの組み合わせは記録できません。別の組み合わせをお試しください。",
@@ -516,7 +516,7 @@
     },
     "fixed": {
       "title": "固定のシステムショートカット",
-      "description": "変更できません。ズームとタブの操作はデスクトップ版のみです。",
+      "description": "変更できません。",
       "open_settings": "設定を開く",
       "close_tab": "アクティブなタブを閉じる",
       "select_tab_1_to_8": "1〜8番目のタブを選択",

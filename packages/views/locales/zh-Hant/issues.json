@@ -2057,8 +2057,8 @@
       "exit_divider_code": "{{time}} 退出 · 退出碼 {{code}}",
       "stopped_divider": "{{time}} 停止"
     },
-    "app_desktop_hint": "桌面 App。在執行它的那台機器上，用 Multica Desktop 切到它的視窗。",
-    "app_remote_hint": "在 {{machine}} 上執行。在那台機器上用 Multica Desktop 切到它的視窗。",
+    "app_desktop_hint": "桌面 App。請在執行它的那台機器上切到它的視窗。",
+    "app_remote_hint": "在 {{machine}} 上執行。請在那台機器上切到它的視窗。",
     "focus": "切到視窗",
     "focus_gone": "{{name}} 已不在執行",
     "focus_unsupported": "此機器上的 Multica 暫不支援切換應用程式視窗。請更新 Multica 後重試。",

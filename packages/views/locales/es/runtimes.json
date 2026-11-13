@@ -689,8 +689,8 @@
     "description": "Un runtime es donde los agentes realizan su trabajo: tu ordenador, un servidor o un servicio en la nube.",
     "slides": {
       "local": {
-        "title": "Este ordenador se conecta por sí solo",
-        "description": "Descarga la app de escritorio e inicia sesión. Claude Code, Codex y las demás CLI de este ordenador aparecen automáticamente."
+        "title": "Empieza por este ordenador",
+        "description": "Instala la CLI y ejecuta multica setup. Claude Code, Codex y las demás CLI de este ordenador aparecen automáticamente."
       },
       "remote": {
         "title": "Otra máquina, dos comandos",
@@ -702,7 +702,7 @@
       }
     },
     "art": {
-      "this_computer": "Este ordenador · App de escritorio",
+      "this_computer": "Este ordenador",
       "detected": "Runtimes detectados",
       "run_there": "Ejecutar en esa máquina",
       "connected": "{{name}} conectado a Multica"
