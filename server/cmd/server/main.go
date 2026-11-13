@@ -327,6 +327,7 @@ func newMainHTTPServer(addr string, handler http.Handler) *http.Server {
 
 func main() {
 	logger.Init()
+	applyDeploymentEnvDefaults()
 	// Read the opt-out before constructing any telemetry dependency. In the
 	// disabled case no collector or HTTP client is ever created.
 	telemetryConfig := selfhosttelemetry.ConfigFromDoNotTrack(os.Getenv("DO_NOT_TRACK"))
@@ -720,7 +721,7 @@ func main() {
 	// the scheduler's Run goroutine starts so the field write is race-free.
 	heartbeatScheduler.RecoveryNotifier = h
 
-	srv := newMainHTTPServer(":"+port, r)
+	srv := newMainHTTPServer(":"+port, closeDeploymentRoutes(r))
 	profilingServer := profiling.NewServer()
 	maintenanceServer, maintenanceErr := maintenance.NewServer(os.Getenv("MAINTENANCE_PORT"), maintenance.NewService(pool, maintenance.StatusCategory{}))
 	if maintenanceErr != nil {
