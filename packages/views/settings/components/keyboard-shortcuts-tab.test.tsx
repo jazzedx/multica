@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, screen, within } from "@testing-library/react";
 import {
   createShortcutChord,
@@ -10,6 +10,9 @@ import {
 import { renderWithI18n } from "../../test/i18n";
 import { KeyboardShortcutsTab } from "./keyboard-shortcuts-tab";
 
+const shell = vi.hoisted(() => ({ desktop: false }));
+vi.mock("../../platform", () => ({ isDesktopShell: () => shell.desktop }));
+
 describe("KeyboardShortcutsTab", () => {
   beforeEach(() => {
     configureShortcutPlatform("windows");
@@ -18,6 +21,7 @@ describe("KeyboardShortcutsTab", () => {
 
   afterEach(() => {
     cleanup();
+    shell.desktop = false;
     configureShortcutPlatform(null);
     configureShortcutRuntime(null);
     useShortcutStore.getState().resetAll();
@@ -40,7 +44,8 @@ describe("KeyboardShortcutsTab", () => {
     expect(within(rightSidebarRecorder).getByTitle("/")).toHaveTextContent("/");
   });
 
-  it("shows the fixed numbered tab shortcuts", () => {
+  it("shows the fixed numbered tab shortcuts in the desktop shell", () => {
+    shell.desktop = true;
     renderWithI18n(<KeyboardShortcutsTab />);
 
     expect(screen.getByText("Select tab 1–8")).toBeInTheDocument();
@@ -49,6 +54,15 @@ describe("KeyboardShortcutsTab", () => {
       screen.getByRole("img", { name: "Ctrl+1–8" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Ctrl+9" })).toBeInTheDocument();
+  });
+
+  // In a browser the tab and zoom chords are the browser's own.
+  it("lists only its own fixed shortcuts in a browser", () => {
+    renderWithI18n(<KeyboardShortcutsTab />);
+
+    expect(screen.getByText("Open Settings")).toBeInTheDocument();
+    expect(screen.queryByText("Select tab 1–8")).not.toBeInTheDocument();
+    expect(screen.queryByText("Zoom in")).not.toBeInTheDocument();
   });
 
   it("records a shortcut and applies it immediately", () => {
