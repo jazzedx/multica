@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 )
 
@@ -93,5 +94,33 @@ func TestInstallVerifiedArchiveRejectsChecksumMismatch(t *testing.T) {
 	}
 	if string(got) != "old-cli" {
 		t.Fatalf("binary = %q, want old-cli", got)
+	}
+}
+
+// The server packs each platform the way that platform unpacks it: a zip
+// holding multica.exe for Windows, a tar.gz holding multica elsewhere.
+func TestExtractServerCLIReadsEachPlatformsArchive(t *testing.T) {
+	for _, goos := range []string{"linux", "darwin", "windows"} {
+		_, archive, _, err := BuildCLIArchive([]byte("cli-for-"+goos), "v0.9.0", goos, "amd64")
+		if err != nil {
+			t.Fatal(err)
+		}
+		binary, err := extractServerCLI(archive, goos)
+		if err != nil {
+			t.Fatalf("%s: %v", goos, err)
+		}
+		if string(binary) != "cli-for-"+goos {
+			t.Fatalf("%s: binary = %q", goos, binary)
+		}
+	}
+}
+
+func TestExtractServerCLIRejectsAnotherPlatformsArchive(t *testing.T) {
+	_, archive, _, err := BuildCLIArchive([]byte("cli"), "v0.9.0", "linux", "amd64")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := extractServerCLI(archive, "windows"); err == nil || !strings.Contains(err.Error(), "zip") {
+		t.Fatalf("a tar.gz handed to Windows must fail as a bad zip, got %v", err)
 	}
 }
