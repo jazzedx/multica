@@ -1,4 +1,4 @@
-.PHONY: help makehelp dev server daemon cli multica build test migrate-up migrate-down sqlc seed clean setup start stop check worktree-env setup-main start-main stop-main check-main setup-worktree start-worktree stop-worktree check-worktree remove-worktree db-up db-down db-drop db-reset selfhost selfhost-start selfhost-build selfhost-build-start selfhost-stop up down status list destroy gc env-exec api-dev web-dev
+.PHONY: help makehelp dev server daemon cli multica build test migrate-up migrate-down sqlc seed clean setup start stop check worktree-env setup-main start-main stop-main check-main setup-worktree start-worktree stop-worktree check-worktree remove-worktree db-up db-down db-drop db-reset selfhost selfhost-start selfhost-build selfhost-build-start selfhost-mirror-env selfhost-build-mirror selfhost-stop up down status list destroy gc env-exec api-dev web-dev
 
 MAIN_ENV_FILE ?= .env
 WORKTREE_ENV_FILE ?= .env.worktree
@@ -31,6 +31,7 @@ export
 MULTICA_ARGS ?= $(ARGS)
 
 COMPOSE := docker compose
+SELFHOST_BUILD_COMPOSE_FILES ?= -f docker-compose.selfhost.yml -f docker-compose.selfhost.build.yml
 
 define REQUIRE_ENV
 	@if [ ! -f "$(ENV_FILE)" ]; then \
@@ -144,8 +145,15 @@ selfhost-build: ## Build backend/web from the current checkout and start the sel
 # Internal: see selfhost-start.
 selfhost-build-start:
 	@echo "==> Building Multica from the current checkout..."
-	$(COMPOSE) -f docker-compose.selfhost.yml -f docker-compose.selfhost.build.yml up -d --build
+	$(COMPOSE) $(SELFHOST_BUILD_COMPOSE_FILES) up -d --build
 	@bash scripts/selfhost-wait.sh build
+
+selfhost-mirror-env: ## Create .env if missing: random secrets plus private-deployment settings such as a fixed verification code; builds and starts nothing
+	@bash scripts/selfhost-mirror-env.sh
+
+selfhost-build-mirror: selfhost-mirror-env ## Like selfhost-build, with build dependencies fetched from China mirrors; prepares .env through selfhost-mirror-env first
+	@$(MAKE) selfhost-build \
+		SELFHOST_BUILD_COMPOSE_FILES="-f docker-compose.selfhost.yml -f docker-compose.selfhost.build.yml -f docker-compose.selfhost.build.mirror.yml"
 
 selfhost-stop: ## Stop the self-hosted Docker Compose stack
 	$(REQUIRE_COMPOSE)

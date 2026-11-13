@@ -1,9 +1,16 @@
+# Download sources, replaceable at build time. The defaults are the official ones.
+ARG ALPINE_MIRROR=https://dl-cdn.alpinelinux.org
+ARG NPM_REGISTRY=https://registry.npmjs.org
+
 # --- Dependencies ---
 # Node is pinned to an exact patch so a stale cached `node:22-alpine` layer can
 # never ship a runtime missing a security release. 22.23.4 fixes the
 # 2026-10-21 Node.js security release (CVE-2026-111497, CVE-2026-106069,
 # CVE-2026-105482, ...). Bump all three stages together.
 FROM node:22.23.4-alpine AS deps
+
+ARG NPM_REGISTRY
+ENV npm_config_registry=$NPM_REGISTRY COREPACK_NPM_REGISTRY=$NPM_REGISTRY
 
 WORKDIR /app
 
@@ -26,6 +33,9 @@ RUN pnpm install --frozen-lockfile
 
 # --- Build ---
 FROM node:22.23.4-alpine AS builder
+
+ARG NPM_REGISTRY
+ENV npm_config_registry=$NPM_REGISTRY COREPACK_NPM_REGISTRY=$NPM_REGISTRY
 
 WORKDIR /app
 
@@ -62,6 +72,8 @@ WORKDIR /app
 # Alpine openssl security fixes (CVE-2026-63073, CVE-2026-75803).
 # Floor pins the fix so the build fails instead of silently shipping the CVEs.
 # Remove once the pinned node image includes libssl3 >= 3.5.8-r0.
+ARG ALPINE_MIRROR
+RUN sed -i "s#https\?://dl-cdn.alpinelinux.org#${ALPINE_MIRROR}#g" /etc/apk/repositories
 RUN apk add --no-cache "libcrypto3>=3.5.8-r0" "libssl3>=3.5.8-r0"
 
 ENV NODE_ENV=production

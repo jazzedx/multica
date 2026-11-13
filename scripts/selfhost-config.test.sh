@@ -292,8 +292,8 @@ chmod +x "$stub_dir/docker" "$stub_dir/curl"
 # Throwaway checkout so the recipe never touches this repo's own .env.
 recipe_dir="$tmp_dir/recipe"
 mkdir -p "$recipe_dir/scripts"
-cp Makefile .env.example docker-compose.selfhost.yml docker-compose.selfhost.build.yml "$recipe_dir/"
-cp scripts/selfhost-wait.sh "$recipe_dir/scripts/"
+cp Makefile .env.example docker-compose.selfhost.yml docker-compose.selfhost.build.yml docker-compose.selfhost.build.mirror.yml "$recipe_dir/"
+cp scripts/selfhost-wait.sh scripts/selfhost-mirror-env.sh "$recipe_dir/scripts/"
 
 record="$tmp_dir/published"
 curl_log="$tmp_dir/probed"
@@ -389,6 +389,113 @@ fi
 # selfhost-build resolves the port the same way.
 run_recipe selfhost-build 's/^PORT=8080/PORT=9400/' '' '' >/dev/null
 require_consistent 'selfhost-build with PORT edited' 9400
+
+# selfhost-build-mirror layers the mirror override file and resolves ports the
+# same way selfhost-build does.
+run_recipe selfhost-build-mirror 's/^PORT=8080/PORT=9450/' '' '' >/dev/null
+require_consistent 'selfhost-build-mirror with PORT edited' 9450
+
+# The mirror override file defaults to China mirrors, an environment variable of
+# the same name replaces one, and the build args from build.yml stay as they are.
+mirror_files=(-f docker-compose.selfhost.yml -f docker-compose.selfhost.build.yml -f docker-compose.selfhost.build.mirror.yml)
+config="$(env -u ALPINE_MIRROR -u GOPROXY -u NPM_REGISTRY docker compose --env-file "$tmp_env" "${mirror_files[@]}" config)"
+require_config "$config" 'ALPINE_MIRROR: https://repo.huaweicloud.com'
+require_config "$config" 'GOPROXY: https://goproxy.cn,direct'
+require_config "$config" 'NPM_REGISTRY: https://mirrors.cloud.tencent.com/npm'
+require_config "$config" 'NEXT_PUBLIC_APP_VERSION: dev'
+config="$(ALPINE_MIRROR=https://alpine.example GOPROXY=https://goproxy.example NPM_REGISTRY=https://npm.example docker compose --env-file "$tmp_env" "${mirror_files[@]}" config)"
+require_config "$config" 'ALPINE_MIRROR: https://alpine.example'
+require_config "$config" 'GOPROXY: https://goproxy.example'
+require_config "$config" 'NPM_REGISTRY: https://npm.example'
+
+# Runs a make target in a copy of the recipe that has no .env.
+run_target_without_env() {
+  local target=$1 make_args=$2
+  rm -f "$recipe_dir/.env"
+  : >"$record"
+  : >"$curl_log"
+  (
+    cd "$recipe_dir" || exit 1
+    eval "env PATH=\"$stub_dir:\$PATH\" \
+      REAL_DOCKER=\"$real_docker\" \
+      STUB_PUBLISHED_RECORD=\"$record\" \
+      STUB_CURL_LOG=\"$curl_log\" \
+      make $target $make_args"
+  )
+}
+
+require_generated_env() {
+  local label=$1 generated_env
+  generated_env="$(cat "$recipe_dir/.env")"
+  require_env "$generated_env" 'APP_ENV=development'
+  require_env "$generated_env" 'MULTICA_DEV_VERIFICATION_CODE=886644'
+  require_env "$generated_env" 'DO_NOT_TRACK=1'
+  if ! grep -Eq '^JWT_SECRET=[0-9a-f]{64}$' <<<"$generated_env" ||
+    ! grep -Eq '^POSTGRES_PASSWORD=[0-9a-f]{48}$' <<<"$generated_env" ||
+    ! grep -Eq '^MULTICA_VCS_SECRET_KEY=[A-Za-z0-9+/]{43}=$' <<<"$generated_env"; then
+    echo "[$label] the generated .env must carry random JWT_SECRET, POSTGRES_PASSWORD and MULTICA_VCS_SECRET_KEY"
+    exit 1
+  fi
+  local pgpass
+  pgpass="$(grep '^POSTGRES_PASSWORD=' <<<"$generated_env" | cut -d= -f2)"
+  if ! grep -Fq "DATABASE_URL=postgres://multica:$pgpass@" <<<"$generated_env"; then
+    echo "[$label] DATABASE_URL must carry the generated POSTGRES_PASSWORD"
+    exit 1
+  fi
+  for key in JWT_SECRET POSTGRES_PASSWORD MULTICA_VCS_SECRET_KEY APP_ENV MULTICA_DEV_VERIFICATION_CODE DO_NOT_TRACK; do
+    if [ "$(grep -c "^$key=" <<<"$generated_env")" != "1" ]; then
+      echo "[$label] $key must be replaced in place, not duplicated, in the generated .env"
+      exit 1
+    fi
+  done
+}
+
+# selfhost-mirror-env only creates .env and never calls docker.
+run_target_without_env selfhost-mirror-env '' >/dev/null
+require_generated_env 'selfhost-mirror-env'
+if [ -s "$record" ]; then
+  echo "selfhost-mirror-env must not start the stack"
+  exit 1
+fi
+
+# On its first run selfhost-build-mirror must hand compose the database password
+# from the .env it just generated,
+# not the Makefile's default, multica.
+run_target_without_env selfhost-build-mirror '' >/dev/null
+require_generated_env 'selfhost-build-mirror'
+require_consistent 'selfhost-build-mirror with a generated .env' 8080
+compose_pgpass="$(published_port postgres_password)"
+env_pgpass="$(grep '^POSTGRES_PASSWORD=' "$recipe_dir/.env" | cut -d= -f2)"
+if [ "$compose_pgpass" != "$env_pgpass" ]; then
+  echo "first selfhost-build-mirror run must hand the generated POSTGRES_PASSWORD to compose"
+  echo "  .env: $env_pgpass"
+  echo "  compose: ${compose_pgpass:-<none>}"
+  exit 1
+fi
+
+run_target_without_env selfhost-mirror-env 'MULTICA_DEV_VERIFICATION_CODE=123456' >/dev/null
+require_env "$(cat "$recipe_dir/.env")" 'MULTICA_DEV_VERIFICATION_CODE=123456'
+
+# A verification code that is not six digits fails immediately: no .env is
+# created and no service starts.
+if run_target_without_env selfhost-build-mirror 'MULTICA_DEV_VERIFICATION_CODE=12ab' >/dev/null 2>&1; then
+  echo "selfhost-build-mirror must reject a verification code that is not six digits"
+  exit 1
+fi
+if [ -e "$recipe_dir/.env" ] || [ -s "$record" ]; then
+  echo "a rejected verification code must neither write .env nor start the stack"
+  exit 1
+fi
+if ls "$recipe_dir"/.env.?????? >/dev/null 2>&1; then
+  echo "a rejected verification code must not leave a temporary env file behind"
+  exit 1
+fi
+
+# An existing .env is left untouched, as selfhost-build does.
+run_recipe selfhost-build-mirror '' '' '' >/dev/null
+existing_env="$(cat "$recipe_dir/.env")"
+require_env "$existing_env" 'APP_ENV='
+require_env "$existing_env" 'MULTICA_DEV_VERIFICATION_CODE='
 
 # Every alias at once: BACKEND_PORT wins, and the probe follows it.
 run_recipe selfhost \

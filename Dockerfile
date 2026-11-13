@@ -1,6 +1,13 @@
+# Download sources, replaceable at build time. The defaults are the official ones.
+ARG ALPINE_MIRROR=https://dl-cdn.alpinelinux.org
+ARG GOPROXY=https://proxy.golang.org,direct
+
 # --- Build stage ---
 FROM golang:1.27.4-alpine AS builder
 
+ARG ALPINE_MIRROR
+ARG GOPROXY
+RUN sed -i "s#https\?://dl-cdn.alpinelinux.org#${ALPINE_MIRROR}#g" /etc/apk/repositories
 RUN apk add --no-cache git
 
 WORKDIR /src
@@ -26,6 +33,8 @@ RUN cd server && CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/backfill_codex_u
 # --- Runtime stage ---
 FROM alpine:3.21
 
+ARG ALPINE_MIRROR
+RUN sed -i "s#https\?://dl-cdn.alpinelinux.org#${ALPINE_MIRROR}#g" /etc/apk/repositories
 RUN apk add --no-cache ca-certificates tzdata
 
 WORKDIR /app
