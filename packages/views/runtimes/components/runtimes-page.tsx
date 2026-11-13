@@ -10,8 +10,6 @@ import {
 } from "react";
 import {
   Check,
-  Cloud,
-  Download,
   Laptop,
   Loader2,
   Plus,
@@ -44,9 +42,7 @@ import {
   memberListOptions,
 } from "@multica/core/workspace/queries";
 import type { AgentRuntime, MemberWithUser } from "@multica/core/types";
-import type { QoderConnection } from "@multica/core/runtimes/qoder";
-import { Badge } from "@multica/ui/components/ui/badge";
-import { Button, buttonVariants } from "@multica/ui/components/ui/button";
+import { Button } from "@multica/ui/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -60,7 +56,6 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@multica/ui/components/ui/dropdown-menu";
 import {
@@ -85,12 +80,7 @@ import { cn } from "@multica/ui/lib/utils";
 import { useNavigation } from "../../navigation";
 import { useRestoredScrollRef } from "../../platform/scroll-restoration";
 import { getMikaOnboarding, pickContentLang } from "../../onboarding/templates";
-import { qoderOptions } from "@multica/core/runtimes/qoder";
-import { QODER_RUNTIME_LOCATOR } from "./qoder-detail-page";
-import { RemoteRuntimeDialog } from "./remote-runtime-dialog";
 import { ConnectRemoteDialog } from "./connect-remote-dialog";
-import { CloudRuntimeDialog } from "./cloud-runtime-dialog";
-import { ProviderLogo } from "./provider-logo";
 import { RuntimeList, buildWorkloadIndex } from "./runtime-list";
 import { RuntimesIntro } from "./runtimes-intro";
 import { pendingRuntimeFromProfile } from "./pending-runtime";
@@ -112,22 +102,13 @@ export interface RuntimesPageProps {
   hasLocalMachine?: boolean;
   /** The bundled daemon is starting but has not registered yet. */
   bootstrapping?: boolean;
-  /** Web SaaS-only Cloud Runtime entrypoint. */
-  cloudRuntimeEnabled?: boolean;
 }
 
 type StatusFilter = "all" | "online" | "offline";
 const STATUS_FILTERS: StatusFilter[] = ["all", "online", "offline"];
 
-const COMING_SOON_SERVICES = [
-  { provider: "cursor", name: "Cursor Cloud Agents", vendor: "Cursor" },
-  { provider: "claude", name: "Claude Managed Agents", vendor: "Anthropic" },
-];
-
 type RuntimeRow =
   | { kind: "machine"; id: string; machine: RuntimeMachine; agentCount: number }
-  | { kind: "qoder"; id: string; connection: QoderConnection; agentCount: number }
-  | { kind: "coming-soon"; id: string; provider: string; name: string; vendor: string }
   | {
       kind: "action";
       id: string;
@@ -136,8 +117,6 @@ type RuntimeRow =
       description: string;
       action: ReactNode;
     };
-
-type QoderStatus = "stopped" | "online" | "error" | "offline" | "starting";
 
 function useNowTick(intervalMs = 30_000): number {
   const [now, setNow] = useState(() => Date.now());
@@ -148,36 +127,11 @@ function useNowTick(intervalMs = 30_000): number {
   return now;
 }
 
-function qoderIsOnline(connection: QoderConnection): boolean {
-  return (
-    connection.configured &&
-    connection.enabled &&
-    connection.status === "online"
-  );
-}
-
-function qoderStatus(connection: QoderConnection): QoderStatus {
-  if (!connection.enabled) return "stopped";
-  if (connection.status === "online") return "online";
-  if (connection.status === "error") return "error";
-  if (connection.status === "offline") return "offline";
-  return "starting";
-}
-
-const QODER_DOT: Record<QoderStatus, string> = {
-  online: "bg-success",
-  error: "bg-destructive",
-  starting: "bg-warning",
-  offline: "bg-muted-foreground/40",
-  stopped: "bg-muted-foreground/40",
-};
-
 export function RuntimesPage({
   localDaemonId,
   localMachineName,
   hasLocalMachine,
   bootstrapping,
-  cloudRuntimeEnabled = false,
 }: RuntimesPageProps = {}) {
   const { t } = useT("runtimes");
   const isAuthLoading = useAuthStore((state) => state.isLoading);
@@ -185,11 +139,7 @@ export function RuntimesPage({
   const wsId = useWorkspaceId();
   const qc = useQueryClient();
   const paths = useWorkspacePaths();
-  const { data: qoderConnection, isLoading: qoderLoading } = useQuery(qoderOptions(wsId));
-  const navigation = useNavigation();
-  const [qoderDialogOpen, setQoderDialogOpen] = useState(false);
   const [showConnectDialog, setShowConnectDialog] = useState(false);
-  const [showCloudRuntimeDialog, setShowCloudRuntimeDialog] = useState(false);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const restoreScrollRef = useRestoredScrollRef("runtimes");
 
@@ -266,11 +216,6 @@ export function RuntimesPage({
   const listLoading = isAuthLoading || runtimesLoading || profilesLoading;
 
   const isDesktop = hasLocalMachine === true;
-  const qoder = qoderConnection ?? null;
-  const qoderHref = paths.runtimeDetail(QODER_RUNTIME_LOCATOR);
-  // Qoder's runtime registers like a machine, but it is listed once, as a
-  // cloud service — never as a machine, even when this server cannot run
-  // Qoder and the cloud row is hidden.
   const machineList = machines.filter(
     (machine) =>
       !(
@@ -278,12 +223,6 @@ export function RuntimesPage({
         machine.runtimes.every((runtime) => runtime.provider === "qoder_cloud")
       ),
   );
-  const qoderAgentCount = agents.filter((agent) =>
-    runtimes.some(
-      (runtime) =>
-        runtime.id === agent.runtime_id && runtime.provider === "qoder_cloud",
-    ),
-  ).length;
   const localMachine = machineList.find((machine) => machine.isCurrent);
 
   const filtering = statusFilter !== "all";
@@ -293,34 +232,17 @@ export function RuntimesPage({
   const visibleMachines = machineList.filter((machine) =>
     matchesStatus(machine.health === "online"),
   );
-  const qoderConfigured = qoder?.configured === true;
-  const showQoderRow =
-    qoder !== null &&
-    (statusFilter === "all" ||
-      (qoderConfigured && matchesStatus(qoderIsOnline(qoder))));
-  const visibleComingSoon = statusFilter === "all" ? COMING_SOON_SERVICES : [];
-  const showThisComputerRow =
-    !filtering && !isDesktop && machineList.length === 0;
   const showAddMachineRow = !filtering && machineList.length === 0;
   const showIntro =
     !listLoading &&
-    !qoderLoading &&
     !filtering &&
     !isDesktop &&
     machineList.length === 0 &&
-    !qoderConfigured &&
     orphanProfileRuntimes.length === 0;
-  const nothingMatches =
-    filtering &&
-    visibleMachines.length === 0 &&
-    !showQoderRow &&
-    visibleComingSoon.length === 0;
+  const nothingMatches = filtering && visibleMachines.length === 0;
 
-  const configuredCloudCount = qoderConfigured ? 1 : 0;
-  const totalCount = machineList.length + configuredCloudCount;
-  const onlineCount =
-    machineList.filter((machine) => machine.health === "online").length +
-    (qoder && qoderIsOnline(qoder) ? 1 : 0);
+  const totalCount = machineList.length;
+  const onlineCount = machineList.filter((machine) => machine.health === "online").length;
   const statusCounts: Record<StatusFilter, number> = {
     all: totalCount,
     online: onlineCount,
@@ -333,16 +255,10 @@ export function RuntimesPage({
     offline: t(($) => $.page.filters.offline),
   };
 
-  const openQoder = () =>
-    qoderConfigured ? navigation.push(qoderHref) : setQoderDialogOpen(true);
   const addMenuProps = {
     isDesktop,
     localMachineName: localMachineName ?? localMachine?.title ?? null,
-    qoder,
-    cloudRuntimeEnabled,
     onAddMachine: () => setShowConnectDialog(true),
-    onQoder: openQoder,
-    onCloudRuntime: () => setShowCloudRuntimeDialog(true),
   };
 
   const columns = useMemo<CollectionColumn<RuntimeRow>[]>(
@@ -355,7 +271,6 @@ export function RuntimesPage({
             row={row}
             currentUserId={currentUserId ?? null}
             members={members}
-            onConnectQoder={() => setQoderDialogOpen(true)}
           />
         ),
       },
@@ -366,8 +281,6 @@ export function RuntimesPage({
         cell: (row) =>
           row.kind === "machine" ? (
             <ProviderIconStack providers={row.machine.providerNames} />
-          ) : row.kind === "qoder" ? (
-            <CollectionEmptyValue />
           ) : null,
       },
       {
@@ -376,12 +289,7 @@ export function RuntimesPage({
         width: 56,
         align: "end",
         className: "tabular-nums",
-        cell: (row) =>
-          row.kind === "machine" || (row.kind === "qoder" && row.connection.configured)
-            ? row.agentCount
-            : row.kind === "qoder"
-              ? <CollectionEmptyValue />
-              : null,
+        cell: (row) => (row.kind === "machine" ? row.agentCount : null),
       },
       {
         key: "workload",
@@ -409,26 +317,6 @@ export function RuntimesPage({
       0,
     ),
   }));
-  if (showThisComputerRow) {
-    machineRows.push({
-      kind: "action",
-      id: "action:this-computer",
-      icon: Laptop,
-      title: t(($) => $.page.rows.this_computer_title),
-      description: t(($) => $.page.rows.this_computer_hint),
-      action: (
-        <a
-          href="/download"
-          target="_blank"
-          rel="noreferrer"
-          className={buttonVariants({ variant: "outline", size: "xs" })}
-        >
-          <Download aria-hidden="true" className="size-3.5" />
-          {t(($) => $.page.rows.download_desktop)}
-        </a>
-      ),
-    });
-  }
   if (showAddMachineRow) {
     machineRows.push({
       kind: "action",
@@ -443,18 +331,6 @@ export function RuntimesPage({
       ),
     });
   }
-  const cloudRows: RuntimeRow[] = [];
-  if (showQoderRow && qoder) {
-    cloudRows.push({
-      kind: "qoder",
-      id: "qoder",
-      connection: qoder,
-      agentCount: qoderAgentCount,
-    });
-  }
-  for (const service of visibleComingSoon) {
-    cloudRows.push({ kind: "coming-soon", id: `soon:${service.provider}`, ...service });
-  }
   const groups: CollectionGroup<RuntimeRow>[] = nothingMatches
     ? []
     : [
@@ -464,19 +340,9 @@ export function RuntimesPage({
           count: machineList.length,
           rows: machineRows,
         },
-        {
-          key: "cloud",
-          label: t(($) => $.page.groups.cloud.title),
-          count: configuredCloudCount,
-          rows: cloudRows,
-        },
       ];
   const rowHref = (row: RuntimeRow) =>
-    row.kind === "machine"
-      ? paths.runtimeDetail(row.machine.id)
-      : row.kind === "qoder" && row.connection.configured
-        ? qoderHref
-        : null;
+    row.kind === "machine" ? paths.runtimeDetail(row.machine.id) : null;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -499,7 +365,6 @@ export function RuntimesPage({
 
       {showIntro ? (
         <RuntimesIntro
-          cloudRuntimeEnabled={cloudRuntimeEnabled}
           action={
             <AddRuntimeMenu
               {...addMenuProps}
@@ -528,13 +393,7 @@ export function RuntimesPage({
             loading={listLoading}
             getRowId={(row) => row.id}
             getRowHref={rowHref}
-            getRowTitle={(row) =>
-              row.kind === "machine"
-                ? row.machine.title
-                : row.kind === "qoder"
-                  ? t(($) => $.qoder.cloud_title)
-                  : undefined
-            }
+            getRowTitle={(row) => (row.kind === "machine" ? row.machine.title : undefined)}
             empty={
               <CollectionNoMatches
                 title={t(($) => $.page.rows.no_matches)}
@@ -567,14 +426,8 @@ export function RuntimesPage({
         </div>
       )}
 
-      {qoderDialogOpen && (
-        <RemoteRuntimeDialog onClose={() => setQoderDialogOpen(false)} />
-      )}
       {showConnectDialog && (
         <ConnectRemoteDialog onClose={() => setShowConnectDialog(false)} />
-      )}
-      {cloudRuntimeEnabled && showCloudRuntimeDialog && (
-        <CloudRuntimeDialog onClose={() => setShowCloudRuntimeDialog(false)} />
       )}
     </div>
   );
@@ -583,21 +436,13 @@ export function RuntimesPage({
 function AddRuntimeMenu({
   isDesktop,
   localMachineName,
-  qoder,
-  cloudRuntimeEnabled,
   onAddMachine,
-  onQoder,
-  onCloudRuntime,
   trigger,
   align = "end",
 }: {
   isDesktop: boolean;
   localMachineName: string | null;
-  qoder: QoderConnection | null;
-  cloudRuntimeEnabled: boolean;
   onAddMachine: () => void;
-  onQoder: () => void;
-  onCloudRuntime: () => void;
   trigger?: ReactElement;
   align?: "start" | "end";
 }) {
@@ -610,7 +455,7 @@ function AddRuntimeMenu({
       <DropdownMenuContent align={align} className="w-80">
         <DropdownMenuGroup>
           <DropdownMenuLabel>{t(($) => $.page.add_menu.machines)}</DropdownMenuLabel>
-          {isDesktop ? (
+          {isDesktop && (
             <AddMenuItem
               icon={<Laptop className="size-4 text-muted-foreground" />}
               title={t(($) => $.page.add_menu.this_computer)}
@@ -624,13 +469,6 @@ function AddRuntimeMenu({
               trailing={<Check className="size-4 text-muted-foreground" />}
               disabled
             />
-          ) : (
-            <AddMenuItem
-              icon={<Laptop className="size-4 text-muted-foreground" />}
-              title={t(($) => $.page.add_menu.this_computer)}
-              description={t(($) => $.page.add_menu.this_computer_download)}
-              render={<a href="/download" target="_blank" rel="noreferrer" />}
-            />
           )}
           <AddMenuItem
             icon={<SquareTerminal className="size-4 text-muted-foreground" />}
@@ -638,51 +476,6 @@ function AddRuntimeMenu({
             description={t(($) => $.page.add_menu.other_machine_hint)}
             onClick={onAddMachine}
           />
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuLabel>{t(($) => $.page.add_menu.cloud_services)}</DropdownMenuLabel>
-          {qoder && (
-            <AddMenuItem
-              icon={<ProviderLogo provider="qoder_cloud" className="size-4" />}
-              title={t(($) => $.qoder.cloud_title)}
-              description={
-                qoder.configured
-                  ? t(($) => $.page.add_menu.qoder_manage_hint)
-                  : t(($) => $.page.rows.provided_by, { vendor: "Qoder" })
-              }
-              trailing={
-                qoder.configured ? (
-                  <Check className="size-4 text-muted-foreground" />
-                ) : undefined
-              }
-              onClick={onQoder}
-            />
-          )}
-          {cloudRuntimeEnabled && (
-            <AddMenuItem
-              icon={<Cloud className="size-4 text-muted-foreground" />}
-              title={t(($) => $.cloud_runtime.action)}
-              description={t(($) => $.page.add_menu.cloud_runtime_hint)}
-              onClick={onCloudRuntime}
-            />
-          )}
-          {COMING_SOON_SERVICES.map((service) => (
-            <AddMenuItem
-              key={service.provider}
-              icon={<ProviderLogo provider={service.provider} className="size-4" />}
-              title={service.name}
-              description={t(($) => $.page.rows.provided_by, {
-                vendor: service.vendor,
-              })}
-              trailing={
-                <Badge variant="secondary" className="shrink-0">
-                  {t(($) => $.page.groups.cloud.coming_soon)}
-                </Badge>
-              }
-              disabled
-            />
-          ))}
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -723,12 +516,10 @@ function RuntimeNameCell({
   row,
   currentUserId,
   members,
-  onConnectQoder,
 }: {
   row: RuntimeRow;
   currentUserId: string | null;
   members: MemberWithUser[];
-  onConnectQoder: () => void;
 }) {
   const { t } = useT("runtimes");
   switch (row.kind) {
@@ -758,41 +549,6 @@ function RuntimeNameCell({
         />
       );
     }
-    case "qoder": {
-      const { connection } = row;
-      const byQoder = t(($) => $.page.rows.provided_by, { vendor: "Qoder" });
-      const error =
-        connection.configured &&
-        qoderStatus(connection) === "error" &&
-        connection.lastError;
-      return (
-        <CollectionNameCell
-          icon={<ProviderLogo provider="qoder_cloud" className="size-4 shrink-0" />}
-          title={t(($) => $.qoder.cloud_title)}
-          description={error || byQoder}
-          trailing={
-            connection.configured ? undefined : (
-              <Button variant="outline" size="xs" onClick={onConnectQoder}>
-                {t(($) => $.page.rows.connect)}
-              </Button>
-            )
-          }
-        />
-      );
-    }
-    case "coming-soon":
-      return (
-        <CollectionNameCell
-          icon={
-            <span className="shrink-0 opacity-60">
-              <ProviderLogo provider={row.provider} className="size-4" />
-            </span>
-          }
-          title={row.name}
-          description={t(($) => $.page.rows.provided_by, { vendor: row.vendor })}
-          muted
-        />
-      );
     case "action": {
       const Icon = row.icon;
       return (
@@ -835,13 +591,6 @@ function RuntimeWorkloadCell({ row }: { row: RuntimeRow }) {
       <CollectionEmptyValue />
     );
   }
-  if (row.kind === "qoder") {
-    return row.connection.configured && qoderStatus(row.connection) === "online" ? (
-      <WorkloadText running={row.connection.activeRuns} queued={row.connection.queuedRuns} />
-    ) : (
-      <CollectionEmptyValue />
-    );
-  }
   return null;
 }
 
@@ -877,32 +626,6 @@ function RuntimeStatusCell({
         </>
       );
     }
-    case "qoder": {
-      if (!row.connection.configured) {
-        return (
-          <Badge variant="secondary" className="bg-warning/10 text-warning">
-            {t(($) => $.page.rows.not_connected)}
-          </Badge>
-        );
-      }
-      const status = qoderStatus(row.connection);
-      return (
-        <>
-          <span aria-hidden="true" className={cn("size-1.5 shrink-0 rounded-full", QODER_DOT[status])} />
-          <span
-            className={cn(
-              "truncate",
-              status === "online" && "text-foreground",
-              status === "error" && "text-destructive",
-            )}
-          >
-            {t(($) => $.qoder[status])}
-          </span>
-        </>
-      );
-    }
-    case "coming-soon":
-      return <Badge variant="secondary">{t(($) => $.page.groups.cloud.coming_soon)}</Badge>;
     case "action":
       return null;
   }
