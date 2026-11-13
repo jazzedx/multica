@@ -3,6 +3,7 @@
 import { useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { CoreProvider } from "@multica/core/platform";
+import "@/platform/deployment";
 import { installUserTimingCap } from "@multica/core/diagnostics";
 import { createBrowserCookieLocaleAdapter } from "@multica/core/i18n/browser";
 import type { SupportedLocale } from "@multica/core/i18n";
