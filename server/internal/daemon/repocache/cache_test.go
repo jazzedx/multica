@@ -2179,7 +2179,7 @@ func TestCreateWorktreeInstallsCoAuthoredByHook(t *testing.T) {
 		t.Fatalf("git log failed: %v", err)
 	}
 	commitMsg := string(out)
-	expectedTrailer := "Co-authored-by: multica-agent <github@multica.ai>"
+	expectedTrailer := "Co-authored-by: vertex-agent <dev@vertex-ai>"
 	if !strings.Contains(commitMsg, expectedTrailer) {
 		t.Errorf("commit message missing Co-authored-by trailer.\ngot:\n%s", commitMsg)
 	}
@@ -2211,7 +2211,7 @@ func TestCoAuthoredByHookIdempotent(t *testing.T) {
 	}
 
 	// Commit with the trailer already in the message.
-	trailer := "Co-authored-by: multica-agent <github@multica.ai>"
+	trailer := "Co-authored-by: vertex-agent <dev@vertex-ai>"
 	if err := os.WriteFile(filepath.Join(result.Path, "test.txt"), []byte("hello\n"), 0o644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -2298,7 +2298,7 @@ func TestCreateWorktreeRemovesCoAuthoredByHookWhenDisabled(t *testing.T) {
 		t.Fatalf("git log failed: %v", err)
 	}
 	commitMsg := string(out)
-	if strings.Contains(commitMsg, "Co-authored-by: multica-agent") {
+	if strings.Contains(commitMsg, "Co-authored-by: vertex-agent") {
 		t.Errorf("commit unexpectedly carries the Co-authored-by trailer with setting disabled.\ngot:\n%s", commitMsg)
 	}
 }
@@ -2336,7 +2336,7 @@ case "$COMMIT_SOURCE" in
   merge|squash) exit 0 ;;
 esac
 
-TRAILER="Co-authored-by: multica-agent <github@multica.ai>"
+TRAILER="Co-authored-by: vertex-agent <dev@vertex-ai>"
 
 # Don't add if already present.
 if grep -qF "$TRAILER" "$COMMIT_MSG_FILE"; then
@@ -2384,7 +2384,7 @@ git interpret-trailers --in-place --trailer "$TRAILER" "$COMMIT_MSG_FILE"
 	if err != nil {
 		t.Fatalf("git log failed: %v", err)
 	}
-	if commitMsg := string(out); strings.Contains(commitMsg, "Co-authored-by: multica-agent") {
+	if commitMsg := string(out); strings.Contains(commitMsg, "Co-authored-by: vertex-agent") {
 		t.Errorf("commit unexpectedly carries the Co-authored-by trailer after legacy hook removal.\ngot:\n%s", commitMsg)
 	}
 }
@@ -2651,7 +2651,7 @@ func TestCoAuthoredByStateStopsTrailerInExistingCheckout(t *testing.T) {
 		return string(out)
 	}
 
-	if msg := commit("a.txt", "enabled commit"); !strings.Contains(msg, "Co-authored-by: multica-agent") {
+	if msg := commit("a.txt", "enabled commit"); !strings.Contains(msg, "Co-authored-by: vertex-agent") {
 		t.Fatalf("precondition: commit made with the setting on lacks the trailer.\ngot:\n%s", msg)
 	}
 
@@ -2661,10 +2661,10 @@ func TestCoAuthoredByStateStopsTrailerInExistingCheckout(t *testing.T) {
 		t.Fatalf("WriteCoAuthoredByState(false) failed: %v", err)
 	}
 
-	if msg := commit("b.txt", "disabled commit"); strings.Contains(msg, "Co-authored-by: multica-agent") {
+	if msg := commit("b.txt", "disabled commit"); strings.Contains(msg, "Co-authored-by: vertex-agent") {
 		t.Errorf("commit in the existing checkout still carries the trailer after the toggle was turned off.\ngot:\n%s", msg)
 	}
-	if msg := commit("c.txt", "disabled commit, no-verify", "--no-verify"); strings.Contains(msg, "Co-authored-by: multica-agent") {
+	if msg := commit("c.txt", "disabled commit, no-verify", "--no-verify"); strings.Contains(msg, "Co-authored-by: vertex-agent") {
 		t.Errorf("--no-verify commit still carries the trailer after the toggle was turned off.\ngot:\n%s", msg)
 	}
 
@@ -2672,7 +2672,7 @@ func TestCoAuthoredByStateStopsTrailerInExistingCheckout(t *testing.T) {
 	if err := cache.WriteCoAuthoredByState("ws-1", true); err != nil {
 		t.Fatalf("WriteCoAuthoredByState(true) failed: %v", err)
 	}
-	if msg := commit("d.txt", "re-enabled commit"); !strings.Contains(msg, "Co-authored-by: multica-agent") {
+	if msg := commit("d.txt", "re-enabled commit"); !strings.Contains(msg, "Co-authored-by: vertex-agent") {
 		t.Errorf("commit missing the trailer after the toggle was turned back on.\ngot:\n%s", msg)
 	}
 }
@@ -2772,7 +2772,7 @@ case "$COMMIT_SOURCE" in
   merge|squash) exit 0 ;;
 esac
 
-TRAILER="Co-authored-by: multica-agent <github@multica.ai>"
+TRAILER="Co-authored-by: vertex-agent <dev@vertex-ai>"
 
 # Don't add if already present.
 if grep -qF "$TRAILER" "$COMMIT_MSG_FILE"; then
@@ -2835,7 +2835,7 @@ func TestReconcileCoAuthoredByHooksMigratesReleasedHook(t *testing.T) {
 	t.Parallel()
 	cache, worktreePath, hookPath := seedUpgradedHost(t, "55555555-0000-0000-0000-000000000000")
 
-	if msg := commitInWorktree(t, worktreePath, "a.txt", "before the toggle"); !strings.Contains(msg, "Co-authored-by: multica-agent") {
+	if msg := commitInWorktree(t, worktreePath, "a.txt", "before the toggle"); !strings.Contains(msg, "Co-authored-by: vertex-agent") {
 		t.Fatalf("precondition: the previous release's hook should still add the trailer.\ngot:\n%s", msg)
 	}
 
@@ -2851,7 +2851,7 @@ func TestReconcileCoAuthoredByHooksMigratesReleasedHook(t *testing.T) {
 	if _, err := os.Stat(hookPath); !os.IsNotExist(err) {
 		t.Errorf("expected the previous release's hook to be removed at %s, stat err=%v", hookPath, err)
 	}
-	if msg := commitInWorktree(t, worktreePath, "b.txt", "after the toggle"); strings.Contains(msg, "Co-authored-by: multica-agent") {
+	if msg := commitInWorktree(t, worktreePath, "b.txt", "after the toggle"); strings.Contains(msg, "Co-authored-by: vertex-agent") {
 		t.Errorf("upgraded host still adds the trailer after the toggle was turned off.\ngot:\n%s", msg)
 	}
 }
@@ -2877,7 +2877,7 @@ func TestReconcileCoAuthoredByHooksUpgradesReleasedHookInPlace(t *testing.T) {
 	if !strings.Contains(string(hook), filepath.ToSlash(cache.CoAuthoredByStatePath("ws-1"))) {
 		t.Fatalf("hook was not upgraded to read the state file.\ngot:\n%s", hook)
 	}
-	if msg := commitInWorktree(t, worktreePath, "a.txt", "still enabled"); !strings.Contains(msg, "Co-authored-by: multica-agent") {
+	if msg := commitInWorktree(t, worktreePath, "a.txt", "still enabled"); !strings.Contains(msg, "Co-authored-by: vertex-agent") {
 		t.Errorf("upgraded hook dropped the trailer while the setting is on.\ngot:\n%s", msg)
 	}
 
@@ -2885,7 +2885,7 @@ func TestReconcileCoAuthoredByHooksUpgradesReleasedHookInPlace(t *testing.T) {
 	if err := cache.WriteCoAuthoredByState("ws-1", false); err != nil {
 		t.Fatalf("WriteCoAuthoredByState failed: %v", err)
 	}
-	if msg := commitInWorktree(t, worktreePath, "b.txt", "toggled off"); strings.Contains(msg, "Co-authored-by: multica-agent") {
+	if msg := commitInWorktree(t, worktreePath, "b.txt", "toggled off"); strings.Contains(msg, "Co-authored-by: vertex-agent") {
 		t.Errorf("upgraded hook ignored the published state.\ngot:\n%s", msg)
 	}
 }
@@ -2962,7 +2962,7 @@ func TestCreateWorktreeDoesNotResurrectDisabledState(t *testing.T) {
 	if strings.TrimSpace(string(state)) != "0" {
 		t.Errorf("state = %q, want it left at 0: a checkout must not republish its snapshot", state)
 	}
-	if msg := commitInWorktree(t, result.Path, "a.txt", "checked out with a stale snapshot"); strings.Contains(msg, "Co-authored-by: multica-agent") {
+	if msg := commitInWorktree(t, result.Path, "a.txt", "checked out with a stale snapshot"); strings.Contains(msg, "Co-authored-by: vertex-agent") {
 		t.Errorf("commit carries the trailer although the workspace setting is off.\ngot:\n%s", msg)
 	}
 }
@@ -3001,7 +3001,7 @@ func TestReconcileCoAuthoredByHookInCheckoutMigratesReleasedHook(t *testing.T) {
 	if err := os.WriteFile(hookPath, []byte(releasedUngatedHook), 0o755); err != nil {
 		t.Fatalf("seed previous-release hook: %v", err)
 	}
-	if msg := commitInWorktree(t, result.Path, "a.txt", "before the toggle"); !strings.Contains(msg, "Co-authored-by: multica-agent") {
+	if msg := commitInWorktree(t, result.Path, "a.txt", "before the toggle"); !strings.Contains(msg, "Co-authored-by: vertex-agent") {
 		t.Fatalf("precondition: the previous release's hook should still add the trailer.\ngot:\n%s", msg)
 	}
 
@@ -3015,7 +3015,7 @@ func TestReconcileCoAuthoredByHookInCheckoutMigratesReleasedHook(t *testing.T) {
 	if _, err := os.Stat(hookPath); !os.IsNotExist(err) {
 		t.Errorf("expected the hook to be removed at %s, stat err=%v", hookPath, err)
 	}
-	if msg := commitInWorktree(t, result.Path, "b.txt", "after the toggle"); strings.Contains(msg, "Co-authored-by: multica-agent") {
+	if msg := commitInWorktree(t, result.Path, "b.txt", "after the toggle"); strings.Contains(msg, "Co-authored-by: vertex-agent") {
 		t.Errorf("isolated checkout still adds the trailer after the toggle was turned off.\ngot:\n%s", msg)
 	}
 }
