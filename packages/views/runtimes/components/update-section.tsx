@@ -9,6 +9,7 @@ import {
 } from "@multica/ui/icons";
 import { Button } from "@multica/ui/components/ui/button";
 import { api } from "@multica/core/api";
+import { useConfigStore } from "@multica/core/config";
 import type { RuntimeUpdateStatus } from "@multica/core/types";
 import { useT } from "../../i18n";
 
@@ -80,6 +81,18 @@ function isNewer(latest: string, current: string): boolean {
   return false;
 }
 
+/**
+ * True when both strings name the same build.
+ *
+ * A self-hosted server builds its CLI alongside itself, so the two carry the
+ * same version string and there is nothing to order: a runtime either runs the
+ * server's build or it does not.
+ */
+function sameBuild(a: string, b: string): boolean {
+  const normalize = (v: string) => v.trim().replace(/^v/, "");
+  return normalize(a) === normalize(b);
+}
+
 const statusConfig: Record<
   RuntimeUpdateStatus,
   { icon: typeof Loader2; color: string }
@@ -113,7 +126,18 @@ export function UpdateSection({
 }: UpdateSectionProps) {
   const { t } = useT("runtimes");
   const isManaged = launchedBy === "desktop";
-  const [latestVersion, setLatestVersion] = useState<string | null>(null);
+  const setupTarget = useConfigStore((state) => state.daemonSetupTarget);
+  const serverVersion = useConfigStore((state) => state.serverVersion);
+  // A self-hosted server ships the CLI its runtimes should be on. Only the
+  // managed cloud follows the public release, so nothing else asks GitHub.
+  const followsServer = setupTarget === "self_host";
+  const [releaseVersion, setReleaseVersion] = useState<string | null>(null);
+  const latestVersion = followsServer ? serverVersion || null : releaseVersion;
+  const isBehind = useCallback(
+    (latest: string, current: string) =>
+      followsServer ? !sameBuild(latest, current) : isNewer(latest, current),
+    [followsServer],
+  );
   const [status, setStatus] = useState<RuntimeUpdateStatus | null>(null);
   const [error, setError] = useState("");
   const [output, setOutput] = useState("");
@@ -130,10 +154,11 @@ export function UpdateSection({
 
   useEffect(() => cleanup, [cleanup]);
 
-  // Fetch latest version on mount.
+  // Fetch the latest public release, on the managed cloud only.
   useEffect(() => {
-    fetchLatestVersion().then(setLatestVersion);
-  }, []);
+    if (setupTarget !== "cloud") return;
+    fetchLatestVersion().then(setReleaseVersion);
+  }, [setupTarget]);
 
   const markCompleted = useCallback(
     (message: string) => {
@@ -151,10 +176,10 @@ export function UpdateSection({
 
   useEffect(() => {
     if (!updating || !targetVersion || !currentVersion) return;
-    if (!isNewer(targetVersion, currentVersion)) {
+    if (!isBehind(targetVersion, currentVersion)) {
       markCompleted(`Updated to ${targetVersion}`);
     }
-  }, [currentVersion, markCompleted, targetVersion, updating]);
+  }, [currentVersion, isBehind, markCompleted, targetVersion, updating]);
 
   const handleUpdate = async () => {
     if (!latestVersion || !runtimeId) return;
@@ -201,14 +226,19 @@ export function UpdateSection({
   const hasUpdate =
     currentVersion &&
     latestVersion &&
-    isNewer(latestVersion, currentVersion);
+    isBehind(latestVersion, currentVersion);
 
   // A source build cannot be ordered against a release tag, so neither
   // "update available" nor "Latest" is a claim we can make. Say that, rather
   // than defaulting to "Latest" and telling the operator their local binary is
   // up to date when we never parsed its version.
+  //
+  // Against a self-hosted server the question does not arise: every build is
+  // compared with the server's by identity, release-shaped or not.
   const isLocalBuild =
-    !!currentVersion && parseReleaseVersion(currentVersion) === null;
+    !followsServer &&
+    !!currentVersion &&
+    parseReleaseVersion(currentVersion) === null;
 
   const config = status ? statusConfig[status] : null;
   const Icon = config?.icon;

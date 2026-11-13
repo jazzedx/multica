@@ -48,6 +48,9 @@ type HealthResponse struct {
 	// CLICommit belongs to this running process, not an installed replacement.
 	// Empty or unknown values do not attest a revision; never fall back to version.
 	CLICommit string `json:"cli_commit"`
+	// ServerCLIUpdate is the version of a build the self-hosted server ships
+	// and this daemon does not run yet. Empty when there is none.
+	ServerCLIUpdate string `json:"server_cli_update,omitempty"`
 	// LaunchedBy is "desktop" when the Electron app spawned this daemon, empty
 	// for a standalone one. Already reported to the server on registration;
 	// surfaced here so `daemon status` can say who manages the daemon instead
@@ -394,6 +397,7 @@ func (d *Daemon) healthHandler(startedAt time.Time) http.HandlerFunc {
 			ServerURL:             d.cfg.ServerBaseURL,
 			CLIVersion:            d.cfg.CLIVersion,
 			CLICommit:             d.cfg.CLICommit,
+			ServerCLIUpdate:       d.serverCLIUpdateVersion(),
 			ActiveTaskCount:       d.activeTasks.Load(),
 			RunningTaskCount:      d.runningTasks.Load(),
 			ResourceWaitTaskCount: d.resourceWaitTasks.Load(),

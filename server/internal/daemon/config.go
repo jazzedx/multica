@@ -131,7 +131,7 @@ type Config struct {
 	AutoUpdateEnabled              bool                  // periodically check for a newer CLI release and self-update when idle (default: true on Multica Cloud, false on self-host)
 	AutoUpdateCheckInterval        time.Duration         // how often the auto-update loop polls for a new release (default: 6h)
 	AutoReloadEnabled              bool                  // restart when the multica binary on disk no longer matches the running version (default: true for CLI-launched daemons)
-	FollowServerCLI                bool                  // self-host: replace this CLI with the build shipped by the logged-in server (default: true; MULTICA_DAEMON_FOLLOW_SERVER=false turns it off)
+	FollowServerCLI                bool                  // self-host: replace this CLI with the build shipped by the logged-in server on its own instead of only reporting it (default: false; MULTICA_DAEMON_FOLLOW_SERVER=true turns it on)
 	PollInterval                   time.Duration
 	WSClaimPollInterval            time.Duration // upper bound for healthy WS batch-claim safety polls; actual sleeps use downward-only jitter
 	HeartbeatInterval              time.Duration
@@ -648,7 +648,7 @@ func LoadConfig(overrides Overrides) (Config, error) {
 	if overrides.DisableAutoReload {
 		autoReloadEnabled = false
 	}
-	followServerCLI := boolFromEnv("MULTICA_DAEMON_FOLLOW_SERVER", true)
+	followServerCLI := boolFromEnv("MULTICA_DAEMON_FOLLOW_SERVER", false)
 
 	return Config{
 		ServerBaseURL:                   serverBaseURL,

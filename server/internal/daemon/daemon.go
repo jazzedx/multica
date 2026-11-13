@@ -672,6 +672,9 @@ type Daemon struct {
 	brewInstall    bool        // resolved once: was this binary installed via brew?
 	brewPrefix     string      // Homebrew prefix when brewInstall and it resolved; the stable path is derived per call by cli.StableExecutablePath
 	updating       atomic.Bool // prevents concurrent update attempts
+	// serverCLIUpdate is the self-hosted server build this daemon could move to,
+	// nil when it already runs it. Written by noteServerCLI.
+	serverCLIUpdate atomic.Pointer[cli.ServerCLIRelease]
 	// activeTasks is the ownership-safe count of tasks currently in handleTask.
 	// It deliberately includes preparation and local-directory waiters because
 	// restart/update barriers must not kill any claimed task.
@@ -5287,6 +5290,12 @@ func (d *Daemon) tryBeginServerUpdate(ctx context.Context) serverUpdateAcquireRe
 // the restart — extracted so the server-triggered path (handleUpdate) and the
 // auto-update poller (autoUpdateLoop) share the exact same execution body.
 func (d *Daemon) runUpdate(targetVersion string) (string, error) {
+	// A self-hosted server ships its own CLI. Homebrew and the public release
+	// would replace it with the official build.
+	if d.usesServerCLI() {
+		d.logger.Info("updating CLI from the server...", "target_version", targetVersion)
+		return d.updateFromServer()
+	}
 	if cli.IsBrewInstall() {
 		d.logger.Info("updating CLI via Homebrew...")
 		out, err := cli.UpdateViaBrew()
