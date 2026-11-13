@@ -155,6 +155,7 @@
     ".env.example",
     "docker-compose.selfhost.yml",
     "docker-compose.selfhost.build.yml",
+    "docker-compose.selfhost.build.mirror.yml",
     "Makefile",
     "server/internal/handler/attachment_text_preview.json",
     "server/internal/handler/reserved_slugs.json",

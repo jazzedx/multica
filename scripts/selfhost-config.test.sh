@@ -461,7 +461,7 @@ chmod +x "$stub_dir/docker" "$stub_dir/curl"
 # Throwaway checkout so the recipe never touches this repo's own .env.
 recipe_dir="$tmp_dir/recipe"
 mkdir -p "$recipe_dir/scripts"
-cp Makefile .env.example docker-compose.selfhost.yml docker-compose.selfhost.build.yml "$recipe_dir/"
+cp Makefile .env.example docker-compose.selfhost.yml docker-compose.selfhost.build.yml docker-compose.selfhost.build.mirror.yml "$recipe_dir/"
 cp scripts/selfhost-wait.sh "$recipe_dir/scripts/"
 
 record="$tmp_dir/published"
@@ -578,6 +578,69 @@ for upload_target in selfhost selfhost-build; do
     exit 1
   fi
 done
+# selfhost-build-mirror layers the mirror override file and resolves ports the
+# same way selfhost-build does.
+run_recipe selfhost-build-mirror 's/^PORT=8080/PORT=9450/' '' '' >/dev/null
+require_consistent 'selfhost-build-mirror with PORT edited' 9450
+
+# The mirror override file sets a default for every mirror, an environment
+# variable of the same name replaces one, and the build args from build.yml stay
+# as they are.
+mirror_files=(-f docker-compose.selfhost.yml -f docker-compose.selfhost.build.yml -f docker-compose.selfhost.build.mirror.yml)
+config="$(env -u ALPINE_MIRROR -u GOPROXY -u NPM_REGISTRY docker compose --env-file "$tmp_env" "${mirror_files[@]}" config)"
+require_config "$config" 'ALPINE_MIRROR: https://'
+require_config "$config" 'GOPROXY: https://'
+require_config "$config" 'NPM_REGISTRY: https://'
+require_config "$config" 'NEXT_PUBLIC_APP_VERSION: dev'
+config="$(ALPINE_MIRROR=https://alpine.example GOPROXY=https://goproxy.example NPM_REGISTRY=https://npm.example docker compose --env-file "$tmp_env" "${mirror_files[@]}" config)"
+require_config "$config" 'ALPINE_MIRROR: https://alpine.example'
+require_config "$config" 'GOPROXY: https://goproxy.example'
+require_config "$config" 'NPM_REGISTRY: https://npm.example'
+
+# Runs a make target in a copy of the recipe that has no .env.
+run_target_without_env() {
+  local target=$1 make_args=$2
+  rm -f "$recipe_dir/.env"
+  : >"$record"
+  : >"$curl_log"
+  (
+    cd "$recipe_dir" || exit 1
+    eval "env PATH=\"$stub_dir:\$PATH\" \
+      REAL_DOCKER=\"$real_docker\" \
+      STUB_PUBLISHED_RECORD=\"$record\" \
+      STUB_CURL_LOG=\"$curl_log\" \
+      make $target $make_args"
+  )
+}
+
+# On its first run selfhost-build-mirror creates .env the way selfhost-build
+# does and hands compose the database password from it, not the Makefile's
+# default, multica. Mirrors are all it adds: sign-in stays as .env.example
+# ships it, with no fixed verification code.
+run_target_without_env selfhost-build-mirror '' >/dev/null
+generated_env="$(cat "$recipe_dir/.env")"
+require_env "$generated_env" 'APP_ENV='
+require_env "$generated_env" 'MULTICA_DEV_VERIFICATION_CODE='
+if ! grep -Eq '^JWT_SECRET=[0-9a-f]{64}$' <<<"$generated_env" ||
+  ! grep -Eq '^POSTGRES_PASSWORD=[0-9a-f]{48}$' <<<"$generated_env"; then
+  echo "first selfhost-build-mirror run must generate random JWT_SECRET and POSTGRES_PASSWORD"
+  exit 1
+fi
+require_consistent 'selfhost-build-mirror with a generated .env' 8080
+compose_pgpass="$(published_port postgres_password)"
+env_pgpass="$(grep '^POSTGRES_PASSWORD=' "$recipe_dir/.env" | cut -d= -f2)"
+if [ "$compose_pgpass" != "$env_pgpass" ]; then
+  echo "first selfhost-build-mirror run must hand the generated POSTGRES_PASSWORD to compose"
+  echo "  .env: $env_pgpass"
+  echo "  compose: ${compose_pgpass:-<none>}"
+  exit 1
+fi
+
+# An existing .env is left untouched, as selfhost-build does.
+run_recipe selfhost-build-mirror '' '' '' >/dev/null
+existing_env="$(cat "$recipe_dir/.env")"
+require_env "$existing_env" 'APP_ENV='
+require_env "$existing_env" 'MULTICA_DEV_VERIFICATION_CODE='
 
 # Every alias at once: BACKEND_PORT wins, and the probe follows it.
 run_recipe selfhost \

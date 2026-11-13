@@ -36,6 +36,13 @@ export
 MULTICA_ARGS ?= $(ARGS)
 
 COMPOSE := docker compose
+SELFHOST_BUILD_COMPOSE_FILES ?= -f docker-compose.selfhost.yml -f docker-compose.selfhost.build.yml
+# MULTICA_ADDONS (.env) lists the optional parts of the self-hosted stack,
+# comma-separated: proxy. Each name adds docker-compose.<name>.yml
+# when that file exists and turns on the compose profile of the same name.
+comma := ,
+SELFHOST_ADDONS := $(strip $(subst $(comma), ,$(MULTICA_ADDONS)))
+SELFHOST_ADDON_ARGS := $(strip $(foreach addon,$(SELFHOST_ADDONS),$(if $(wildcard docker-compose.$(addon).yml),-f docker-compose.$(addon).yml)) $(foreach addon,$(SELFHOST_ADDONS),--profile $(addon)))
 
 define REQUIRE_ENV
 	@if [ ! -f "$(ENV_FILE)" ]; then \
@@ -112,7 +119,7 @@ selfhost: ## Create .env if needed, then pull and start the official self-hosted
 # ENV_FILE is pinned because Compose reads .env even when .env.worktree exists.
 selfhost-start:
 	@echo "==> Pulling official Multica images..."
-	@if ! $(COMPOSE) -f docker-compose.selfhost.yml pull; then \
+	@if ! $(COMPOSE) -f docker-compose.selfhost.yml $(SELFHOST_ADDON_ARGS) pull; then \
 		echo ""; \
 		echo "Official images for tag '$${MULTICA_IMAGE_TAG:-latest}' are not published yet."; \
 		echo "If this is before the first GHCR release, build from the current checkout:"; \
@@ -120,7 +127,7 @@ selfhost-start:
 		exit 1; \
 	fi
 	@echo "==> Starting Multica via Docker Compose..."
-	$(COMPOSE) -f docker-compose.selfhost.yml up -d
+	$(COMPOSE) -f docker-compose.selfhost.yml $(SELFHOST_ADDON_ARGS) up -d
 	@bash scripts/selfhost-wait.sh official
 
 selfhost-build: ## Build backend/web from the current checkout and start the self-hosted stack
@@ -149,13 +156,18 @@ selfhost-build: ## Build backend/web from the current checkout and start the sel
 # Internal: see selfhost-start.
 selfhost-build-start:
 	@echo "==> Building Multica from the current checkout..."
-	$(COMPOSE) -f docker-compose.selfhost.yml -f docker-compose.selfhost.build.yml up -d --build
+	$(COMPOSE) $(SELFHOST_BUILD_COMPOSE_FILES) $(SELFHOST_ADDON_ARGS) up -d --build
 	@bash scripts/selfhost-wait.sh build
+
+.PHONY: selfhost-build-mirror
+selfhost-build-mirror: ## Like selfhost-build, with build dependencies fetched from China mirrors
+	@$(MAKE) selfhost-build \
+		SELFHOST_BUILD_COMPOSE_FILES="-f docker-compose.selfhost.yml -f docker-compose.selfhost.build.yml -f docker-compose.selfhost.build.mirror.yml"
 
 selfhost-stop: ## Stop the self-hosted Docker Compose stack
 	$(REQUIRE_COMPOSE)
 	@echo "==> Stopping Multica services..."
-	$(COMPOSE) -f docker-compose.selfhost.yml down
+	$(COMPOSE) -f docker-compose.selfhost.yml $(SELFHOST_ADDON_ARGS) down
 	@echo "✓ All services stopped."
 
 # ---------- Environments ----------

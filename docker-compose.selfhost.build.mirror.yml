@@ -1,0 +1,23 @@
+# Layered on top of docker-compose.selfhost.build.yml: build-time downloads go
+# through China mirrors.
+# Override a default mirror with the environment variable of the same name, or
+# with a value in .env.
+#
+# Usage:
+#   make selfhost-build-mirror
+
+services:
+  backend:
+    build:
+      args:
+        ALPINE_MIRROR: ${ALPINE_MIRROR:-https://repo.huaweicloud.com}
+        GOPROXY: ${GOPROXY:-https://goproxy.cn,direct}
+
+  frontend:
+    build:
+      args:
+        ALPINE_MIRROR: ${ALPINE_MIRROR:-https://repo.huaweicloud.com}
+        # Corepack needs dist.tarball in the per-version metadata to be an
+        # absolute URL. The Huawei Cloud npm mirror returns a relative path,
+        # so it cannot be used here.
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://mirrors.cloud.tencent.com/npm}
