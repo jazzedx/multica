@@ -21,7 +21,7 @@ import { docsLocalePrefix } from "../../common/docs-locale";
 import { openExternal } from "../../platform";
 import { IntegrationChannelIcon } from "./integration-channel-icon";
 import {
-  CHANNEL_INTEGRATIONS,
+  offeredChannels,
   type ChannelIntegration,
 } from "./settings-navigation";
 import { useMessagingChannels } from "./use-messaging-channels";
@@ -150,7 +150,7 @@ function ChannelConnectSteps({
                       (candidate) =>
                         !candidate.archived_at &&
                         (isAdmin ||
-                          CHANNEL_INTEGRATIONS.some((id) =>
+                          offeredChannels().some((id) =>
                             canManage(id, candidate),
                           )),
                     )
@@ -168,7 +168,7 @@ function ChannelConnectSteps({
               aria-label={t(($) => $.channels.platform_label)}
             >
               <Label>{t(($) => $.channels.platform_label)}</Label>
-              {CHANNEL_INTEGRATIONS.filter(
+              {offeredChannels().filter(
                 (id) => queries[id].data?.configured || isAdmin,
               )
                 .filter((id) => !connected(id))

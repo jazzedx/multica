@@ -13,7 +13,7 @@ import { ChannelDisconnectDialog } from "./channel-disconnect-dialog";
 import { IntegrationChannelIcon } from "./integration-channel-icon";
 import { SettingsCard, SettingsSection, SettingsTab } from "./settings-layout";
 import {
-  CHANNEL_INTEGRATIONS,
+  offeredChannels,
   type ChannelIntegration,
   settingsHref,
 } from "./settings-navigation";
@@ -42,10 +42,18 @@ export function ChannelsTab() {
       );
   }, [legacyDetail, navigation]);
 
+  // The offered channels among `ids`, named for the permissions table.
+  const channelNames = (ids: readonly ChannelIntegration[]) =>
+    offeredChannels()
+      .filter((id) => ids.includes(id))
+      .map((id) => t(($) => $[id].section_title))
+      .join(", ");
+  const adminOnlyChannels = channelNames(["slack", "wecom", "telegram", "weixin"]);
+
   return (
     <SettingsTab title={t(($) => $.page.tabs.channels)} scope="workspace">
       <SettingsCard>
-        {CHANNEL_INTEGRATIONS.filter(
+        {offeredChannels().filter(
           (id) =>
             isAdmin ||
             queries[id].data?.configured ||
@@ -169,25 +177,19 @@ export function ChannelsTab() {
       <SettingsSection title={t(($) => $.channels.permissions_title)}>
         <SettingsCard>
           <div className="flex flex-wrap justify-between gap-2 px-4 py-3 text-caption">
-            <span>
-              {t(($) => $.lark.section_title)},{" "}
-              {t(($) => $.dingtalk.section_title)}
-            </span>
+            <span>{channelNames(["lark", "dingtalk"])}</span>
             <span className="text-muted-foreground">
               {t(($) => $.channels.owner_or_admin)}
             </span>
           </div>
+          {adminOnlyChannels && (
           <div className="flex flex-wrap justify-between gap-2 px-4 py-3 text-caption">
-            <span>
-              {t(($) => $.slack.section_title)},{" "}
-              {t(($) => $.wecom.section_title)},{" "}
-              {t(($) => $.telegram.section_title)},{" "}
-              {t(($) => $.weixin.section_title)}
-            </span>
+            <span>{adminOnlyChannels}</span>
             <span className="text-muted-foreground">
               {t(($) => $.channels.admin_only)}
             </span>
           </div>
+          )}
         </SettingsCard>
       </SettingsSection>
       <ChannelConnectDialog

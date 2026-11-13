@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useWorkspaceId } from "@multica/core/hooks";
+import { offersChannel } from "@multica/core/deployment";
 import { useCurrentMember } from "@multica/core/permissions";
 import { larkInstallationsOptions } from "@multica/core/lark";
 import { slackInstallationsOptions } from "@multica/core/slack";
@@ -54,12 +55,12 @@ export function useMessagingChannels() {
   const wsId = useWorkspaceId();
   const { member, userId, role } = useCurrentMember(wsId);
   const enabled = !!wsId && !!member;
-  const lark = useQuery({ ...larkInstallationsOptions(wsId), enabled });
-  const slack = useQuery({ ...slackInstallationsOptions(wsId), enabled });
-  const dingtalk = useQuery({ ...dingtalkInstallationsOptions(wsId), enabled });
-  const wecom = useQuery({ ...wecomInstallationsOptions(wsId), enabled });
-  const telegram = useQuery({ ...telegramInstallationsOptions(wsId), enabled });
-  const weixin = useQuery({ ...weixinInstallationsOptions(wsId), enabled });
+  const lark = useQuery({ ...larkInstallationsOptions(wsId), enabled: enabled && offersChannel("lark") });
+  const slack = useQuery({ ...slackInstallationsOptions(wsId), enabled: enabled && offersChannel("slack") });
+  const dingtalk = useQuery({ ...dingtalkInstallationsOptions(wsId), enabled: enabled && offersChannel("dingtalk") });
+  const wecom = useQuery({ ...wecomInstallationsOptions(wsId), enabled: enabled && offersChannel("wecom") });
+  const telegram = useQuery({ ...telegramInstallationsOptions(wsId), enabled: enabled && offersChannel("telegram") });
+  const weixin = useQuery({ ...weixinInstallationsOptions(wsId), enabled: enabled && offersChannel("weixin") });
   const queries = { lark, slack, dingtalk, wecom, telegram, weixin };
   const connections: ChannelConnection[] = [
     ...(lark.data?.installations ?? []).map((installation) => ({

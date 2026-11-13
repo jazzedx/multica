@@ -7,7 +7,7 @@ import { notificationPreferenceOptions } from "@multica/core/notification-prefer
 import { notificationPreferenceValue } from "@multica/core/notification-preferences/patch";
 import { useT } from "../../i18n";
 import type { SettingsSearchEntry } from "./settings-search";
-import { CHANNEL_INTEGRATIONS } from "./settings-navigation";
+import { offeredChannels } from "./settings-navigation";
 import { browserNotificationSettingAvailable } from "./browser-notification-setting";
 
 const NOTIFICATION_GROUPS = [
@@ -384,7 +384,7 @@ export function useSettingsSearchIndex(
         title: t(($) => $.pr_merge_status.label),
         description: t(($) => $.pr_merge_status.description),
       },
-      ...CHANNEL_INTEGRATIONS.map((channel) => ({
+      ...offeredChannels().map((channel) => ({
         tab: "channels",
         integration: channel,
         title: t(($) => $[channel].section_title),

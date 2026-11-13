@@ -27,7 +27,7 @@ import {
   DingTalkBotGroups,
   getDingTalkBotIdentity,
 } from "../../settings/components/dingtalk-bot-groups";
-import { CHANNEL_INTEGRATIONS } from "../../settings/components/settings-navigation";
+import { offeredChannels } from "../../settings/components/settings-navigation";
 import {
   channelChatLink,
   useMessagingChannels,
@@ -102,13 +102,13 @@ export function AgentChannelsSection({ agent }: { agent: Agent }) {
   );
   const canAdd =
     !agent.archived_at &&
-    CHANNEL_INTEGRATIONS.some(
+    offeredChannels().some(
       (id) =>
         canManage(id, agent) &&
         available(id) &&
         !installed.some((entry) => entry.channel === id),
     );
-  const failed = CHANNEL_INTEGRATIONS.filter((id) => queries[id].isError);
+  const failed = offeredChannels().filter((id) => queries[id].isError);
   const visible = installed.length > 0 || canAdd || failed.length > 0 || weixinExpired;
   useEffect(() => {
     if (visible && (view === "channels" || view === "integrations"))

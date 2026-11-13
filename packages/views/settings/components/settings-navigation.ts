@@ -1,3 +1,5 @@
+import { offersChannel } from "@multica/core/deployment";
+
 /** Messaging integrations that live under the Channels page. */
 export const CHANNEL_INTEGRATIONS = [
   "lark",
@@ -9,6 +11,11 @@ export const CHANNEL_INTEGRATIONS = [
 ] as const;
 
 export type ChannelIntegration = (typeof CHANNEL_INTEGRATIONS)[number];
+
+/** The channels this deployment lets a workspace connect. */
+export function offeredChannels(): ChannelIntegration[] {
+  return CHANNEL_INTEGRATIONS.filter((channel) => offersChannel(channel));
+}
 
 export function isChannelIntegration(
   value: string | null,
