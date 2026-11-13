@@ -10,6 +10,25 @@ The `multica` CLI connects your local machine to Multica. It handles authenticat
 brew install multica-ai/tap/multica
 ```
 
+### From a self-hosted server
+
+A server built from this repository hands out the CLI from its own build, for
+macOS, Linux and Windows on amd64 and arm64. The machine needs to reach only
+that server:
+
+```bash
+curl -fsSL https://multica.example.com/api/cli/install.sh | bash -s -- https://multica.example.com
+```
+
+```powershell
+$env:MULTICA_SERVER_URL="https://multica.example.com"; irm https://multica.example.com/api/cli/install.ps1 | iex
+```
+
+The script verifies the download against the checksum the server sends and
+installs to `~/.local/bin` (`%USERPROFILE%\.multica\bin` on Windows);
+`MULTICA_INSTALL_DIR` changes that. The app shows the same command, with its
+own address filled in, wherever it asks you to connect a machine.
+
 ### Build from Source
 
 ```bash

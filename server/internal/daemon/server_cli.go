@@ -39,6 +39,12 @@ func (d *Daemon) serverCLIFollowEnabled() bool {
 	if IsOfficialCloudServer(d.cfg.ServerBaseURL) {
 		return false
 	}
+	// The server ships Windows a zip, and this install path only unpacks a tar.gz
+	// and replaces the binary in place. On Windows, rerun the install command to
+	// update.
+	if runtime.GOOS == "windows" {
+		return false
+	}
 	return cli.FollowableCommit(d.cfg.CLIShortCommit)
 }
 

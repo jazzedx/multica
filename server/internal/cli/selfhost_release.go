@@ -2,6 +2,7 @@ package cli
 
 import (
 	"archive/tar"
+	"archive/zip"
 	"bytes"
 	"compress/gzip"
 	"context"
@@ -41,23 +42,38 @@ func FollowableCommit(commit string) bool {
 	}
 }
 
-// BuildCLIArchive packs a CLI binary into a tar.gz whose entry is named multica,
-// matching what the direct-download update unpacks. sum is the SHA-256 of the
-// archive bytes.
+// BuildCLIArchive packs a CLI binary: a zip holding multica.exe for Windows,
+// and elsewhere a tar.gz whose entry is named multica, matching what the
+// direct-download update unpacks. sum is the SHA-256 of the archive bytes.
 func BuildCLIArchive(binary []byte, version, goos, goarch string) (name string, archive []byte, sum string, err error) {
 	if len(binary) == 0 {
 		return "", nil, "", fmt.Errorf("cli binary is empty")
-	}
-	if goos == "windows" {
-		return "", nil, "", fmt.Errorf("windows cli archive is not produced here")
 	}
 	version = strings.TrimSpace(version)
 	if version == "" {
 		version = "dev"
 	}
-	name = fmt.Sprintf("multica-cli-%s-%s-%s.tar.gz", strings.TrimPrefix(version, "v"), goos, goarch)
+	base := fmt.Sprintf("multica-cli-%s-%s-%s", strings.TrimPrefix(version, "v"), goos, goarch)
 
 	var buf bytes.Buffer
+	if goos == "windows" {
+		zw := zip.NewWriter(&buf)
+		entry, err := zw.CreateHeader(&zip.FileHeader{Name: "multica.exe", Method: zip.Deflate})
+		if err != nil {
+			return "", nil, "", err
+		}
+		if _, err := entry.Write(binary); err != nil {
+			return "", nil, "", err
+		}
+		if err := zw.Close(); err != nil {
+			return "", nil, "", err
+		}
+		archive = buf.Bytes()
+		digest := sha256.Sum256(archive)
+		return base + ".zip", archive, hex.EncodeToString(digest[:]), nil
+	}
+	name = base + ".tar.gz"
+
 	gz := gzip.NewWriter(&buf)
 	tw := tar.NewWriter(gz)
 	if err := tw.WriteHeader(&tar.Header{
@@ -138,12 +154,19 @@ func InstallVerifiedArchive(archive []byte, expectedSHA string) (string, error) 
 	return exePath, nil
 }
 
-// FetchServerCLIMetadata reads a self-hosted server's CLI description without
-// downloading the archive.
+// localPlatformQuery asks the server for this machine's OS and architecture.
+// An older server ignores the parameters and answers with its own platform,
+// which the caller's platform check then rejects.
+func localPlatformQuery() string {
+	return "?goos=" + runtime.GOOS + "&goarch=" + runtime.GOARCH
+}
+
+// FetchServerCLIMetadata reads a self-hosted server's CLI description for this
+// platform without downloading the archive.
 func FetchServerCLIMetadata(ctx context.Context, baseURL, token string) (*ServerCLIRelease, error) {
 	client := NewAPIClient(baseURL, "", token)
 	var rel ServerCLIRelease
-	if err := client.GetJSON(ctx, "/api/cli/release", &rel); err != nil {
+	if err := client.GetJSON(ctx, "/api/cli/release"+localPlatformQuery(), &rel); err != nil {
 		return nil, err
 	}
 	return &rel, nil
@@ -153,7 +176,7 @@ func FetchServerCLIMetadata(ctx context.Context, baseURL, token string) (*Server
 func DownloadServerCLIArchive(ctx context.Context, baseURL, token string) ([]byte, error) {
 	client := NewAPIClient(baseURL, "", token)
 	client.HTTPClient.Timeout = 2 * time.Minute
-	return client.GetBytes(ctx, "/api/cli/release/archive", MaxCLIArchiveBytes)
+	return client.GetBytes(ctx, "/api/cli/release/archive"+localPlatformQuery(), MaxCLIArchiveBytes)
 }
 
 // ApplyServerCLI installs the server's CLI when the commits differ and leaves

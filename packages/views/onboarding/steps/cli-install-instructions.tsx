@@ -88,24 +88,29 @@ export function CliInstallInstructions() {
         <p className="text-caption leading-[1.55] text-muted-foreground">
           {t(($) => $.cli_install.intro)}
         </p>
-        <Step n={1} label={t(($) => $.cli_install.step1_label)}>
-          <CliInstallCommand
-            labels={{
-              group: t(($) => $.cli_install.platform_group),
-              macosLinux: t(($) => $.cli_install.platform_macos_linux),
-              windows: t(($) => $.cli_install.platform_windows),
-            }}
-          >
-            {(cmd) => <CommandRow cmd={cmd} />}
-          </CliInstallCommand>
-        </Step>
-        <Step n={2} label={t(($) => $.cli_install.step2_label)}>
-          {commands.status === "ready" ? (
-            <CommandRow cmd={commands.setupCmd} />
-          ) : (
-            <DaemonSetupNotice status={commands.status} />
-          )}
-        </Step>
+        {/* Both commands name this server, so neither is offered until its
+            connection settings are known. */}
+        {commands.status === "ready" ? (
+          <>
+            <Step n={1} label={t(($) => $.cli_install.step1_label)}>
+              <CliInstallCommand
+                commands={commands.installCmds}
+                labels={{
+                  group: t(($) => $.cli_install.platform_group),
+                  macosLinux: t(($) => $.cli_install.platform_macos_linux),
+                  windows: t(($) => $.cli_install.platform_windows),
+                }}
+              >
+                {(cmd) => <CommandRow cmd={cmd} />}
+              </CliInstallCommand>
+            </Step>
+            <Step n={2} label={t(($) => $.cli_install.step2_label)}>
+              <CommandRow cmd={commands.setupCmd} />
+            </Step>
+          </>
+        ) : (
+          <DaemonSetupNotice status={commands.status} />
+        )}
       </CardContent>
     </Card>
   );
