@@ -8,9 +8,14 @@
 #   MULTICA_SERVER_URL   server URL (required)
 #   MULTICA_INSTALL_DIR  install directory, %USERPROFILE%\.multica\bin by default
 
-$ErrorActionPreference = "Stop"
-
 function Install-MulticaCli {
+    # Set here, not at the top of the script: `iex` runs the script in the
+    # caller's scope, where these would outlive the install.
+    $ErrorActionPreference = "Stop"
+    # Windows PowerShell 5.1 redraws a progress bar per chunk, which slows the
+    # download by an order of magnitude.
+    $ProgressPreference = "SilentlyContinue"
+
     $serverUrl = "$env:MULTICA_SERVER_URL".TrimEnd("/")
     if (-not $serverUrl) {
         throw 'multica install: missing server URL. Usage: $env:MULTICA_SERVER_URL="<server>"; irm <server>/api/cli/install.ps1 | iex'
@@ -47,6 +52,13 @@ function Install-MulticaCli {
         Expand-Archive -Path $zip -DestinationPath $tmp -Force
         New-Item -ItemType Directory -Path $installDir -Force | Out-Null
         $target = Join-Path $installDir "multica.exe"
+        if (Test-Path $target) {
+            # Windows refuses to overwrite a running multica.exe (a daemon, say)
+            # but lets it be renamed. The CLI removes the leftover on its next start.
+            $previous = "$target.old"
+            Remove-Item -Path $previous -Force -ErrorAction SilentlyContinue
+            Move-Item -Path $target -Destination $previous -Force
+        }
         Move-Item -Path (Join-Path $tmp "multica.exe") -Destination $target -Force
         if (-not $version) { $version = "(unknown version)" }
         Write-Host "Installed multica $version to $target"

@@ -102,8 +102,16 @@ func BuildCLIArchive(binary []byte, version, goos, goarch string) (name string, 
 // Tests replace it.
 var resolveInstallTarget = selfexec.Resolve
 
-// InstallVerifiedArchive checks the archive's SHA-256, extracts multica from it
-// and atomically replaces the running executable.
+// extractServerCLI unpacks the binary BuildCLIArchive packed for goos.
+func extractServerCLI(archive []byte, goos string) ([]byte, error) {
+	if goos == "windows" {
+		return extractBinaryFromZip(bytes.NewReader(archive), "multica.exe")
+	}
+	return extractBinaryFromTarGz(bytes.NewReader(archive), "multica")
+}
+
+// InstallVerifiedArchive checks the archive's SHA-256, extracts the binary for
+// this platform from it and replaces the running executable.
 func InstallVerifiedArchive(archive []byte, expectedSHA string) (string, error) {
 	if len(archive) == 0 || len(archive) > MaxCLIArchiveBytes {
 		return "", fmt.Errorf("cli archive size %d is outside 1..%d", len(archive), MaxCLIArchiveBytes)
@@ -111,7 +119,7 @@ func InstallVerifiedArchive(archive []byte, expectedSHA string) (string, error) 
 	if err := verifyAssetSHA256(archive, expectedSHA, "cli archive"); err != nil {
 		return "", err
 	}
-	binary, err := extractBinaryFromTarGz(bytes.NewReader(archive), "multica")
+	binary, err := extractServerCLI(archive, runtime.GOOS)
 	if err != nil {
 		return "", err
 	}
