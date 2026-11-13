@@ -6,6 +6,7 @@ import { IconButton } from "@multica/ui/components/common/icon-button";
 import { cn } from "@multica/ui/lib/utils";
 import { useT } from "../i18n";
 import { CHANGELOG_URL } from "../layout/help-links";
+import { deploymentOffers } from "@multica/core/deployment";
 import { HighlightActionButton } from "./highlight-action";
 import { highlightCopy, type WhatsNewRelease } from "./releases";
 
@@ -91,6 +92,7 @@ export function WhatsNewPanel({
                   );
                 })}
               </ul>
+              {deploymentOffers().marketing && (
               <a
                 href={releaseAnchor(release.version)}
                 target="_blank"
@@ -100,6 +102,7 @@ export function WhatsNewPanel({
                 {t(($) => $.whats_new.panel.release_notes, { version: release.version })}
                 <ArrowUpRight className="size-3 text-faint-foreground" />
               </a>
+              )}
             </section>
           );
         })}
@@ -111,6 +114,7 @@ export function WhatsNewPanel({
             {t(($) => $.help.server_version, { version: serverVersion })}
           </span>
         )}
+        {deploymentOffers().marketing && (
         <a
           href={CHANGELOG_URL}
           target="_blank"
@@ -120,6 +124,7 @@ export function WhatsNewPanel({
           {t(($) => $.whats_new.panel.full_changelog)}
           <ArrowUpRight className="size-3.5 text-faint-foreground" />
         </a>
+        )}
       </div>
     </div>
   );

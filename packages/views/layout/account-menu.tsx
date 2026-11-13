@@ -47,6 +47,7 @@ import { isDesktopShell } from "../platform/local-directory";
 import { ThemeSwatch, useAppliedMode, useColorThemes, useThemeLabel } from "../settings/components/theme-swatch";
 import { DISCORD_URL, DiscordIcon } from "./discord";
 import { CHANGELOG_URL, DOCS_URL, DOWNLOAD_URL } from "./help-links";
+import { deploymentOffers } from "@multica/core/deployment";
 import { RAIL_ICON_BUTTON_CLASS } from "./rail-styles";
 
 const THEMES = [
@@ -208,8 +209,8 @@ export function AccountMenu() {
             icon={<BookOpen />}
             label={t(($) => $.help.docs)}
           />
-          <ExternalItem href={CHANGELOG_URL} icon={<History />} label={t(($) => $.help.changelog)} />
-          <ExternalItem href={DISCORD_URL} icon={<DiscordIcon />} label={t(($) => $.help.discord)} />
+          {deploymentOffers().marketing && <ExternalItem href={CHANGELOG_URL} icon={<History />} label={t(($) => $.help.changelog)} />}
+          {deploymentOffers().marketing && <ExternalItem href={DISCORD_URL} icon={<DiscordIcon />} label={t(($) => $.help.discord)} />}
           {!isDesktopShell() && (
             <ExternalItem
               href={DOWNLOAD_URL}

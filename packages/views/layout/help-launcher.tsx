@@ -24,6 +24,7 @@ import {
 import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
 import { useModalStore } from "@multica/core/modals";
 import { useConfigStore } from "@multica/core/config";
+import { deploymentOffers } from "@multica/core/deployment";
 import { formatStarCount, githubStarsOptions, MULTICA_GITHUB_URL } from "@multica/core/github/stars";
 import { createLogger } from "@multica/core/logger";
 import { markStarPromptStarred } from "@multica/core/star-prompt";
@@ -51,11 +52,12 @@ export function HelpLauncher() {
   // markup matches either way, so the link can ship in the SSR payload instead
   // of popping in a frame late.
   const desktop = isDesktopShell();
+  const offers = deploymentOffers();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const whatsNew = useWhatsNewMenuPanel();
   const [open, setOpen] = useState(false);
   // Asked only once the menu opens, so closed sessions never call GitHub.
-  const { data: stars } = useQuery({ ...githubStarsOptions(), enabled: open });
+  const { data: stars } = useQuery({ ...githubStarsOptions(), enabled: open && offers.marketing });
   return (
     <>
       <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -119,6 +121,8 @@ export function HelpLauncher() {
               )}
             </DropdownMenuItem>
           )}
+          {offers.marketing && (
+            <>
           <DropdownMenuItem
             render={
               <a
@@ -160,6 +164,8 @@ export function HelpLauncher() {
               <ArrowUpRight className="size-3 translate-y-px text-faint-foreground" />
             )}
           </DropdownMenuItem>
+            </>
+          )}
           <DropdownMenuItem
             onClick={() => useModalStore.getState().open("feedback")}
           >
