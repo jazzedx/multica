@@ -1,12 +1,5 @@
 /** Messaging integrations that live under the Channels page. */
-export const CHANNEL_INTEGRATIONS = [
-  "lark",
-  "slack",
-  "dingtalk",
-  "wecom",
-  "telegram",
-  "weixin",
-] as const;
+export const CHANNEL_INTEGRATIONS = ["lark"] as const;
 
 export type ChannelIntegration = (typeof CHANNEL_INTEGRATIONS)[number];
 

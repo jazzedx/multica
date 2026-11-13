@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import type { Agent } from "@multica/core/types";
-import { dingtalkAgentGroupsOptions } from "@multica/core/dingtalk";
 import { Button } from "@multica/ui/components/ui/button";
 import { IconButton } from "@multica/ui/components/common/icon-button";
 import { ExternalLink, MoreHorizontal, Plus } from "@multica/ui/icons";
@@ -17,24 +15,18 @@ import {
 
 import { docsLocalePrefix } from "../../common/docs-locale";
 import { ObjectSection, ObjectSectionAction } from "../../layout/object-page";
-import { useT, useTimeAgo } from "../../i18n";
+import { useT } from "../../i18n";
 import { openExternal } from "../../platform";
 import { useNavigation } from "../../navigation";
 import { IntegrationChannelIcon } from "../../settings/components/integration-channel-icon";
 import { ChannelDisconnectDialog } from "../../settings/components/channel-disconnect-dialog";
 import { ChannelConnectDialog } from "../../settings/components/channel-connect-dialog";
-import {
-  DingTalkBotGroups,
-  getDingTalkBotIdentity,
-} from "../../settings/components/dingtalk-bot-groups";
 import { CHANNEL_INTEGRATIONS } from "../../settings/components/settings-navigation";
 import {
   channelChatLink,
   useMessagingChannels,
   type ChannelConnection,
 } from "../../settings/components/use-messaging-channels";
-
-const DINGTALK_CHAT_MANAGE_PERMISSION = "qyapi_chat_manage";
 
 export function AgentChannelLinks({ agent }: { agent: Agent }) {
   const { connections } = useMessagingChannels();
@@ -57,38 +49,21 @@ function AgentChannelContact({
   connection: ChannelConnection;
 }) {
   const { t } = useT("settings");
-  const { channel, installation } = connection;
-  const { data } = useQuery({
-    ...dingtalkAgentGroupsOptions(
-      installation.workspace_id,
-      installation.agent_id,
-    ),
-    enabled: channel === "dingtalk",
-  });
-  const name =
-    connection.channel === "wecom"
-      ? connection.installation.bot_name
-      : (data?.bot_identities?.[installation.id]?.bot_name ??
-        getDingTalkBotIdentity(data?.groups ?? [], installation.id)?.bot_name);
   const href = channelChatLink(connection);
-  return href ? (
+  if (!href) return null;
+  return (
     <Button variant="outline" size="sm" onClick={() => openExternal(href)}>
-      <IntegrationChannelIcon channel={channel} />
+      <IntegrationChannelIcon channel={connection.channel} />
       {t(($) => $.channels.find_me, {
-        platform: t(($) => $[channel].section_title),
+        platform: t(($) => $[connection.channel].section_title),
       })}
     </Button>
-  ) : name ? (
-    <span className="inline-flex items-center gap-1.5 text-caption text-muted-foreground">
-      <IntegrationChannelIcon channel={channel} />
-      {name}
-    </span>
-  ) : null;
+  );
 }
 
 export function AgentChannelsSection({ agent }: { agent: Agent }) {
   const { t } = useT("settings");
-  const { queries, connections, canManage, available, isAdmin } =
+  const { queries, connections, canManage, available } =
     useMessagingChannels();
   const [open, setOpen] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -96,9 +71,6 @@ export function AgentChannelsSection({ agent }: { agent: Agent }) {
   const view = searchParams.get("view") ?? searchParams.get("tab");
   const installed = connections.filter(
     (entry) => entry.installation.agent_id === agent.id,
-  );
-  const weixinExpired = queries.weixin.data?.installations.some(
-    (entry) => entry.agent_id === agent.id && entry.status === "expired",
   );
   const canAdd =
     !agent.archived_at &&
@@ -109,7 +81,7 @@ export function AgentChannelsSection({ agent }: { agent: Agent }) {
         !installed.some((entry) => entry.channel === id),
     );
   const failed = CHANNEL_INTEGRATIONS.filter((id) => queries[id].isError);
-  const visible = installed.length > 0 || canAdd || failed.length > 0 || weixinExpired;
+  const visible = installed.length > 0 || canAdd || failed.length > 0;
   useEffect(() => {
     if (visible && (view === "channels" || view === "integrations"))
       sectionRef.current?.scrollIntoView({ block: "start" });
@@ -133,11 +105,6 @@ export function AgentChannelsSection({ agent }: { agent: Agent }) {
           ) : undefined
         }
       >
-        {weixinExpired && (
-          <p role="status" className="mb-2 text-caption text-destructive">
-            {t(($) => $.weixin.authorization_expired)}
-          </p>
-        )}
         {installed.length ? (
           <div className="divide-y rounded-lg border">
             {installed.map((connection) => (
@@ -145,7 +112,6 @@ export function AgentChannelsSection({ agent }: { agent: Agent }) {
                 key={connection.installation.id}
                 connection={connection}
                 canManage={canManage(connection.channel, agent)}
-                canForget={isAdmin}
               />
             ))}
           </div>
@@ -188,56 +154,18 @@ export function AgentChannelsSection({ agent }: { agent: Agent }) {
 function AgentChannelRow({
   connection,
   canManage,
-  canForget,
 }: {
   connection: ChannelConnection;
   canManage: boolean;
-  canForget: boolean;
 }) {
   const { t, i18n } = useT("settings");
-  const timeAgo = useTimeAgo();
   const { channel, installation } = connection;
   const [confirm, setConfirm] = useState(false);
-  const groups = useQuery({
-    ...dingtalkAgentGroupsOptions(
-      installation.workspace_id,
-      installation.agent_id,
-    ),
-    enabled: channel === "dingtalk",
-  });
-  const identity =
-    groups.data?.bot_identities?.[installation.id] ??
-    getDingTalkBotIdentity(groups.data?.groups ?? [], installation.id);
-  const identityIssue =
-    channel === "dingtalk" ? identity?.bot_identity_issue : undefined;
-  const missingChatPermission = identityIssue === "missing_qyapi_chat_manage";
-  const name =
-    channel === "dingtalk"
-      ? identity?.bot_name
-      : connection.channel === "wecom"
-        ? connection.installation.bot_name
-        : connection.channel === "telegram" &&
-            connection.installation.bot_username
-          ? `@${connection.installation.bot_username}`
-          : undefined;
-  const pending =
-    connection.channel === "lark" &&
-    !connection.installation.first_message_received_at;
+  const pending = !installation.first_message_received_at;
   const href = channelChatLink(connection);
-  const larkManageHref =
-    connection.channel === "lark" && connection.installation.app_id
-      ? `https://${connection.installation.region === "lark" ? "open.larksuite.com" : "open.feishu.cn"}/app/${encodeURIComponent(connection.installation.app_id)}`
-      : undefined;
-  const lastMessage = (groups.data?.groups ?? [])
-    .flatMap((group) => group.bots)
-    .filter(
-      (bot) =>
-        bot.installation_id === installation.id &&
-        Date.parse(bot.last_active_at ?? "") > 0,
-    )
-    .map((bot) => bot.last_active_at!)
-    .sort((left, right) => Date.parse(left) - Date.parse(right))
-    .at(-1);
+  const larkManageHref = installation.app_id
+    ? `https://${installation.region === "lark" ? "open.larksuite.com" : "open.feishu.cn"}/app/${encodeURIComponent(installation.app_id)}`
+    : undefined;
 
   return (
     <div className="px-3 py-3">
@@ -248,33 +176,17 @@ function AgentChannelRow({
             <span className="text-body font-medium">
               {t(($) => $[channel].section_title)}
             </span>
-            {name ? (
-              <span className="truncate text-caption text-muted-foreground">
-                {name}
-              </span>
-            ) : null}
           </div>
           <span
             className={
-              identityIssue
-                ? "text-caption text-warning"
-                : pending
-                  ? "text-caption text-muted-foreground"
-                  : "text-caption text-success"
+              pending
+                ? "text-caption text-muted-foreground"
+                : "text-caption text-success"
             }
           >
-            {identityIssue
-              ? t(($) => $.dingtalk.bot_identity_unavailable)
-              : pending
-                ? t(($) => $.channels.waiting_message)
-                : t(($) => $.channels.normal)}
-            {lastMessage ? (
-              <span className="ml-2 text-muted-foreground">
-                {t(($) => $.channels.last_message, {
-                  time: timeAgo(lastMessage),
-                })}
-              </span>
-            ) : null}
+            {pending
+              ? t(($) => $.channels.waiting_message)
+              : t(($) => $.channels.normal)}
           </span>
         </div>
         {href ? (
@@ -298,31 +210,27 @@ function AgentChannelRow({
               }
             />
             <DropdownMenuContent align="end">
-              {connection.channel === "lark" ? (
-                <>
-                  {larkManageHref ? (
-                    <DropdownMenuItem
-                      onClick={() => openExternal(larkManageHref)}
-                    >
-                      <ExternalLink />
-                      {connection.installation.region === "lark"
-                        ? t(($) => $.lark.agent_bot_manage_link_lark)
-                        : t(($) => $.lark.agent_bot_manage_link_feishu)}
-                    </DropdownMenuItem>
-                  ) : null}
-                  <DropdownMenuItem
-                    onClick={() =>
-                      openExternal(
-                        `https://multica.ai/docs${docsLocalePrefix(i18n.language)}/lark-bot-integration`,
-                      )
-                    }
-                  >
-                    <ExternalLink />
-                    {t(($) => $.lark.agent_bot_silent_hint_link)}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                </>
+              {larkManageHref ? (
+                <DropdownMenuItem
+                  onClick={() => openExternal(larkManageHref)}
+                >
+                  <ExternalLink />
+                  {installation.region === "lark"
+                    ? t(($) => $.lark.agent_bot_manage_link_lark)
+                    : t(($) => $.lark.agent_bot_manage_link_feishu)}
+                </DropdownMenuItem>
               ) : null}
+              <DropdownMenuItem
+                onClick={() =>
+                  openExternal(
+                    `https://multica.ai/docs${docsLocalePrefix(i18n.language)}/lark-bot-integration`,
+                  )
+                }
+              >
+                <ExternalLink />
+                {t(($) => $.lark.agent_bot_silent_hint_link)}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant="destructive"
                 onClick={() => setConfirm(true)}
@@ -333,42 +241,6 @@ function AgentChannelRow({
           </DropdownMenu>
         ) : null}
       </div>
-      {missingChatPermission && canManage ? (
-        <p role="status" className="mt-2 text-caption text-muted-foreground">
-          {t(($) => $.dingtalk.bot_permission_tooltip_prefix)}{" "}
-          <code
-            className="rounded-xs bg-muted px-1 py-0.5 font-mono text-micro"
-            translate="no"
-          >
-            {DINGTALK_CHAT_MANAGE_PERMISSION}
-          </code>{" "}
-          {t(($) => $.dingtalk.bot_permission_tooltip_suffix)}
-        </p>
-      ) : null}
-      {channel === "dingtalk" &&
-      (groups.isPending ||
-        groups.isError ||
-        groups.data?.group_discovery_supported) ? (
-        <details className="mt-3">
-          <summary className="cursor-pointer text-caption text-muted-foreground">
-            {t(($) => $.dingtalk.groups_title)}
-          </summary>
-          <DingTalkBotGroups
-            workspaceId={installation.workspace_id}
-            agentId={installation.agent_id}
-            installationId={installation.id}
-            groups={groups.data?.groups ?? []}
-            inactiveCount={
-              groups.data?.inactive_group_counts?.[installation.id] ?? 0
-            }
-            isLoading={groups.isPending}
-            isError={groups.isError}
-            onRetry={() => void groups.refetch()}
-            showDescription={false}
-            canForget={canForget}
-          />
-        </details>
-      ) : null}
       <ChannelDisconnectDialog
         connection={connection}
         open={confirm}

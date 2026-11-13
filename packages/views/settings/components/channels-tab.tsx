@@ -169,23 +169,9 @@ export function ChannelsTab() {
       <SettingsSection title={t(($) => $.channels.permissions_title)}>
         <SettingsCard>
           <div className="flex flex-wrap justify-between gap-2 px-4 py-3 text-caption">
-            <span>
-              {t(($) => $.lark.section_title)},{" "}
-              {t(($) => $.dingtalk.section_title)}
-            </span>
+            <span>{t(($) => $.lark.section_title)}</span>
             <span className="text-muted-foreground">
               {t(($) => $.channels.owner_or_admin)}
-            </span>
-          </div>
-          <div className="flex flex-wrap justify-between gap-2 px-4 py-3 text-caption">
-            <span>
-              {t(($) => $.slack.section_title)},{" "}
-              {t(($) => $.wecom.section_title)},{" "}
-              {t(($) => $.telegram.section_title)},{" "}
-              {t(($) => $.weixin.section_title)}
-            </span>
-            <span className="text-muted-foreground">
-              {t(($) => $.channels.admin_only)}
             </span>
           </div>
         </SettingsCard>

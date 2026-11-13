@@ -15,7 +15,6 @@ const entries: SettingsSearchEntry[] = [
     description: "Given to agents working for you on every run.",
   },
   { tab: "workspace", anchor: "context", title: "Agent context" },
-  { tab: "channels", integration: "slack", title: "Slack" },
   { tab: "channels", integration: "lark", title: "Lark" },
 ];
 
@@ -34,8 +33,8 @@ describe("searchSettings", () => {
   });
 
   it("matches case-insensitively and keeps each detail page", () => {
-    expect(searchSettings(entries, "SLACK").map((r) => r.integration)).toEqual([
-      "slack",
+    expect(searchSettings(entries, "LARK").map((r) => r.integration)).toEqual([
+      "lark",
     ]);
     // Channels share a tab, so the detail page is part of the identity.
     expect(searchSettings(entries, "a").map((r) => r.title)).toContain("Lark");

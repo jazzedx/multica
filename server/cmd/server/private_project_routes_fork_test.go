@@ -6,6 +6,8 @@ package main
 func init() {
 	for _, key := range []string{
 		"checkout-sessions/{sessionId}",
+		"groups/{conversationId}",
+		"logins/{loginId}",
 	} {
 		delete(routeParamsOutsideProjects, key)
 	}

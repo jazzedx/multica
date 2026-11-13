@@ -34,15 +34,10 @@ export function ChannelDisconnectDialog({
     if (disconnecting) return;
     setDisconnecting(true);
     try {
-      const revoke = {
-        lark: api.deleteLarkInstallation.bind(api),
-        slack: api.deleteSlackInstallation.bind(api),
-        dingtalk: api.deleteDingTalkInstallation.bind(api),
-        wecom: api.deleteWecomInstallation.bind(api),
-        telegram: api.deleteTelegramInstallation.bind(api),
-        weixin: api.deleteWeixinInstallation.bind(api),
-      }[channel];
-      await revoke(installation.workspace_id, installation.id);
+      await api.deleteLarkInstallation(
+        installation.workspace_id,
+        installation.id,
+      );
       await qc.invalidateQueries({
         queryKey: [channel, installation.workspace_id],
       });
