@@ -1,5 +1,6 @@
 "use client";
 
+import { deploymentOffers } from "@multica/core/deployment";
 import { useEffect, useState, type ReactNode } from "react";
 import { ArrowRight, Download, Loader2 } from "@multica/ui/icons";
 import { Button } from "@multica/ui/components/ui/button";
@@ -138,12 +139,14 @@ export function StepPlatformFork({
             onAction={handleOpenCli}
           />
 
+          {deploymentOffers().hostedRuntimes && (
           <ForkAlt
             title={t(($) => $.step_platform.cloud_title)}
             subtitle={t(($) => $.step_platform.cloud_subtitle)}
             actionLabel={t(($) => $.step_platform.cloud_action)}
             disabled
           />
+          )}
         </div>
 
       </div>

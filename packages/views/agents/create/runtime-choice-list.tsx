@@ -1,5 +1,6 @@
 "use client";
 
+import { deploymentOffers } from "@multica/core/deployment";
 import { useState, type ReactNode } from "react";
 import {
   ChevronDown,
@@ -564,7 +565,7 @@ export function RuntimeChoiceList({
 
   const showQoder = !!qoder && !!qoderState && (!q || QODER_NAME.toLowerCase().includes(q));
   const matchedCloud = cloud.filter((option) => harnessMatches(option, "", query));
-  const soon = COMING_SOON.filter((item) => !q || item.name.toLowerCase().includes(q));
+  const soon = (deploymentOffers().hostedRuntimes ? COMING_SOON : []).filter((item) => !q || item.name.toLowerCase().includes(q));
 
   const showMachines = matchedDevices.length > 0 || showWebRow || !searching;
   const showCloud = showQoder || matchedCloud.length > 0 || soon.length > 0;

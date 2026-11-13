@@ -1,5 +1,6 @@
 "use client";
 
+import { deploymentOffers } from "@multica/core/deployment";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronRight, Search } from "@multica/ui/icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -67,7 +68,10 @@ export function ChooseRuntimePage({
     runtimeListOptions(wsId),
   );
   const { data: members = [] } = useQuery(memberListOptions(wsId));
-  const { data: qoderConnection } = useQuery(qoderOptions(wsId));
+  const { data: qoderConnection } = useQuery({
+    ...qoderOptions(wsId),
+    enabled: deploymentOffers().hostedRuntimes,
+  });
   const { data: sessions = [] } = useQuery(agentBuilderSessionListOptions(wsId));
 
   useWSEvent("daemon:register", () => {

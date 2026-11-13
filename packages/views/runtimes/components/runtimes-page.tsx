@@ -1,5 +1,6 @@
 "use client";
 
+import { deploymentOffers } from "@multica/core/deployment";
 import {
   useCallback,
   useEffect,
@@ -185,7 +186,11 @@ export function RuntimesPage({
   const wsId = useWorkspaceId();
   const qc = useQueryClient();
   const paths = useWorkspacePaths();
-  const { data: qoderConnection, isLoading: qoderLoading } = useQuery(qoderOptions(wsId));
+  const offers = deploymentOffers();
+  const { data: qoderConnection, isLoading: qoderLoading } = useQuery({
+    ...qoderOptions(wsId),
+    enabled: offers.hostedRuntimes,
+  });
   const navigation = useNavigation();
   const [qoderDialogOpen, setQoderDialogOpen] = useState(false);
   const [showConnectDialog, setShowConnectDialog] = useState(false);
@@ -298,7 +303,8 @@ export function RuntimesPage({
     qoder !== null &&
     (statusFilter === "all" ||
       (qoderConfigured && matchesStatus(qoderIsOnline(qoder))));
-  const visibleComingSoon = statusFilter === "all" ? COMING_SOON_SERVICES : [];
+  const visibleComingSoon =
+    offers.hostedRuntimes && statusFilter === "all" ? COMING_SOON_SERVICES : [];
   const showThisComputerRow =
     !filtering && !isDesktop && machineList.length === 0;
   const showAddMachineRow = !filtering && machineList.length === 0;
@@ -470,7 +476,7 @@ export function RuntimesPage({
           count: configuredCloudCount,
           rows: cloudRows,
         },
-      ];
+      ].filter((group) => offers.hostedRuntimes || group.key !== "cloud");
   const rowHref = (row: RuntimeRow) =>
     row.kind === "machine"
       ? paths.runtimeDetail(row.machine.id)
@@ -639,6 +645,8 @@ function AddRuntimeMenu({
             onClick={onAddMachine}
           />
         </DropdownMenuGroup>
+        {deploymentOffers().hostedRuntimes && (
+          <>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuLabel>{t(($) => $.page.add_menu.cloud_services)}</DropdownMenuLabel>
@@ -684,6 +692,8 @@ function AddRuntimeMenu({
             />
           ))}
         </DropdownMenuGroup>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
