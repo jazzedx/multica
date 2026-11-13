@@ -1,94 +1,34 @@
-// Package analytics provides a buffered PostHog client.
-// Product events go through metrics.RecordEvent; current server events are
-// metrics-only. The client remains available for non-metrics-only events.
-//
-// Capture never blocks request handlers: a bounded queue drops excess events,
-// and a worker sends batches. Empty POSTHOG_API_KEY selects a no-op client.
+// Package analytics provides a no-op product-event client.
+// Capture call sites remain so handlers keep a uniform shape; events are dropped.
 package analytics
 
 import (
-	"log/slog"
 	"os"
 	"strings"
 	"time"
 )
 
-// Event is a single analytics capture. Fields mirror PostHog's /capture/ shape
-// but are framework-agnostic so alternate backends can plug in later.
+// Event is a single analytics capture. Fields mirror the historical event
+// shape so existing call sites compile without change.
 type Event struct {
-	// Name of the event (e.g. "signup", "workspace_created").
-	Name string
-
-	// DistinctID identifies the person this event belongs to. For logged-in
-	// users this is user.id; for anonymous events it should be the anon_id
-	// that was previously used on the frontend so identity merging works.
-	DistinctID string
-
-	// WorkspaceID scopes the event to a workspace. Required when the event is
-	// about a workspace-level action (workspace_created, issue_executed, ...).
-	// Empty is allowed for pre-workspace events (signup).
+	Name        string
+	DistinctID  string
 	WorkspaceID string
-
-	// Properties is the free-form bag of event attributes. Only serialisable
-	// values (string, number, bool, nested maps/slices of the same) should
-	// go here. Never put raw PII like full emails here — use email_domain.
-	Properties map[string]any
-
-	// SetOnce properties attach to the person record and are only written the
-	// first time they appear. Use this for acquisition attribution
-	// (initial_utm_source, etc.) so later events don't overwrite the origin.
-	SetOnce map[string]any
-
-	// Set properties attach to the person record and overwrite on every write.
-	// Use this for mutable cohort signals (role, use_case, platform_preference)
-	// that users can legitimately change during onboarding.
-	Set map[string]any
-
-	// Timestamp is optional; when zero the client fills in time.Now().
-	Timestamp time.Time
+	Properties  map[string]any
+	SetOnce     map[string]any
+	Set         map[string]any
+	Timestamp   time.Time
 }
 
-// Client is the narrow surface the rest of the codebase depends on. Handlers
-// call Capture and move on; the implementation is responsible for buffering,
-// batching, and shipping.
+// Client is the narrow surface the rest of the codebase depends on.
 type Client interface {
 	Capture(e Event)
-	// Close drains pending events. Call once during graceful shutdown.
 	Close()
 }
 
-// NewFromEnv returns a Client configured from environment variables:
-//
-//   - POSTHOG_API_KEY: project API key. Empty → no-op client.
-//   - POSTHOG_HOST:    API host (default https://us.i.posthog.com).
-//   - ANALYTICS_ENVIRONMENT: production/staging/dev. Defaults from APP_ENV.
-//   - ANALYTICS_DISABLED: set to "true"/"1" to force a no-op client even
-//     when POSTHOG_API_KEY is set (useful for CI and self-hosted opt-out).
+// NewFromEnv always returns a no-op client. Product telemetry is disabled.
 func NewFromEnv() Client {
-	if isDisabled() {
-		slog.Info("analytics disabled via ANALYTICS_DISABLED")
-		return NoopClient{}
-	}
-	key := os.Getenv("POSTHOG_API_KEY")
-	if key == "" {
-		slog.Info("analytics: POSTHOG_API_KEY not set, using noop client")
-		return NoopClient{}
-	}
-	host := os.Getenv("POSTHOG_HOST")
-	if host == "" {
-		host = "https://us.i.posthog.com"
-	}
-	slog.Info("analytics: posthog client enabled", "host", host)
-	return NewPostHogClient(PostHogConfig{
-		APIKey:      key,
-		Host:        host,
-		Environment: EnvironmentFromEnv(),
-	})
-}
-
-func isDisabled() bool {
-	v := os.Getenv("ANALYTICS_DISABLED")
-	return v == "true" || v == "1"
+	return NoopClient{}
 }
 
 func EnvironmentFromEnv() string {
@@ -114,8 +54,7 @@ func normalizeEnvironment(v string) string {
 	}
 }
 
-// NoopClient silently drops all events. Used in tests, in local dev when
-// POSTHOG_API_KEY is unset, and in self-hosted instances that opt out.
+// NoopClient silently drops all events.
 type NoopClient struct{}
 
 func (NoopClient) Capture(Event) {}

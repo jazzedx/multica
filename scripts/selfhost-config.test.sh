@@ -150,10 +150,7 @@ require_config "$config" 'DATABASE_MIN_CONNS: ""'
 # into the backend environment is the whole change once that is settled.
 not_passed_to_backend="$(
   cat <<'EOF'
-ANALYTICS_DISABLED                   Cloud product analytics (PostHog); self-host ships no key and opts out of telemetry with DO_NOT_TRACK
 ANALYTICS_ENVIRONMENT                Cloud product analytics (PostHog)
-POSTHOG_API_KEY                      Cloud product analytics (PostHog)
-POSTHOG_HOST                         Cloud product analytics (PostHog)
 FF_BILLING_WORKSPACE_SUBSCRIPTIONS   needs multica-cloud billing, which self-host does not run
 CLOUDFRONT_PRIVATE_KEY_SECRET        Cloud reads the key from AWS Secrets Manager; it outranks CLOUDFRONT_PRIVATE_KEY and .env.example ships a default name, so passing it would break the key self-host does pass
 MULTICA_FEATURE_FLAGS_FILE           a path inside the container: set it in a compose override together with the mount; FF_ variables cover single flags

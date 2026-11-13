@@ -36,7 +36,6 @@ vi.mock("../logger", async (importOriginal) => {
 vi.mock("../analytics", () => ({
   captureSignupSource: vi.fn(),
   identify: vi.fn(),
-  initAnalytics: vi.fn(),
   resetAnalytics: vi.fn(),
 }));
 
