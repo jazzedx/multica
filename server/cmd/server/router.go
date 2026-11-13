@@ -1961,58 +1961,6 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 					r.Get("/lark/install/{sessionId}/status", h.GetLarkInstallStatus)
 				})
 
-				// Slack integration (MUL-3666). Same admin/member split as
-				// Lark: listing is member-visible; OAuth begin + revoke are
-				// admin-only. The OAuth callback itself is a public route (it is
-				// hit by Slack's browser redirect with no workspace in the path)
-				// and is registered outside this workspace group.
-				r.Group(func(r chi.Router) {
-					r.Use(middleware.RequireWorkspaceMemberFromURL(queries, "id"))
-					r.Get("/slack/installations", h.ListSlackInstallations)
-					r.Get("/wecom/installations", h.ListWecomInstallations)
-				})
-				r.Group(func(r chi.Router) {
-					r.Use(middleware.RequireWorkspaceRoleFromURL(queries, "id", "owner", "admin"))
-					r.Delete("/slack/installations/{installationId}", h.RevokeSlackInstallation)
-					r.Post("/slack/install/byo", h.RegisterSlackBYO)
-					r.Delete("/wecom/installations/{installationId}", h.RevokeWecomInstallation)
-					r.Post("/wecom/install/byo", h.RegisterWecomBYO)
-					// Scan-code install creates and binds a bot, so it sits with
-					// the manual install and the revoke: whoever can connect a
-					// bot this way can also disconnect it.
-					r.Post("/wecom/install/begin", h.BeginWecomInstall)
-					r.Get("/wecom/install/{sessionId}", h.GetWecomInstallStatus)
-				})
-
-				r.Group(func(r chi.Router) {
-					r.Use(middleware.RequireWorkspaceMemberFromURL(queries, "id"))
-					r.Get("/dingtalk/installations", h.ListDingTalkInstallations)
-					r.Get("/dingtalk/groups", h.ListDingTalkGroups)
-					r.Delete("/dingtalk/installations/{installationId}/groups/{conversationId}", h.ForgetDingTalkGroup)
-					r.Delete("/dingtalk/installations/{installationId}", h.RevokeDingTalkInstallation)
-					r.Post("/dingtalk/install/byo", h.RegisterDingTalkBYO)
-				})
-
-				r.Group(func(r chi.Router) {
-					r.Use(middleware.RequireWorkspaceMemberFromURL(queries, "id"))
-					r.Get("/weixin/installations", h.ListWeixinInstallations)
-					r.Post("/weixin/logins", h.BeginWeixinLogin)
-					r.Post("/weixin/logins/{loginId}/poll", h.PollWeixinLogin)
-					r.Delete("/weixin/logins/{loginId}", h.CancelWeixinLogin)
-					r.Delete("/weixin/installations/{installationId}", h.RevokeWeixinInstallation)
-				})
-
-				// Telegram integration. Same admin/member split as Slack:
-				// listing is member-visible; install + revoke are admin-only.
-				r.Group(func(r chi.Router) {
-					r.Use(middleware.RequireWorkspaceMemberFromURL(queries, "id"))
-					r.Get("/telegram/installations", h.ListTelegramInstallations)
-				})
-				r.Group(func(r chi.Router) {
-					r.Use(middleware.RequireWorkspaceRoleFromURL(queries, "id", "owner", "admin"))
-					r.Delete("/telegram/installations/{installationId}", h.RevokeTelegramInstallation)
-					r.Post("/telegram/install", h.RegisterTelegramBot)
-				})
 			})
 		})
 
@@ -2023,23 +1971,6 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 		// the token only proves "this open_id requested binding," and
 		// is combined with the logged-in user to create the mapping.
 		r.Post("/api/lark/binding/redeem", h.RedeemLarkBindingToken)
-		// Slack binding-token redemption. Same rationale as Lark: NOT
-		// workspace-scoped because the redeemer hits this before they have any
-		// workspace context — the redemption itself mints their binding row. The
-		// logged-in user (from the session) is bound to the Slack id the token
-		// carries.
-		r.Post("/api/slack/binding/redeem", h.RedeemSlackBindingToken)
-		// DingTalk binding redemption is user-scoped for the same reason as
-		// Slack: the token is redeemed before workspace context is selected.
-		r.Post("/api/dingtalk/binding/redeem", h.RedeemDingTalkBindingToken)
-		// WeCom smart-bot binding-token redemption. Same rationale as
-		// Lark/Slack: the session is the source of truth for the redeemer's
-		// Multica identity; the token only carries the WeCom userid to bind.
-		r.Post("/api/wecom/binding/redeem", h.RedeemWecomBindingToken)
-		// Telegram binding-token redemption. Same rationale: not
-		// workspace-scoped, identity from the session, token proves only
-		// "this Telegram user id requested binding".
-		r.Post("/api/telegram/binding/redeem", h.RedeemTelegramBindingToken)
 
 		// Composio integration (MUL-3720). User-scoped (no workspace context):
 		// a connection belongs to a user. These four require a logged-in
@@ -2395,7 +2326,6 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 					r.Post("/restore", h.RestoreAgent)
 					r.Post("/cancel-tasks", h.CancelAgentTasks)
 					r.Get("/tasks", h.ListAgentTasks)
-					r.Get("/dingtalk/groups", h.ListDingTalkGroupsForAgent)
 					r.Get("/skills", h.ListAgentSkills)
 					r.Put("/skills", h.SetAgentSkills)
 					r.Post("/skills/add", h.AddAgentSkills)

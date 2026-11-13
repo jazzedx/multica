@@ -33,8 +33,8 @@ vi.mock("./channels-tab", async () => {
   return {
     ChannelsTab: () =>
       tabs.channelDetail ? (
-        <SettingsTab title="Slack" scope="workspace" breadcrumb={<nav>Messaging</nav>}>
-          <div>SlackDetail</div>
+        <SettingsTab title="Feishu" scope="workspace" breadcrumb={<nav>Messaging</nav>}>
+          <div>FeishuDetail</div>
         </SettingsTab>
       ) : (
         <SettingsTab title="Messaging" scope="workspace">
@@ -207,13 +207,13 @@ describe("SettingsPage header", () => {
   });
 
   it("shows a detail page as a trail back to its section", () => {
-    navigationState.search = "tab=channels&integration=slack";
+    navigationState.search = "tab=channels&integration=lark";
     tabs.channelDetail = true;
     renderWithI18n(<SettingsPage />);
 
     const header = pageHeader();
     const title = within(header.getByRole("heading", { level: 2 }));
-    expect(title.getByText("Slack")).toHaveAttribute("aria-current", "page");
+    expect(title.getByText("Feishu")).toHaveAttribute("aria-current", "page");
     const back = title.getByRole("link", { name: "Messaging" });
     expect(back.getAttribute("href")).toContain("tab=channels");
     expect(back.getAttribute("href")).not.toContain("integration");
@@ -390,7 +390,7 @@ describe("SettingsPage information architecture", () => {
   });
 
   it("navigates from the compact selector and clears the old detail", () => {
-    navigationState.search = "tab=channels&integration=slack&keep=1";
+    navigationState.search = "tab=channels&integration=lark&keep=1";
     renderWithI18n(<SettingsPage />);
     fireEvent.change(
       screen.getByRole("combobox", { name: "Go to settings page" }),
@@ -421,10 +421,10 @@ describe("SettingsPage search", () => {
     renderWithI18n(<SettingsPage />);
     const input = screen.getByRole("searchbox", { name: "Search settings" });
 
-    fireEvent.change(input, { target: { value: "slack" } });
+    fireEvent.change(input, { target: { value: "lark" } });
     fireEvent.keyDown(input, { key: "Enter" });
     expect(push).toHaveBeenCalledWith(
-      "/acme/settings?tab=channels&integration=slack",
+      "/acme/settings?tab=channels&integration=lark",
     );
 
     fireEvent.keyDown(input, { key: "Escape" });

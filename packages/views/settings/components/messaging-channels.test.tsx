@@ -1,10 +1,9 @@
-import { useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { Agent } from "@multica/core/types";
 import { renderWithI18n } from "../../test/i18n";
-import { api, ApiError } from "@multica/core/api";
+import { api } from "@multica/core/api";
 import {
   AgentChannelsSection,
   AgentChannelLinks,
@@ -53,30 +52,10 @@ vi.mock("@multica/core/api", async (original) => ({
   api: Object.fromEntries(
     [
       "listLarkInstallations",
-      "listSlackInstallations",
-      "listDingTalkInstallations",
-      "listWecomInstallations",
-      "listTelegramInstallations",
-      "listWeixinInstallations",
-      "beginWeixinLogin",
-      "pollWeixinLogin",
-      "cancelWeixinLogin",
-      "registerSlackBYO",
-      "registerDingTalkBYO",
-      "registerWecomBYO",
-      "registerTelegramBot",
       "deleteLarkInstallation",
-      "deleteSlackInstallation",
-      "deleteDingTalkInstallation",
-      "deleteWecomInstallation",
-      "deleteTelegramInstallation",
-      "deleteWeixinInstallation",
-      "listAgentDingTalkGroups",
       "listAgents",
       "beginLarkInstall",
       "getLarkInstallStatus",
-      "beginWecomInstall",
-      "getWecomInstallStatus",
     ].map((name) => [name, vi.fn()]),
   ),
 }));
@@ -122,21 +101,8 @@ beforeEach(() => {
   state.role = "admin";
   state.member = true;
   state.search = "tab=channels";
-  for (const name of [
-    "listLarkInstallations",
-    "listSlackInstallations",
-    "listDingTalkInstallations",
-    "listWecomInstallations",
-    "listTelegramInstallations",
-    "listWeixinInstallations",
-  ] as const) {
-    vi.mocked(api[name]).mockResolvedValue(listing() as never);
-  }
+  vi.mocked(api.listLarkInstallations).mockResolvedValue(listing() as never);
   vi.mocked(api.listAgents).mockResolvedValue([agent, otherAgent]);
-  vi.mocked(api.listAgentDingTalkGroups).mockResolvedValue({
-    groups: [],
-    group_discovery_supported: false,
-  });
   vi.mocked(api.beginLarkInstall).mockResolvedValue({
     session_id: "s1",
     qr_code_url: "https://accounts.feishu.cn/example",
@@ -173,56 +139,23 @@ describe("agent messaging channels", () => {
     },
   );
 
-  it("shows actionable DingTalk permission help instead of a healthy status", async () => {
-    vi.mocked(api.listDingTalkInstallations).mockResolvedValue(
-      listing([active]) as never,
-    );
-    vi.mocked(api.listAgentDingTalkGroups).mockResolvedValue({
-      groups: [],
-      group_discovery_supported: true,
-      bot_identities: {
-        i1: {
-          installation_id: "i1",
-          agent_id: agent.id,
-          bot_name: "",
-          bot_identity_issue: "missing_qyapi_chat_manage",
-        },
-      },
-    });
-    show(<AgentChannelsSection agent={agent} />);
-    expect(await screen.findByText("qyapi_chat_manage")).toBeInTheDocument();
-    expect(screen.getByText("Identity unavailable")).toBeInTheDocument();
-    expect(screen.getByText(/then @mention the bot again/)).toBeInTheDocument();
-    expect(screen.queryByText("Connected", { exact: true })).toBeNull();
-  });
-
   it("keeps recovery controls hidden for members who cannot manage the bot", async () => {
     state.role = "member";
     vi.mocked(api.listLarkInstallations).mockResolvedValue(
       listing([
-        { ...active, agent_id: otherAgent.id, app_id: "cli_readonly" },
+        {
+          ...active,
+          agent_id: otherAgent.id,
+          app_id: "cli_readonly",
+          first_message_received_at: "2026-11-10T00:00:00Z",
+        },
       ]) as never,
     );
-    vi.mocked(api.listDingTalkInstallations).mockResolvedValue(
-      listing([{ ...active, id: "d1", agent_id: otherAgent.id }]) as never,
-    );
-    vi.mocked(api.listAgentDingTalkGroups).mockResolvedValue({
-      groups: [],
-      group_discovery_supported: true,
-      bot_identities: {
-        d1: {
-          installation_id: "d1",
-          agent_id: otherAgent.id,
-          bot_name: "",
-          bot_identity_issue: "missing_qyapi_chat_manage",
-        },
-      },
-    });
     show(<AgentChannelsSection agent={otherAgent} />);
-    expect(await screen.findByText("Identity unavailable")).toBeInTheDocument();
+    expect(await screen.findByText("Connected")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Manage Lark" })).toBeNull();
-    expect(screen.queryByText("qyapi_chat_manage")).toBeNull();
   });
+
   it("does not offer management to someone without workspace membership", async () => {
     state.member = false;
     const { container } = show(<AgentChannelsSection agent={agent} />);
@@ -232,16 +165,15 @@ describe("agent messaging channels", () => {
     expect(container).toBeEmptyDOMElement();
     expect(api.listLarkInstallations).not.toHaveBeenCalled();
   });
+
   it("hides the empty section from a member who cannot manage the agent", async () => {
     state.role = "member";
     const { container } = show(<AgentChannelsSection agent={otherAgent} />);
-    await waitFor(() =>
-      expect(api.listTelegramInstallations).toHaveBeenCalled(),
-    );
+    await waitFor(() => expect(api.listLarkInstallations).toHaveBeenCalled());
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("gives an agent owner Feishu, DingTalk and WeChat, with admin-only platforms labelled", async () => {
+  it("lets an agent owner connect Feishu", async () => {
     state.role = "member";
     show(<AgentChannelsSection agent={agent} />);
     await waitFor(() =>
@@ -256,61 +188,33 @@ describe("agent messaging channels", () => {
     expect(
       within(dialog).getByRole("button", { name: /^Feishu$/ }),
     ).toBeEnabled();
-    expect(
-      within(dialog).getByRole("button", { name: /^DingTalk$/ }),
-    ).toBeEnabled();
-    expect(
-      within(dialog).getByRole("button", { name: /^WeChat$/ }),
-    ).toBeEnabled();
-    expect(
-      within(dialog).getByRole("button", { name: /Slack Ask an admin/ }),
-    ).toBeDisabled();
-    expect(
-      within(dialog).getByRole("button", { name: /Telegram Ask an admin/ }),
-    ).toBeDisabled();
-    expect(
-      within(dialog).getByRole("button", { name: /WeCom Ask an admin/ }),
-    ).toBeDisabled();
   });
 
-  it("hides unconfigured platforms from members", async () => {
+  it("shows a chat link to a read-only member", async () => {
     state.role = "member";
-    vi.mocked(api.listSlackInstallations).mockResolvedValue({
-      configured: false,
-      installations: [],
-    });
-    show(
-      <ChannelConnectDialog
-        agents={[agent]}
-        initialAgent={agent}
-        open
-        onOpenChange={vi.fn()}
-      />,
-    );
-    await screen.findByRole("button", { name: /^DingTalk$/ });
-    expect(screen.queryByRole("button", { name: /Slack/ })).toBeNull();
-  });
-
-  it("shows connected channels and a chat link to a read-only member", async () => {
-    state.role = "member";
-    vi.mocked(api.listTelegramInstallations).mockResolvedValue(
-      listing([{ ...active, bot_username: "mika_bot" }]) as never,
+    vi.mocked(api.listLarkInstallations).mockResolvedValue(
+      listing([
+        {
+          ...active,
+          agent_id: otherAgent.id,
+          app_id: "cli_mika",
+          region: "feishu",
+        },
+      ]) as never,
     );
     show(
       <>
         <AgentChannelLinks agent={otherAgent} />
         <AgentChannelsSection agent={otherAgent} />
-        <AgentChannelsSection agent={agent} />
-        <AgentChannelLinks agent={agent} />
       </>,
     );
     fireEvent.click(
-      await screen.findByRole("button", { name: "Find me on Telegram" }),
+      await screen.findByRole("button", { name: "Find me on Lark" }),
     );
-    expect(state.open).toHaveBeenCalledWith("https://t.me/mika_bot");
-    expect(
-      screen.queryByRole("button", { name: "Manage Telegram" }),
-    ).toBeNull();
+    expect(state.open).toHaveBeenCalledWith(
+      "https://applink.feishu.cn/client/bot/open?appId=cli_mika",
+    );
+    expect(screen.queryByRole("button", { name: "Manage Lark" })).toBeNull();
   });
 
   it("updates Lark from waiting to connected when inbound evidence arrives", async () => {
@@ -338,7 +242,7 @@ describe("agent messaging channels", () => {
   });
 
   it("does not display revoked connections or another agent's connection", async () => {
-    vi.mocked(api.listTelegramInstallations).mockResolvedValue(
+    vi.mocked(api.listLarkInstallations).mockResolvedValue(
       listing([
         { ...active, status: "revoked" },
         { ...active, id: "i2", agent_id: "agent-2" },
@@ -346,105 +250,43 @@ describe("agent messaging channels", () => {
     );
     show(<AgentChannelsSection agent={agent} />);
     await screen.findAllByRole("button", { name: "Add messaging channel" });
-    expect(screen.queryByText("Telegram")).toBeNull();
+    expect(screen.queryByText("Waiting for first message")).toBeNull();
   });
 
-  it.each(["lark", "slack", "dingtalk", "wecom", "telegram", "weixin"] as const)(
-    "confirms %s disconnect and preserves the connection on failure",
-    async (channel) => {
-      if (channel === "weixin") state.role = "member";
-      const methods = {
-        lark: ["listLarkInstallations", "deleteLarkInstallation"],
-        slack: ["listSlackInstallations", "deleteSlackInstallation"],
-        dingtalk: ["listDingTalkInstallations", "deleteDingTalkInstallation"],
-        wecom: ["listWecomInstallations", "deleteWecomInstallation"],
-        telegram: ["listTelegramInstallations", "deleteTelegramInstallation"],
-        weixin: ["listWeixinInstallations", "deleteWeixinInstallation"],
-      } as const;
-      const [list, remove] = methods[channel];
-      vi.mocked(api[list]).mockResolvedValue(listing([active]) as never);
-      vi.mocked(api[remove])
-        .mockRejectedValueOnce(new Error("Disconnect failed"))
-        .mockResolvedValueOnce(undefined);
-      show(<AgentChannelsSection agent={agent} />);
-      fireEvent.click(await screen.findByRole("button", { name: /^Manage / }));
-      fireEvent.click(
-        await screen.findByRole("menuitem", { name: "Disconnect" }),
-      );
-      const dialog = await screen.findByRole("alertdialog");
-      expect(api[remove]).not.toHaveBeenCalled();
-      fireEvent.click(
+  it("confirms Feishu disconnect and preserves the connection on failure", async () => {
+    vi.mocked(api.listLarkInstallations).mockResolvedValue(
+      listing([active]) as never,
+    );
+    vi.mocked(api.deleteLarkInstallation)
+      .mockRejectedValueOnce(new Error("Disconnect failed"))
+      .mockResolvedValueOnce(undefined);
+    show(<AgentChannelsSection agent={agent} />);
+    fireEvent.click(await screen.findByRole("button", { name: /^Manage / }));
+    fireEvent.click(
+      await screen.findByRole("menuitem", { name: "Disconnect" }),
+    );
+    const dialog = await screen.findByRole("alertdialog");
+    expect(api.deleteLarkInstallation).not.toHaveBeenCalled();
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Disconnect" }),
+    );
+    await waitFor(() =>
+      expect(api.deleteLarkInstallation).toHaveBeenCalledWith("ws-1", "i1"),
+    );
+    await waitFor(() =>
+      expect(
         within(dialog).getByRole("button", { name: "Disconnect" }),
-      );
-      await waitFor(() =>
-        expect(api[remove]).toHaveBeenCalledWith("ws-1", "i1"),
-      );
-      await waitFor(() =>
-        expect(
-          within(dialog).getByRole("button", { name: "Disconnect" }),
-        ).toBeEnabled(),
-      );
-      expect(dialog).toBeInTheDocument();
-      fireEvent.click(
-        within(dialog).getByRole("button", { name: "Disconnect" }),
-      );
-      await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
-    },
-  );
+      ).toBeEnabled(),
+    );
+    expect(dialog).toBeInTheDocument();
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Disconnect" }),
+    );
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+  });
 });
 
-const platformName = {
-  slack: "Slack",
-  dingtalk: "DingTalk",
-  wecom: "WeCom",
-  telegram: "Telegram",
-} as const;
-
 describe("shared connection dialog", () => {
-  it("shows the WeChat QR to the agent owner and cancels it on close", async () => {
-    state.role = "member";
-    const login = {
-      id: "login-1",
-      status: "wait",
-      qr_code_url: "https://weixin.qq.com/test-qr",
-      expires_at: new Date(Date.now() + 300_000).toISOString(),
-    };
-    vi.mocked(api.beginWeixinLogin).mockResolvedValue(login);
-    vi.mocked(api.pollWeixinLogin).mockResolvedValue(login);
-    vi.mocked(api.cancelWeixinLogin).mockResolvedValue(undefined);
-    function Harness() {
-      const [open, setOpen] = useState(true);
-      return (
-        <ChannelConnectDialog
-          agents={[agent]}
-          initialAgent={agent}
-          initialChannel="weixin"
-          open={open}
-          onOpenChange={setOpen}
-        />
-      );
-    }
-    show(<Harness />);
-    const platform = await screen.findByRole("button", { name: "WeChat" });
-    await waitFor(() => expect(platform).toBeEnabled());
-    fireEvent.click(platform);
-    const qr = await screen.findByTitle("WeChat connection QR code");
-    expect(api.beginWeixinLogin).toHaveBeenCalledWith("ws-1", agent.id);
-    expect(screen.queryByRole("button", { name: "Connect WeChat" })).toBeNull();
-    const guide = screen.getByRole("button", { name: "Setup guide" });
-    expect(
-      qr.compareDocumentPosition(guide) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    fireEvent.click(guide);
-    expect(state.open).toHaveBeenCalledWith(
-      "https://multica.ai/docs/weixin-bot-integration",
-    );
-    // The footer's Close; the header's icon button shares the name.
-    fireEvent.click(screen.getAllByRole("button", { name: "Close" })[0]!);
-    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    expect(api.cancelWeixinLogin).toHaveBeenCalledWith("ws-1", login.id);
-  });
-
   it("offers only Feishu for new connections while international Lark is disabled", async () => {
     show(
       <ChannelConnectDialog
@@ -471,47 +313,7 @@ describe("shared connection dialog", () => {
     );
   });
 
-  it("offers the WeCom QR flow only when the server supports it", async () => {
-    vi.mocked(api.listWecomInstallations).mockResolvedValue({
-      configured: true,
-      install_supported: true,
-      scan_install_supported: true,
-      installations: [],
-    });
-    vi.mocked(api.beginWecomInstall).mockResolvedValue({
-      session_id: "wecom-session",
-      status: "creating",
-      poll_interval_seconds: 1,
-    });
-    show(
-      <ChannelConnectDialog
-        agents={[agent]}
-        initialAgent={agent}
-        initialChannel="wecom"
-        open
-        onOpenChange={vi.fn()}
-      />,
-    );
-    expect(screen.queryByLabelText("Connection method")).toBeNull();
-    const wecom = await screen.findByRole("button", { name: "WeCom" });
-    await waitFor(() => expect(wecom).toBeEnabled());
-    fireEvent.click(wecom);
-    await screen.findByTestId("wecom-scan-starting");
-    expect(screen.getByLabelText("Connection method")).toHaveValue("scan");
-    expect(api.beginWecomInstall).toHaveBeenCalledWith(
-      "ws-1",
-      "agent-1",
-      expect.any(String),
-    );
-    fireEvent.change(screen.getByLabelText("Connection method"), {
-      target: { value: "credentials" },
-    });
-    expect(screen.queryByTestId("wecom-scan-starting")).toBeNull();
-    expect(screen.getByLabelText("Bot ID")).toBeInTheDocument();
-    expect(api.registerWecomBYO).not.toHaveBeenCalled();
-  });
-
-  it("starts the connection as soon as a platform is clicked", async () => {
+  it("starts the Feishu connection as soon as the platform is clicked", async () => {
     show(
       <ChannelConnectDialog
         agents={[agent]}
@@ -521,99 +323,15 @@ describe("shared connection dialog", () => {
       />,
     );
     expect(screen.queryByRole("button", { name: "Continue" })).toBeNull();
-    const telegram = await screen.findByRole("button", { name: "Telegram" });
-    await waitFor(() => expect(telegram).toBeEnabled());
-    fireEvent.click(telegram);
-    expect(screen.getByLabelText("Bot token")).toBeInTheDocument();
-    expect(screen.getByText("Connect Mika to Telegram.")).toBeInTheDocument();
-  });
-
-  it.each([
-    [
-      "slack",
-      "registerSlackBYO",
-      ["Bot token (xoxb-)", "App-level token (xapp-)"],
-      { bot_token: "first", app_token: "second" },
-    ],
-    [
-      "dingtalk",
-      "registerDingTalkBYO",
-      ["AppKey (client id)", "AppSecret (client secret)"],
-      { client_id: "first", client_secret: "second" },
-    ],
-    [
-      "wecom",
-      "registerWecomBYO",
-      ["Bot ID", "Long-connection secret"],
-      { bot_id: "first", secret: "second", bot_name: undefined },
-    ],
-    ["telegram", "registerTelegramBot", ["Bot token"], { bot_token: "first" }],
-  ] as const)(
-    "submits %s through the existing API and closes after success",
-    async (channel, method, labels, payload) => {
-      const close = vi.fn();
-      vi.mocked(api[method]).mockResolvedValue(active as never);
-      show(
-        <ChannelConnectDialog
-          agents={[agent]}
-          initialAgent={agent}
-          initialChannel={channel}
-          open
-          onOpenChange={close}
-        />,
-      );
-      const row = await screen.findByRole("button", {
-        name: new RegExp(`^${platformName[channel]}$`),
-      });
-      await waitFor(() => expect(row).toBeEnabled());
-      fireEvent.click(row);
-      labels.forEach((label, index) =>
-        fireEvent.change(screen.getByLabelText(label), {
-          target: { value: index === 0 ? " first " : " second " },
-        }),
-      );
-      expect(screen.getByLabelText(labels.at(-1)!)).toHaveAttribute(
-        "type",
-        "password",
-      );
-      fireEvent.click(screen.getByRole("button", { name: "Connect" }));
-      await waitFor(() =>
-        expect(api[method]).toHaveBeenCalledWith("ws-1", "agent-1", payload),
-      );
-      await waitFor(() => expect(close).toHaveBeenCalledWith(false));
-    },
-  );
-
-  it("keeps inputs and localized WeCom errors after rejected credentials", async () => {
-    vi.mocked(api.registerWecomBYO).mockRejectedValue(
-      new ApiError("English server detail", 400, "Bad Request", {
-        code: "wecom_credentials_rejected",
-      }),
-    );
-    show(
-      <ChannelConnectDialog
-        agents={[agent]}
-        initialAgent={agent}
-        initialChannel="wecom"
-        open
-        onOpenChange={vi.fn()}
-      />,
-    );
-    const wecom = await screen.findByRole("button", { name: "WeCom" });
-    await waitFor(() => expect(wecom).toBeEnabled());
-    fireEvent.click(wecom);
-    fireEvent.change(screen.getByLabelText("Bot ID"), {
-      target: { value: "bot" },
-    });
-    fireEvent.change(screen.getByLabelText("Long-connection secret"), {
-      target: { value: "secret" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Connect" }));
-    expect(await screen.findByRole("alert")).not.toHaveTextContent(
-      "English server detail",
-    );
-    expect(screen.getByLabelText("Long-connection secret")).toHaveValue(
-      "secret",
+    const feishu = await screen.findByRole("button", { name: "Feishu" });
+    await waitFor(() => expect(feishu).toBeEnabled());
+    fireEvent.click(feishu);
+    await waitFor(() =>
+      expect(api.beginLarkInstall).toHaveBeenCalledWith(
+        "ws-1",
+        "agent-1",
+        "feishu",
+      ),
     );
   });
 
@@ -621,42 +339,48 @@ describe("shared connection dialog", () => {
     show(
       <ChannelConnectDialog
         agents={[agent, otherAgent]}
-        initialChannel="telegram"
+        initialChannel="lark"
         open
         onOpenChange={vi.fn()}
       />,
     );
-    const telegram = await screen.findByRole("button", { name: "Telegram" });
-    expect(telegram).toBeDisabled();
+    const feishu = await screen.findByRole("button", { name: "Feishu" });
+    expect(feishu).toBeDisabled();
     fireEvent.change(screen.getByLabelText("Agent"), {
       target: { value: "agent-2" },
     });
-    await waitFor(() => expect(telegram).toBeEnabled());
-    fireEvent.click(telegram);
-    expect(screen.getByLabelText("Bot token")).toBeInTheDocument();
+    await waitFor(() => expect(feishu).toBeEnabled());
+    fireEvent.click(feishu);
+    await waitFor(() =>
+      expect(api.beginLarkInstall).toHaveBeenCalledWith(
+        "ws-1",
+        "agent-2",
+        "feishu",
+      ),
+    );
   });
 });
 
 describe("workspace overview", () => {
   it("lets admins disconnect an installation whose agent was deleted", async () => {
-    vi.mocked(api.listTelegramInstallations).mockResolvedValue(
+    vi.mocked(api.listLarkInstallations).mockResolvedValue(
       listing([{ ...active, agent_id: "deleted-agent" }]) as never,
     );
-    vi.mocked(api.deleteTelegramInstallation).mockResolvedValue(undefined);
+    vi.mocked(api.deleteLarkInstallation).mockResolvedValue(undefined);
     show(<ChannelsTab />);
     expect(await screen.findByText("Agent unavailable")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Disconnect" }));
     const dialog = await screen.findByRole("alertdialog");
-    expect(api.deleteTelegramInstallation).not.toHaveBeenCalled();
+    expect(api.deleteLarkInstallation).not.toHaveBeenCalled();
     fireEvent.click(within(dialog).getByRole("button", { name: "Disconnect" }));
     await waitFor(() =>
-      expect(api.deleteTelegramInstallation).toHaveBeenCalledWith("ws-1", "i1"),
+      expect(api.deleteLarkInstallation).toHaveBeenCalledWith("ws-1", "i1"),
     );
   });
 
   it("links each connected agent to their channels, and redirects old detail links", async () => {
     state.search = "tab=channels&integration=slack";
-    vi.mocked(api.listSlackInstallations).mockResolvedValue(
+    vi.mocked(api.listLarkInstallations).mockResolvedValue(
       listing([active]) as never,
     );
     show(<ChannelsTab />);
@@ -666,13 +390,11 @@ describe("workspace overview", () => {
     );
     expect(state.replace).toHaveBeenCalledWith("/acme/settings?tab=channels");
     expect(screen.getByText("Who can connect")).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Connect" })).toHaveLength(6);
+    expect(screen.getAllByRole("button", { name: "Connect" })).toHaveLength(1);
   });
 
   it("reports failed reads as unavailable and keeps a retry control", async () => {
-    vi.mocked(api.listTelegramInstallations).mockRejectedValue(
-      new Error("offline"),
-    );
+    vi.mocked(api.listLarkInstallations).mockRejectedValue(new Error("offline"));
     show(<ChannelsTab />);
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Status unavailable",

@@ -82,8 +82,8 @@ describe("settings location", () => {
         "/acme/settings",
         new URLSearchParams("tab=preferences&section=chat&scope=skill&keep=1"),
         "channels",
-        { integration: "slack" },
+        { integration: "lark" },
       ),
-    ).toBe("/acme/settings?tab=channels&keep=1&integration=slack");
+    ).toBe("/acme/settings?tab=channels&keep=1&integration=lark");
   });
 });

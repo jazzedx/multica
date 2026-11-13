@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { useEffect } from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { Agent, AgentRuntime } from "@multica/core/types";
@@ -48,38 +48,8 @@ vi.mock("./tabs/runtime-config-tab", () => ({
   RuntimeConfigTab: () => <div>runtime-config-tab</div>,
 }));
 
-// Whether the Integrations section is worth showing depends on the
-// deployment having a channel integration configured. Each listing is
-// backed by a ref so a test can flip `configured`.
-const larkListingRef = vi.hoisted(() => ({
-  current: { installations: [] as unknown[], configured: false },
-}));
-const slackListingRef = vi.hoisted(() => ({
-  current: { installations: [] as unknown[], configured: false },
-}));
-const telegramListingRef = vi.hoisted(() => ({
-  current: { installations: [] as unknown[], configured: false },
-}));
 vi.mock("@multica/core/hooks", () => ({
   useWorkspaceId: () => "ws-1",
-}));
-vi.mock("@multica/core/lark", () => ({
-  larkInstallationsOptions: () => ({
-    queryKey: ["lark", "installations"],
-    queryFn: () => Promise.resolve(larkListingRef.current),
-  }),
-}));
-vi.mock("@multica/core/slack", () => ({
-  slackInstallationsOptions: () => ({
-    queryKey: ["slack", "installations"],
-    queryFn: () => Promise.resolve(slackListingRef.current),
-  }),
-}));
-vi.mock("@multica/core/telegram", () => ({
-  telegramInstallationsOptions: () => ({
-    queryKey: ["telegram", "installations"],
-    queryFn: () => Promise.resolve(telegramListingRef.current),
-  }),
 }));
 
 import { AgentAdvancedSettings, type AdvancedSection } from "./agent-advanced-settings";
@@ -177,12 +147,6 @@ function renderDialog(
 const sectionNames = () =>
   screen.getAllByRole("tab").map((tab) => tab.textContent);
 
-beforeEach(() => {
-  larkListingRef.current = { installations: [], configured: false };
-  slackListingRef.current = { installations: [], configured: false };
-  telegramListingRef.current = { installations: [], configured: false };
-});
-
 describe("AgentAdvancedSettings MCP section visibility", () => {
   it.each([
     ["Claude", "claude"],
@@ -211,29 +175,6 @@ describe("AgentAdvancedSettings MCP section visibility", () => {
     // the runtimes query resolving. Hiding it would flicker it off and back on.
     renderDialog([]);
     expect(screen.getByRole("tab", { name: /^MCP$/i })).toBeInTheDocument();
-  });
-});
-
-describe("AgentAdvancedSettings Integrations section visibility", () => {
-  it.each([
-    ["Lark", larkListingRef],
-    // Regression: the gate must consider Slack too, not just Lark — a
-    // Slack-only deployment was hiding the section (and its bind entry).
-    ["Slack", slackListingRef],
-    ["Telegram", telegramListingRef],
-  ])("keeps channels out of settings when %s is configured", async (_name, ref) => {
-    ref.current = { installations: [], configured: true };
-    renderDialog([makeRuntime("claude")]);
-    expect(
-      screen.queryByRole("tab", { name: /^Integrations$/i }),
-    ).not.toBeInTheDocument();
-  });
-
-  it("hides Integrations when no channel integration is configured", () => {
-    renderDialog([makeRuntime("claude")]);
-    expect(
-      screen.queryByRole("tab", { name: /^Integrations$/i }),
-    ).not.toBeInTheDocument();
   });
 });
 
@@ -285,19 +226,6 @@ describe("AgentAdvancedSettings section lists", () => {
   it("drops what the Qoder bridge rejects and names the Qoder Cloud Agents section", () => {
     renderDialog([makeRuntime("qoder_cloud")]);
     expect(sectionNames()).toEqual(["General", "Access", "Qoder Cloud Agents"]);
-  });
-
-  it("keeps channel management out of Qoder advanced settings", async () => {
-    larkListingRef.current = { installations: [], configured: true };
-    renderDialog([makeRuntime("qoder_cloud")]);
-    expect(
-      screen.queryByRole("tab", { name: /^Integrations$/i }),
-    ).not.toBeInTheDocument();
-    expect(sectionNames()).toEqual([
-      "General",
-      "Access",
-      "Qoder Cloud Agents",
-    ]);
   });
 
   it("renders nothing while closed", () => {
