@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { api, ApiError } from "@multica/core/api";
 import type { RuntimeUpdate } from "@multica/core/types";
 import { I18nProvider } from "@multica/core/i18n/react";
+import { configStore } from "@multica/core/config";
 import enCommon from "../../locales/en/common.json";
 import enRuntimes from "../../locales/en/runtimes.json";
 import { UpdateSection } from "./update-section";
@@ -38,9 +39,18 @@ function renderSection(props: {
   );
 }
 
+// The public release is the reference on the managed cloud only, which is what
+// the suites below exercise unless they say otherwise.
+beforeEach(() => {
+  configStore.getState().setDaemonConfig({ daemonSetupTarget: "cloud" });
+  configStore.getState().setServerVersion("");
+});
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  configStore.getState().setDaemonConfig({ daemonSetupTarget: "unknown" });
+  configStore.getState().setServerVersion("");
 });
 
 describe("UpdateSection read-only status", () => {
@@ -327,5 +337,54 @@ describe("UpdateSection queued updates", () => {
       await screen.findByText("Expired after waiting 24 hours for the machine to go idle."),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Update" })).toBeInTheDocument();
+  });
+});
+
+describe("UpdateSection against a self-hosted server", () => {
+  const SERVER_BUILD = "v0.9.0-12-g547ea952c";
+
+  beforeEach(() => {
+    configStore.getState().setDaemonConfig({
+      daemonSetupTarget: "self_host",
+      daemonServerUrl: "https://multica.example.com",
+      daemonAppUrl: "https://multica.example.com",
+    });
+    configStore.getState().setServerVersion(SERVER_BUILD);
+  });
+
+  it("offers the server's build to a runtime on another one, without asking GitHub", async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+
+    renderSection({ runtimeId: "rt-1", currentVersion: "v0.9.0-11-g52a51c85f" });
+
+    expect(await screen.findByText(SERVER_BUILD)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Update" })).toBeInTheDocument();
+    expect(screen.queryByText("Local build")).not.toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("reports a runtime on the server's build as Latest", async () => {
+    vi.stubGlobal("fetch", vi.fn());
+
+    renderSection({ runtimeId: "rt-1", currentVersion: SERVER_BUILD });
+
+    expect(await screen.findByText("Latest")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Update" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("asks the runtime for the server's version when Update is pressed", async () => {
+    vi.stubGlobal("fetch", vi.fn());
+    const { api } = await import("@multica/core/api");
+    vi.mocked(api.initiateUpdate).mockResolvedValue({ id: "upd-1" } as never);
+
+    renderSection({ runtimeId: "rt-1", currentVersion: "v0.9.0-11-g52a51c85f" });
+    (await screen.findByRole("button", { name: "Update" })).click();
+
+    await vi.waitFor(() =>
+      expect(api.initiateUpdate).toHaveBeenCalledWith("rt-1", SERVER_BUILD),
+    );
   });
 });

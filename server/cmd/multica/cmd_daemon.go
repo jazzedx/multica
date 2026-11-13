@@ -1631,6 +1631,9 @@ func printDaemonStatusReport(w io.Writer, label string, health map[string]any) {
 	if version, ok := health["cli_version"].(string); ok && version != "" {
 		rows = append(rows, row{"Version", version})
 	}
+	if update, ok := health["server_cli_update"].(string); ok && update != "" {
+		rows = append(rows, row{"Update", update + " is available from the server (run 'multica update')"})
+	}
 	// Answers "why is a daemon running that I never started?" — the reporter's
 	// ask in #6694. Only rendered when the daemon names a manager, so a
 	// standalone daemon and an older one that cannot say both stay unchanged.

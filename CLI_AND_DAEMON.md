@@ -180,17 +180,28 @@ multica daemon start --no-auto-reload
 multica config set disable_auto_reload true
 ```
 
-#### Following the self-hosted server's build
+#### Updating to the self-hosted server's build
 
-A daemon logged in to a self-hosted server also compares its build commit with
-the server's. When they differ it downloads the CLI that server ships from its
-own build, verifies the checksum, replaces its binary and restarts once no task
-is running. `multica update` takes the same path instead of the GitHub release.
+A daemon logged in to a self-hosted server compares its build commit with the
+server's every ten minutes. When they differ it does not replace anything on
+its own; it says so, and the update is yours to start:
+
+- The runtime's page in the web app shows the server's version next to the
+  machine's, with an **Update** button. Pressing it asks that machine's daemon
+  to download the CLI the server ships, verify its checksum, replace its binary
+  and restart. It is refused while a task is running, so retry when the machine
+  is idle.
+- On the machine itself, `multica daemon status` shows the same notice and
+  `multica update` installs the server's build instead of the GitHub release.
+
 A server that ships no CLI, or one built for another platform, leaves the local
-binary in place. To turn it off:
+binary in place.
+
+To have a daemon install the server's build without being asked, as soon as no
+task is running:
 
 ```bash
-MULTICA_DAEMON_FOLLOW_SERVER=0 multica daemon start
+MULTICA_DAEMON_FOLLOW_SERVER=1 multica daemon start
 ```
 
 Agent CLIs (codex, claude, ...) are handled differently: when one of them is

@@ -132,7 +132,10 @@ func (d *Daemon) autoUpdateLoop(ctx context.Context) {
 		d.logger.Info("auto-reload: disabled")
 	}
 	followEnabled := d.serverCLIFollowEnabled()
-	if !pullEnabled && !reloadEnabled && !followEnabled {
+	// Without following, the daemon still checks the server's build so it can
+	// say when an update is there to take.
+	watchEnabled := !followEnabled && d.serverCLIWatchEnabled()
+	if !pullEnabled && !reloadEnabled && !followEnabled && !watchEnabled {
 		return
 	}
 
@@ -153,6 +156,10 @@ func (d *Daemon) autoUpdateLoop(ctx context.Context) {
 		d.logger.Info("server cli: following the logged-in server build",
 			"interval", selfReloadCheckInterval, "commit", d.cfg.CLIShortCommit)
 	}
+	if watchEnabled {
+		d.logger.Info("server cli: watching the logged-in server build for updates",
+			"interval", selfReloadCheckInterval, "commit", d.cfg.CLIShortCommit)
+	}
 
 	if err := sleepWithContext(ctx, autoUpdateInitialDelay); err != nil {
 		return
@@ -166,6 +173,9 @@ func (d *Daemon) autoUpdateLoop(ctx context.Context) {
 	if followEnabled {
 		d.tryFollowServerCLI(ctx)
 	}
+	if watchEnabled {
+		d.noteServerCLI(ctx)
+	}
 
 	// Tickers start only now, after the first check. Starting them before the
 	// delay would let an interval shorter than autoUpdateInitialDelay buffer a
@@ -178,7 +188,7 @@ func (d *Daemon) autoUpdateLoop(ctx context.Context) {
 		defer ticker.Stop()
 		pullTick = ticker.C
 	}
-	if reloadEnabled || followEnabled {
+	if reloadEnabled || followEnabled || watchEnabled {
 		ticker := time.NewTicker(selfReloadCheckInterval)
 		defer ticker.Stop()
 		reloadTick = ticker.C
@@ -196,6 +206,9 @@ func (d *Daemon) autoUpdateLoop(ctx context.Context) {
 			}
 			if followEnabled {
 				d.tryFollowServerCLI(ctx)
+			}
+			if watchEnabled {
+				d.noteServerCLI(ctx)
 			}
 		}
 	}

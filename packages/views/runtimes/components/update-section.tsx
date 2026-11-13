@@ -10,6 +10,7 @@ import {
 } from "@multica/ui/icons";
 import { Button } from "@multica/ui/components/ui/button";
 import { api, ApiError } from "@multica/core/api";
+import { useConfigStore } from "@multica/core/config";
 import type { RuntimeUpdate, RuntimeUpdateStatus } from "@multica/core/types";
 import { useT } from "../../i18n";
 
@@ -81,6 +82,18 @@ function isNewer(latest: string, current: string): boolean {
   return false;
 }
 
+/**
+ * True when both strings name the same build.
+ *
+ * A self-hosted server builds its CLI alongside itself, so the two carry the
+ * same version string and there is nothing to order: a runtime either runs the
+ * server's build or it does not.
+ */
+function sameBuild(a: string, b: string): boolean {
+  const normalize = (v: string) => v.trim().replace(/^v/, "");
+  return normalize(a) === normalize(b);
+}
+
 type ShownStatus = "pending" | "scheduled" | "running" | "completed" | "failed" | "timeout";
 
 const statusConfig: Record<ShownStatus, { icon: typeof Loader2; color: string }> = {
@@ -139,17 +152,24 @@ export function UpdateSection({
 }: UpdateSectionProps) {
   const { t } = useT("runtimes");
   const isManaged = launchedBy === "desktop";
-  const [latestVersion, setLatestVersion] = useState<string | null>(null);
+  const setupTarget = useConfigStore((state) => state.daemonSetupTarget);
+  const serverVersion = useConfigStore((state) => state.serverVersion);
+  // A self-hosted server ships the CLI its runtimes should be on. Only the
+  // managed cloud follows the public release, so nothing else asks GitHub.
+  const followsServer = setupTarget === "self_host";
+  const [releaseVersion, setReleaseVersion] = useState<string | null>(null);
+  const latestVersion = followsServer ? serverVersion || null : releaseVersion;
   // The machine's update as the server last reported it.
   const [update, setUpdate] = useState<RuntimeUpdate | null>(null);
   const [note, setNote] = useState<Note | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
 
-  // Fetch latest version on mount.
+  // Fetch the latest public release, on the managed cloud only.
   useEffect(() => {
-    fetchLatestVersion().then(setLatestVersion);
-  }, []);
+    if (setupTarget !== "cloud") return;
+    fetchLatestVersion().then(setReleaseVersion);
+  }, [setupTarget]);
 
   // A reload, or another runtime of the same daemon, picks up the queue.
   // Switching machines replaces whatever the previous one showed.
@@ -194,10 +214,13 @@ export function UpdateSection({
   // exact match counts: a CLI request may target an older version.
   useEffect(() => {
     if (update?.status !== "running" || !currentVersion) return;
-    if (sameReleaseVersion(update.target_version, currentVersion)) {
+    const reached = followsServer
+      ? sameBuild(update.target_version, currentVersion)
+      : sameReleaseVersion(update.target_version, currentVersion);
+    if (reached) {
       setUpdate({ ...update, status: "completed", output: `Updated to ${update.target_version}` });
     }
-  }, [currentVersion, update]);
+  }, [currentVersion, followsServer, update]);
 
   // Let the re-fetched runtime show the new version after a moment.
   useEffect(() => {
@@ -247,14 +270,21 @@ export function UpdateSection({
   const hasUpdate =
     currentVersion &&
     latestVersion &&
-    isNewer(latestVersion, currentVersion);
+    (followsServer
+      ? !sameBuild(latestVersion, currentVersion)
+      : isNewer(latestVersion, currentVersion));
 
   // A source build cannot be ordered against a release tag, so neither
   // "update available" nor "Latest" is a claim we can make. Say that, rather
   // than defaulting to "Latest" and telling the operator their local binary is
   // up to date when we never parsed its version.
+  //
+  // Against a self-hosted server the question does not arise: every build is
+  // compared with the server's by identity, release-shaped or not.
   const isLocalBuild =
-    !!currentVersion && parseReleaseVersion(currentVersion) === null;
+    !followsServer &&
+    !!currentVersion &&
+    parseReleaseVersion(currentVersion) === null;
 
   // Cancelled, expired, and neutral failures leave the card idle with a note.
   const neutral = update ? neutralFailure(update) : null;
