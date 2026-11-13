@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/multica-ai/multica/server/internal/cli"
+	"github.com/multica-ai/multica/server/internal/daemon"
 )
 
 var updateDownloadTimeout time.Duration = cli.DefaultUpdateDownloadTimeout
@@ -29,6 +31,12 @@ func runUpdate(_ *cobra.Command, _ []string) error {
 	}
 
 	fmt.Fprintf(os.Stderr, "Current version: %s (commit: %s, built: %s)\n", version, commit, date)
+
+	// A self-hosted deployment does not pull the official release from GitHub:
+	// that would overwrite this customized CLI.
+	if cfg, err := cli.LoadCLIConfig(); err == nil && cfg.Token != "" && cfg.ServerURL != "" && !daemon.IsOfficialCloudServer(cfg.ServerURL) {
+		return updateFromSelfHost(cfg.ServerURL, cfg.Token)
+	}
 
 	// Check the configured release source.
 	latest, err := cli.FetchLatestRelease()
@@ -67,5 +75,31 @@ func runUpdate(_ *cobra.Command, _ []string) error {
 		return fmt.Errorf("update failed: %w", err)
 	}
 	fmt.Fprintf(os.Stderr, "%s\nUpdate complete.\n", output)
+	return nil
+}
+
+func updateFromSelfHost(serverURL, token string) error {
+	fmt.Fprintf(os.Stderr, "Checking the CLI published by %s...\n", serverURL)
+	rel, err := cli.FetchServerCLIMetadata(context.Background(), serverURL, token)
+	if err != nil {
+		return fmt.Errorf("update from self-hosted server failed: %w", err)
+	}
+	if rel.Commit == commit {
+		fmt.Fprintln(os.Stderr, "Already up to date.")
+		return nil
+	}
+	archive, err := cli.DownloadServerCLIArchive(context.Background(), serverURL, token)
+	if err != nil {
+		return fmt.Errorf("update from self-hosted server failed: %w", err)
+	}
+	updated, err := cli.ApplyServerCLI(commit, rel, archive)
+	if err != nil {
+		return fmt.Errorf("update from self-hosted server failed: %w", err)
+	}
+	if !updated {
+		fmt.Fprintln(os.Stderr, "Already up to date.")
+		return nil
+	}
+	fmt.Fprintf(os.Stderr, "Updated to %s (%s).\n", rel.Version, rel.Commit)
 	return nil
 }

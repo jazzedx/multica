@@ -1863,6 +1863,10 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 		r.Get("/api/theme-store/themes/{themeId}/package", h.GetStoreThemePackage)
 		r.Get("/api/theme-store/themes/{themeId}/screenshots/{mode}", h.GetStoreThemeScreenshot)
 		r.Get("/api/me", h.GetMe)
+		// The CLI on a self-hosted machine collects the binary from the server's
+		// own build here. Uses the same login session as /api/me.
+		r.Get("/api/cli/release", handleCLIRelease)
+		r.Get("/api/cli/release/archive", handleCLIReleaseArchive)
 		r.Patch("/api/me", h.UpdateMe)
 		r.Patch("/api/me/onboarding", h.PatchOnboarding)
 		r.Post("/api/me/onboarding/complete", h.CompleteOnboarding)
