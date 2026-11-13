@@ -1,6 +1,13 @@
 packages:
   - apps/*
   - packages/*
+  # This fork ships the web app only. The desktop and mobile sources stay as
+  # upstream has them, outside the workspace, so nothing installs or builds them.
+  - '!apps/desktop'
+  - '!apps/mobile'
+
+# The root package.json still lists the patch for a mobile-only dependency.
+allowUnusedPatches: true
 
 catalog:
   '@base-ui/react': ^1.3.0
