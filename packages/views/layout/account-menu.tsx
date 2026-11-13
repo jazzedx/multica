@@ -211,7 +211,7 @@ export function AccountMenu() {
           />
           {deploymentOffers().marketing && <ExternalItem href={CHANGELOG_URL} icon={<History />} label={t(($) => $.help.changelog)} />}
           {deploymentOffers().marketing && <ExternalItem href={DISCORD_URL} icon={<DiscordIcon />} label={t(($) => $.help.discord)} />}
-          {!isDesktopShell() && (
+          {deploymentOffers().desktopApp && !isDesktopShell() && (
             <ExternalItem
               href={DOWNLOAD_URL}
               icon={<Download />}

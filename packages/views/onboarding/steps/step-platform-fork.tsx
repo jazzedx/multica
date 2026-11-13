@@ -130,7 +130,7 @@ export function StepPlatformFork({
         />
 
         <div className="flex flex-col gap-2">
-          <ForkPrimary onClick={pickDesktop} />
+          {deploymentOffers().desktopApp && <ForkPrimary onClick={pickDesktop} />}
 
           <ForkAlt
             title={t(($) => $.step_platform.cli_title)}

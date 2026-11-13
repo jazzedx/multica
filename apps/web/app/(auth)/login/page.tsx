@@ -4,6 +4,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { sanitizeNextUrl, useAuthStore } from "@multica/core/auth";
+import { deploymentOffers } from "@multica/core/deployment";
 import { useConfigStore } from "@multica/core/config";
 import {
   workspaceKeys,
@@ -237,7 +238,7 @@ function LoginPageContent() {
           : undefined
       }
       onTokenObtained={setLoggedInCookie}
-      extra={
+      extra={deploymentOffers().desktopApp && (
         <span className="text-caption text-muted-foreground">
           {t(($) => $.web.prefer_desktop)}{" "}
           <Link
@@ -247,7 +248,7 @@ function LoginPageContent() {
             {t(($) => $.web.download)}
           </Link>
         </span>
-      }
+      )}
     />
   );
 }

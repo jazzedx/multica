@@ -76,7 +76,7 @@ export function HelpLauncher() {
           sideOffset={8}
           className="min-w-40 max-w-56"
         >
-          {!desktop && (
+          {deploymentOffers().desktopApp && !desktop && (
             <>
               <DropdownMenuItem
                 render={

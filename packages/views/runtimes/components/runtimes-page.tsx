@@ -306,7 +306,7 @@ export function RuntimesPage({
   const visibleComingSoon =
     offers.hostedRuntimes && statusFilter === "all" ? COMING_SOON_SERVICES : [];
   const showThisComputerRow =
-    !filtering && !isDesktop && machineList.length === 0;
+    deploymentOffers().desktopApp && !filtering && !isDesktop && machineList.length === 0;
   const showAddMachineRow = !filtering && machineList.length === 0;
   const showIntro =
     !listLoading &&
@@ -630,7 +630,7 @@ function AddRuntimeMenu({
               trailing={<Check className="size-4 text-muted-foreground" />}
               disabled
             />
-          ) : (
+          ) : !deploymentOffers().desktopApp ? null : (
             <AddMenuItem
               icon={<Laptop className="size-4 text-muted-foreground" />}
               title={t(($) => $.page.add_menu.this_computer)}

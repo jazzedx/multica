@@ -13,7 +13,7 @@ for (const scenario of [
     name: "same account language",
     language: "zh-Hans",
     htmlLang: "zh-CN",
-    continueLabel: "在网页端继续",
+    continueLabel: "开始探索",
   },
 ]) {
   test(`Google callback keeps its single-use code while synchronizing ${scenario.name}`, async ({

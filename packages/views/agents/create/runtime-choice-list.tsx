@@ -561,7 +561,7 @@ export function RuntimeChoiceList({
         .map((device) => filterDevice(device, query))
         .filter((device): device is DeviceOption => device !== null)
     : devices;
-  const showWebRow = !localAvailable && !searching;
+  const showWebRow = deploymentOffers().desktopApp && !localAvailable && !searching;
 
   const showQoder = !!qoder && !!qoderState && (!q || QODER_NAME.toLowerCase().includes(q));
   const matchedCloud = cloud.filter((option) => harnessMatches(option, "", query));

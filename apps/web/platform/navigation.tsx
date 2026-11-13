@@ -1,5 +1,6 @@
 "use client";
 
+import { deploymentOffers } from "@multica/core/deployment";
 import { Suspense, useEffect, useSyncExternalStore } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { PrefetchKind } from "next/dist/client/components/router-reducer/router-reducer-types";
@@ -87,7 +88,7 @@ function NavigationProviderInner({
     hash,
     getShareableUrl: (path: string) =>
       typeof window === "undefined" ? path : window.location.origin + path,
-    openInDesktop: (path: string) => {
+    openInDesktop: !deploymentOffers().desktopApp ? undefined : (path: string) => {
       const url = window.location.origin + path;
       window.location.href = `multica://open/issue?url=${encodeURIComponent(url)}`;
     },

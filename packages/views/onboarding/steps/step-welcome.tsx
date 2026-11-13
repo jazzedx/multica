@@ -1,5 +1,6 @@
 "use client";
 
+import { deploymentOffers } from "@multica/core/deployment";
 import { statusCategoryOfKey } from "@multica/core/issues";
 import { useState } from "react";
 import { ArrowRight, Download, Loader2 } from "@multica/ui/icons";
@@ -104,7 +105,7 @@ export function StepWelcome({
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              {isWeb ? (
+              {isWeb && deploymentOffers().desktopApp ? (
                 <>
                   {/* `<a>` rather than `<Button onClick={window.open}>`
                       so middle-click / cmd-click / "Copy link" all

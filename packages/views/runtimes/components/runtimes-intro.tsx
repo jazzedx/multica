@@ -1,5 +1,6 @@
 "use client";
 
+import { deploymentOffers } from "@multica/core/deployment";
 import type { ReactNode } from "react";
 import { Check, Cloud, Download, Laptop, Server, SquareTerminal } from "@multica/ui/icons";
 import { buttonVariants } from "@multica/ui/components/ui/button";
@@ -75,7 +76,7 @@ export function RuntimesIntro({
         t(($) => $.page.columns.status),
       ]}
       action={action}
-      secondaryAction={
+      secondaryAction={deploymentOffers().desktopApp && (
         <a
           href="/download"
           target="_blank"
@@ -85,7 +86,7 @@ export function RuntimesIntro({
           <Download aria-hidden="true" />
           {t(($) => $.page.rows.download_desktop)}
         </a>
-      }
+      )}
     >
       <FeatureIntroCarousel label={t(($) => $.intro.title)} slides={slides} />
     </FeatureIntro>

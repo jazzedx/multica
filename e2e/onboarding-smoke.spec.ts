@@ -22,14 +22,14 @@ test("onboarding — welcome → about you (answer path)", async ({ page }, test
     localStorage.setItem("multica_token", t);
   }, token);
   await page.goto("/onboarding", { waitUntil: "domcontentloaded" });
-  await waitForPageText(page, "Continue on web");
+  await waitForPageText(page, "Start exploring");
 
   // 1. Welcome screen
-  await expect(page.getByRole("button", { name: "Continue on web" })).toBeVisible({ timeout: 15000 });
+  await expect(page.getByRole("button", { name: "Start exploring" })).toBeVisible({ timeout: 15000 });
   await page.screenshot({ path: testInfo.outputPath("01-welcome.png"), fullPage: false });
 
-  // Click Continue on web to advance to About you
-  await page.getByRole("button", { name: "Continue on web" }).click();
+  // Click Start exploring to advance to About you
+  await page.getByRole("button", { name: "Start exploring" }).click();
 
   // 2. About you step — both questions live on this one screen and the
   //    source question must NOT exist anywhere in the flow.
@@ -81,9 +81,9 @@ test("onboarding — one skip clears the whole questionnaire step", async ({ pag
 
   await page.addInitScript((t) => localStorage.setItem("multica_token", t), token);
   await page.goto("/onboarding", { waitUntil: "domcontentloaded" });
-  await waitForPageText(page, "Continue on web");
+  await waitForPageText(page, "Start exploring");
 
-  await page.getByRole("button", { name: "Continue on web" }).click();
+  await page.getByRole("button", { name: "Start exploring" }).click();
   await expect(page.getByText("Tell us a bit about you.")).toBeVisible({ timeout: 10000 });
 
   // A single Skip covers role + use case — next stop is workspace.
@@ -107,13 +107,13 @@ test("onboarding — zh-Hans renders Chinese labels", async ({ page, context, ba
 
   await page.addInitScript((t) => localStorage.setItem("multica_token", t), token);
   await page.goto("/onboarding", { waitUntil: "domcontentloaded" });
-  await waitForPageText(page, "在网页端继续");
+  await waitForPageText(page, "开始探索");
 
   // Click the CTA by name. `getByRole("button").first()` used to stand in for
   // it, but the welcome screen renders the pinned Log out button first in DOM
   // order — so this step was signing the user out and the assertions below
   // were waiting on a page that had already redirected to login.
-  await page.getByRole("button", { name: "在网页端继续" }).click();
+  await page.getByRole("button", { name: "开始探索" }).click();
 
   // About-you screen — Chinese headline + both sub-questions.
   await expect(page.getByText("简单介绍一下你自己。")).toBeVisible({ timeout: 10000 });
