@@ -5,7 +5,6 @@ import { describe, expect, it } from "vitest";
 
 const read = (path: string) => readFileSync(resolve(__dirname, path), "utf8");
 const webCss = read("./globals.css");
-const desktopCss = read("../../desktop/src/renderer/src/globals.css");
 const layout = read("./layout.tsx");
 
 const GENERIC = /^(?:serif|sans-serif|monospace|cursive|fantasy|system-ui|math|emoji|fangsong|ui-[a-z-]+)$/;
@@ -39,10 +38,6 @@ describe("Appearance Latin faces", () => {
 
   it.each(names)("web %s names families only", (name) => {
     expect(families(rootVariable(webCss, name)).filter((f) => GENERIC.test(f))).toEqual([]);
-  });
-
-  it.each(names)("desktop %s names families only", (name) => {
-    expect(families(rootVariable(desktopCss, name)).filter((f) => GENERIC.test(f))).toEqual([]);
   });
 
   it("keeps the onboarding serif ending with its generic fallbacks", () => {

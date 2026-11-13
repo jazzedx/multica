@@ -19,7 +19,7 @@ import { fileURLToPath } from "node:url";
 import ts from "typescript";
 
 const repoRoot = resolve(import.meta.dirname, "..");
-const roots = ["apps/web", "apps/desktop", "apps/mobile", "packages/ui", "packages/views"];
+const roots = ["apps/web", "packages/ui", "packages/views"];
 const extensions = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".mdx"]);
 const skippedDirectories = new Set(["node_modules", ".next", ".turbo", "dist", "build", "out"]);
 const radiusNames = ["xs", "sm", "md", "lg", "xl", "2xl", "3xl", "4xl"];
@@ -98,12 +98,11 @@ export function radiusViolations(sourceText, filePath) {
   return violations;
 }
 
-/** Ensure NativeWind resolves every named radius to the web token value. */
-export function radiusScaleViolations(webTokensSource, mobileRadiusTokens) {
+/** Every named radius token must resolve from the shared `--radius` base. */
+export function radiusScaleViolations(webTokensSource) {
   const baseMatch = webTokensSource.match(/--radius:\s*(\d+(?:\.\d+)?)rem\s*;/);
   if (!baseMatch) return ["web base radius is missing"];
 
-  const basePx = Number(baseMatch[1]) * 16;
   const violations = [];
   for (const name of radiusNames) {
     const declaration = webTokensSource.match(
@@ -121,13 +120,6 @@ export function radiusScaleViolations(webTokensSource, mobileRadiusTokens) {
       )?.[1]);
     if (!Number.isFinite(multiplier)) {
       violations.push(`${name}: unsupported web declaration ${declaration}`);
-      continue;
-    }
-
-    const webValue = basePx * multiplier;
-    const mobileValue = mobileRadiusTokens[name];
-    if (mobileValue !== webValue) {
-      violations.push(`${name}: web=${webValue}px mobile=${String(mobileValue)}px`);
     }
   }
   return violations;
@@ -141,11 +133,10 @@ function main() {
 
   const scaleViolations = radiusScaleViolations(
     readFileSync(join(repoRoot, "packages/ui/styles/tokens.css"), "utf8"),
-    JSON.parse(readFileSync(join(repoRoot, "apps/mobile/lib/radius-tokens.json"), "utf8")),
   );
 
   if (scaleViolations.length > 0) {
-    console.error(`Web/mobile radius scale drift (${scaleViolations.length})`);
+    console.error(`Radius token scale (${scaleViolations.length})`);
     for (const violation of scaleViolations) console.error(`  ${violation}`);
   }
 

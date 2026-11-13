@@ -11,7 +11,7 @@ import { THEME_ANCHORS, THEME_PUBLIC_SLOTS } from "@multica/core/appearance";
  */
 
 const REPO = join(__dirname, "../../..");
-const SOURCE_ROOTS = ["packages/views", "packages/ui/components", "apps/desktop/src/renderer", "apps/web/app", "apps/web/components"];
+const SOURCE_ROOTS = ["packages/views", "packages/ui/components", "apps/web/app", "apps/web/components"];
 
 function sourceFiles(dir: string, out: string[] = []): string[] {
   let entries: string[];
@@ -39,9 +39,16 @@ for (const file of files) {
 }
 const docs = readFileSync(join(REPO, "docs/theming.md"), "utf8");
 
+// Rendered by the desktop shell only, which this repository does not build.
+// They stay registered because themes written against the public contract
+// may style them.
+const DESKTOP_ONLY_ANCHORS = new Set(["window-toolbar", "tab-bar", "tab"]);
+
 describe("theme anchors", () => {
   it("renders every registered anchor somewhere", () => {
-    const missing = Object.keys(THEME_ANCHORS).filter((name) => !used.has(name));
+    const missing = Object.keys(THEME_ANCHORS).filter(
+      (name) => !used.has(name) && !DESKTOP_ONLY_ANCHORS.has(name),
+    );
     expect(missing).toEqual([]);
   });
 

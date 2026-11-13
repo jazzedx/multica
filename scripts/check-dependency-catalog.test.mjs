@@ -56,7 +56,7 @@ test("rejects a plain range for a dependency the catalog defines, even in one wo
   assert.match(violations[0], /^tailwindcss: catalog defines \^4/);
 });
 
-test("accepts catalog:, workspace:, single-workspace deps, peers, and mobile pins", () => {
+test("accepts catalog:, workspace:, single-workspace deps, and peers", () => {
   const violations = catalogViolations({
     catalog: new Map([["react", "19.2.3"]]),
     workspaces: [
@@ -68,7 +68,6 @@ test("accepts catalog:, workspace:, single-workspace deps, peers, and mobile pin
         devDependencies: { eslint: "^9.0.0" },
       }),
       workspace("packages/eslint-config", { peerDependencies: { eslint: "^9.0.0" } }),
-      workspace("apps/mobile", { dependencies: { react: "19.2.3", "web-only": "^0.9.0" } }),
     ],
   });
   assert.deepEqual(violations, []);

@@ -8,8 +8,7 @@
  * in a single workspace, or the two versions drift silently.
  *
  * Peer ranges state compatibility rather than the installed version, so they
- * are not checked. apps/mobile is exempt: it pins Expo/React Native-aligned
- * versions in its own manifest (apps/mobile/AGENTS.md).
+ * are not checked.
  *
  * Run: node scripts/check-dependency-catalog.mjs
  */
@@ -20,16 +19,10 @@ import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(import.meta.dirname, "..");
 const checkedFields = ["dependencies", "devDependencies", "optionalDependencies"];
-const exemptWorkspaces = new Set(["apps/mobile"]);
 
 // Known drift that needs its own upgrade. Each entry must still be a live
 // violation; the check fails once the drift is gone so the entry gets removed.
-export const allowlist = new Map([
-  [
-    "@vitejs/plugin-react",
-    "apps/desktop bundles with plugin-react 5; moving it to the catalog's 6 changes how pnpm resolves vite for electron-vite and needs its own verification.",
-  ],
-]);
+export const allowlist = new Map();
 
 const unquote = (value) => value.trim().replace(/^(['"])(.*)\1$/, "$2");
 
@@ -66,7 +59,6 @@ const isWorkspaceSpec = (spec) => spec.startsWith("workspace:");
 export function catalogViolations({ catalog, workspaces, allowlist: allowed = new Map() }) {
   const declarations = new Map();
   for (const { dir, manifest } of workspaces) {
-    if (exemptWorkspaces.has(dir)) continue;
     for (const field of checkedFields) {
       for (const [name, spec] of Object.entries(manifest[field] ?? {})) {
         if (isWorkspaceSpec(spec)) continue;
@@ -133,7 +125,7 @@ function main() {
     console.error(`Dependencies off the pnpm catalog (${violations.length})`);
     for (const violation of violations) console.error(`  ${violation}`);
     console.error(
-      "\nShared external dependencies use \"catalog:\" with the version in pnpm-workspace.yaml. apps/mobile pins its own versions and is exempt.",
+      "\nShared external dependencies use \"catalog:\" with the version in pnpm-workspace.yaml.",
     );
     process.exit(1);
   }

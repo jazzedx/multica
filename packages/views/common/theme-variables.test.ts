@@ -45,7 +45,7 @@ function sourceFiles(dir: string, out: string[] = []): string[] {
 
 const squash = (value: string) => value.replace(/\s+/g, "");
 const themedCss = THEMED_CSS.map(read).join("\n");
-const sources = ["packages/views", "packages/ui", "packages/core/issues", "apps/desktop/src/renderer/src"]
+const sources = ["packages/views", "packages/ui", "packages/core/issues"]
   .flatMap((root) => sourceFiles(join(REPO, root)))
   .map((file) => readFileSync(file, "utf8"))
   .join("\n");

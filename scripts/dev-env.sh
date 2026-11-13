@@ -1532,6 +1532,11 @@ cmd_up() {
     *) [ -z "$cdp_request" ] \
          || die "--cdp, --remote-debugging-port and --no-cdp need the desktop component (C=desktop)." ;;
   esac
+  # This repository does not carry the desktop app.
+  case " $requested " in
+    *" desktop "*) [ -d "$REPO_ROOT/apps/desktop" ] \
+      || die "The desktop component needs apps/desktop, which this repository does not include." ;;
+  esac
   # web, daemon and desktop are all clients of the backend; selecting one
   # without api would produce an environment that cannot serve a single request.
   case " $requested " in *" api "*) ;; *) requested="api $requested" ;; esac
@@ -1676,7 +1681,7 @@ cmd_up() {
   migrate_database
   ok "$DB_NAME reachable through DATABASE_URL and migrated"
 
-  component_selected desktop || sync_desktop_env_file
+  component_selected desktop || [ ! -d "$REPO_ROOT/apps/desktop" ] || sync_desktop_env_file
 
   step "Components: $COMPONENTS"
   component_selected api && start_api

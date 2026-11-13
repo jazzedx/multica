@@ -146,10 +146,8 @@ export default async function RootLayout({
   // Opt-in Google Analytics: omitted entirely unless GOOGLE_ANALYTICS_ID is set.
   const googleAnalyticsId = resolveGoogleAnalyticsId(process.env);
   // Dev toolbar: a status bar pinned to the bottom of the window. Opt-in per
-  // developer with VITE_DEV_TOOLBAR=1, the same convention and var prefix as
-  // react-grab below, so one variable enables it on web and desktop. Without
-  // an explicit API URL the browser goes through the dev proxy, so the
-  // toolbar reports the proxy's upstream.
+  // developer with VITE_DEV_TOOLBAR=1. Without an explicit API URL the browser
+  // goes through the dev proxy, so the toolbar reports the proxy's upstream.
   const devToolbarApiUrl =
     process.env.NODE_ENV === "development" && process.env.VITE_DEV_TOOLBAR
       ? apiBaseUrl || resolveDevRemoteApiUrl(process.env)

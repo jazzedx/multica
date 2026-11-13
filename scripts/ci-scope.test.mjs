@@ -23,7 +23,6 @@ for (const [name, files, selected] of [
   ["docs only", ["apps/docs/content/docs/guide.mdx"], ["quality", "docs"]],
   ["docs test", ["apps/docs/lib/unrendered-bold.test.ts"], ["quality", "docs"]],
   ["web changelog", ["apps/web/features/landing/i18n/en.ts"], ["frontend", "quality"]],
-  ["mobile UI", ["apps/mobile/app/index.tsx"], ["quality"]],
   ["migration only", ["server/migrations/999_example.up.sql"], ["backend", "sqlc"]],
   ["agent process code", ["server/pkg/agent/cursor_background.go"], ["backend", "runtime"]],
   ["daemon dependency", ["server/internal/skill/service.go"], ["backend", "runtime"]],
@@ -49,7 +48,6 @@ for (const [name, files, selected] of [
   ["integration key gates", ["server/cmd/server/router.go"], ["backend", "runtime", "scripts"]],
   ["brand source", ["packages/ui/lib/multica-brand.ts"], ["frontend", "quality"]],
   ["CLI brand copy", ["server/cmd/multica/cmd_auth.go"], ["backend", "runtime", "quality"]],
-  ["mobile brand copy", ["apps/mobile/components/brand/multica-logo.tsx"], ["quality"]],
   ["README logo", ["docs/assets/logo-dark.svg"], ["quality"]],
   ["brand generator", ["scripts/brand/sync.mjs"], ["quality"]],
   ["PR evidence uploader", ["scripts/pr-shots"], ["quality"]],
@@ -59,7 +57,6 @@ for (const [name, files, selected] of [
   ["lockfile", ["pnpm-lock.yaml"], ["frontend", "quality", "docs"]],
   ["workspace catalog", ["pnpm-workspace.yaml"], ["frontend", "quality", "docs"]],
   ["workspace package patch", ["patches/example.patch"], ["frontend", "quality", "docs"]],
-  ["mobile package patch", ["apps/mobile/patches/example.patch"], ["quality"]],
   ["radius policy", ["scripts/check-ui-radius-tokens.mjs"], ["quality"]],
   ["shared quality action", [".github/actions/frontend-quality/action.yml"], ["frontend", "quality"]],
   ["new bitmap", ["apps/web/public/hero.png"], ["frontend", "quality", "images"]],
@@ -195,7 +192,7 @@ test("no gated job or shared quality step continues past a failure", () => {
 // A push only checks the paths it changed, so a main run that is cancelled or
 // left pending behind a newer push skips its commit for good.
 test("path-filtered workflows never cancel or supersede a main run", () => {
-  for (const name of ["ci.yml", "mobile-verify.yml"]) {
+  for (const name of ["ci.yml"]) {
     const source = readFileSync(new URL(`../.github/workflows/${name}`, import.meta.url), "utf8");
     const block = field(source, /^concurrency:\n((?:  .+\n)+)/m);
     assert.match(block, /^  group: .*\$\{\{ github\.event\.pull_request\.number \|\| github\.run_id \}\}$/m, name);

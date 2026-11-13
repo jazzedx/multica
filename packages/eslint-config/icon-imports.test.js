@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { fileURLToPath } from "node:url";
 import { ESLint } from "eslint";
 import base from "./base.js";
 
@@ -19,21 +18,12 @@ async function restricted(eslint, filePath, source) {
   return result.messages.filter((m) => m.ruleId === "no-restricted-imports").length;
 }
 
-const targets = [
-  ["base config", new ESLint({ overrideConfigFile: true, overrideConfig: base }), "src/icon.ts"],
-  [
-    "desktop renderer config",
-    new ESLint({ cwd: fileURLToPath(new URL("../../apps/desktop", import.meta.url)) }),
-    "src/renderer/src/icon.tsx",
-  ],
-];
+test("base config bans icon libraries and their subpaths", async () => {
+  const eslint = new ESLint({ overrideConfigFile: true, overrideConfig: base });
+  for (const source of BANNED) assert.equal(await restricted(eslint, "src/icon.ts", source), 1, source);
+});
 
-for (const [label, eslint, filePath] of targets) {
-  test(`${label} bans icon libraries and their subpaths`, async () => {
-    for (const source of BANNED) assert.equal(await restricted(eslint, filePath, source), 1, source);
-  });
-
-  test(`${label} allows @multica/ui/icons and look-alike packages`, async () => {
-    for (const source of ALLOWED) assert.equal(await restricted(eslint, filePath, source), 0, source);
-  });
-}
+test("base config allows @multica/ui/icons and look-alike packages", async () => {
+  const eslint = new ESLint({ overrideConfigFile: true, overrideConfig: base });
+  for (const source of ALLOWED) assert.equal(await restricted(eslint, "src/icon.ts", source), 0, source);
+});

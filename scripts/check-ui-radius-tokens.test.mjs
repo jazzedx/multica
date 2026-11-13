@@ -48,7 +48,7 @@ test("accepts named, computed, and explicitly allowlisted micro-geometry", () =>
   );
 });
 
-test("keeps the mobile radius scale aligned with resolved web tokens", () => {
+test("accepts radius tokens derived from the shared base", () => {
   const webTokens = `
     --radius-xs: calc(var(--radius) * 0.375);
     --radius-sm: calc(var(--radius) * 0.5);
@@ -60,10 +60,15 @@ test("keeps the mobile radius scale aligned with resolved web tokens", () => {
     --radius-4xl: calc(var(--radius) * 3);
     --radius: 0.5rem;
   `;
-  const aligned = { xs: 3, sm: 4, md: 6, lg: 8, xl: 12, "2xl": 16, "3xl": 20, "4xl": 24 };
-  assert.deepEqual(radiusScaleViolations(webTokens, aligned), []);
-  assert.deepEqual(
-    radiusScaleViolations(webTokens, { ...aligned, xl: 10 }),
-    ["xl: web=12px mobile=10px"],
-  );
+  assert.deepEqual(radiusScaleViolations(webTokens), []);
+  assert.deepEqual(radiusScaleViolations(`--radius: 0.5rem;`), [
+    "xs: web token is missing",
+    "sm: web token is missing",
+    "md: web token is missing",
+    "lg: web token is missing",
+    "xl: web token is missing",
+    "2xl: web token is missing",
+    "3xl: web token is missing",
+    "4xl: web token is missing",
+  ]);
 });

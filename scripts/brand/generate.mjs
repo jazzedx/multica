@@ -5,8 +5,7 @@
 //   node scripts/brand/generate.mjs
 import { chromium } from "@playwright/test";
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { createRequire } from "node:module";
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -31,8 +30,7 @@ const pngs = [];
 const updated = await sync(root);
 if (updated.length) console.log(`updated ${updated.join(", ")}`);
 
-const inter = createRequire(repo("apps/desktop/package.json")).resolve("@fontsource-variable/inter/files/inter-latin-wght-normal.woff2");
-const fonts = `@font-face{font-family:"Inter";font-weight:100 900;src:url(data:font/woff2;base64,${readFileSync(inter).toString("base64")}) format("woff2")}`;
+const fonts = `*{font-family:system-ui,sans-serif}`;
 
 // Full Chrome for Testing, which rasterises on the GPU like the committed bitmaps.
 // The default headless shell (and --disable-gpu) rasterises in software and
@@ -50,31 +48,12 @@ try {
   }
   const at = (svg, px, off) => `<div style="position:absolute;left:${off}px;top:${off}px;width:${px}px;height:${px}px">${svg}</div>`;
 
-  // Desktop and PWA tiles: [tile px, margin] per canvas size.
-  const FLAT = { 16: [16, 0], 24: [24, 0], 32: [30, 1], 48: [46, 1], 64: [52, 6], 128: [104, 12], 256: [208, 24], 512: [412, 50] };
-  for (const [s, [px, off]] of Object.entries(FLAT)) {
-    await png(repo(`apps/desktop/build/icons/${s}x${s}.png`), [+s, +s], at(tile(px), px, off));
-    if (+s <= 256) await png(join(out, `ico-${s}.png`), [+s, +s], at(tile(px), px, off));
-  }
-  await png(repo("apps/desktop/build/icon.png"), [1024, 1024], at(tile(824), 824, 100));
   await png(repo("apps/web/public/icons/icon-192.png"), [192, 192], at(tile(156), 156, 18));
   await png(repo("apps/web/public/icons/icon-512.png"), [512, 512], at(tile(412), 412, 50));
 
   // iOS, Android and Expo mask these themselves, so they are full-bleed and opaque.
   await png(repo("apps/web/public/icons/apple-touch-icon.png"), [180, 180], tile(180, { bleed: true }), { alpha: false });
   await png(repo("apps/web/public/icons/icon-maskable-512.png"), [512, 512], tile(512, { bleed: true }), { alpha: false });
-  await png(repo("apps/mobile/assets/icon.png"), [1024, 1024], tile(1024, { bleed: true }), { alpha: false });
-
-  // macOS: the tile on Apple's 1024 grid (body 100..924) with the standard soft shadow.
-  const macOS = (S) => {
-    const k = S / 1024, px = Math.round(824 * k), off = Math.round(100 * k);
-    return `<div style="position:absolute;left:${off}px;top:${off}px;width:${px}px;height:${px}px;filter:drop-shadow(0 ${(22 * k).toFixed(2)}px ${(30 * k).toFixed(2)}px rgba(0,0,0,.32))">${tile(px)}</div>`;
-  };
-  await png(repo("apps/desktop/resources/icon.png"), [1024, 1024], macOS(1024));
-  const iconset = join(out, "icon.iconset");
-  for (const [name, S] of [["16x16", 16], ["16x16@2x", 32], ["32x32", 32], ["32x32@2x", 64], ["128x128", 128], ["128x128@2x", 256], ["256x256", 256], ["256x256@2x", 512], ["512x512", 512], ["512x512@2x", 1024]]) {
-    await png(join(iconset, `icon_${name}.png`), [S, S], macOS(S));
-  }
 
   // OG card: the wordmark and headline beside a team of thin stars, one per
   // teammate. The lit one is the newest to join.
@@ -85,10 +64,10 @@ try {
   const thinStar = starPath(STAR_GRAPHIC_STROKE);
   const team = Array.from({ length: TEAM.cols * TEAM.rows }, (_, i) =>
     `<svg viewBox="0 0 100 100" style="position:absolute;width:${TEAM.size}px;height:${TEAM.size}px;left:${teamLeft + (i % TEAM.cols) * pitch}px;top:${teamTop + Math.floor(i / TEAM.cols) * pitch}px"><path fill="${i === TEAM.lit ? PAPER : "#2c2c30"}" d="${thinStar}"/></svg>`).join("");
-  await png(repo("apps/web/app/opengraph-image.png"), [1200, 630], `<div style="position:relative;width:1200px;height:630px;background:${INK};overflow:hidden;font-family:Inter">
+  await png(repo("apps/web/app/opengraph-image.png"), [1200, 630], `<div style="position:relative;width:1200px;height:630px;background:${INK};overflow:hidden;font-family:system-ui,sans-serif">
   ${team}
   <div style="position:absolute;left:64px;top:72px;height:52px">${wordmark(PAPER, ` height="52"`)}</div>
-  <div style="position:absolute;left:64px;bottom:70px;color:#fff;font:600 60px/1.12 Inter;letter-spacing:-.02em;white-space:nowrap">People and agents,<br>working as one team.</div></div>`, { alpha: false });
+  <div style="position:absolute;left:64px;bottom:70px;color:#fff;font:600 60px/1.12 system-ui,sans-serif;letter-spacing:-.02em;white-space:nowrap">People and agents,<br>working as one team.</div></div>`, { alpha: false });
   await page.close();
 
   // README hero: the write-on from MulticaWordmark (timings in multica-wordmark.tsx,
@@ -122,8 +101,6 @@ try {
 }
 
 run("python3", [join(here, "pack.py"), out, root]);
-if (process.platform === "darwin") run("iconutil", ["-c", "icns", join(out, "icon.iconset"), "-o", repo("apps/desktop/build/icon.icns")]);
-else console.warn("iconutil is macOS-only: apps/desktop/build/icon.icns was not rebuilt");
 run("oxipng", ["-o", "max", "--strip", "safe", "-q", ...pngs]);
 rmSync(out, { recursive: true, force: true });
 console.log("done");
