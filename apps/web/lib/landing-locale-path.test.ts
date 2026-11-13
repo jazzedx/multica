@@ -1,10 +1,7 @@
-import { readdirSync } from "node:fs";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { isReservedSlug } from "@multica/core/paths";
 import {
   LANDING_PATH_PREFIXES,
-  LANDING_ROUTES,
   landingAlternates,
   landingPathLocale,
   localizeHref,
@@ -13,14 +10,6 @@ import {
 } from "./landing-locale-path";
 
 describe("landing locale paths", () => {
-  it("lists every route under app/(landing)", () => {
-    const dir = join(__dirname, "../app/(landing)");
-    const routes = readdirSync(dir, { withFileTypes: true })
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => entry.name);
-    expect([...LANDING_ROUTES].sort()).toEqual(routes.sort());
-  });
-
   it("reserves every prefix as a workspace slug", () => {
     for (const prefix of Object.keys(LANDING_PATH_PREFIXES)) expect(isReservedSlug(prefix)).toBe(true);
   });

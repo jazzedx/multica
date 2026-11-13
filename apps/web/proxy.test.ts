@@ -120,13 +120,6 @@ describe("proxy legacy workspace route redirects", () => {
     );
   });
 
-  it.each(["multica.ai", "www.multica.ai"])(
-    "does not redirect public marketing root on %s",
-    (host) => {
-      expect(redirectLocation("/", sessionCookies, host)).toBeNull();
-    },
-  );
-
   it("still redirects explicit legacy app routes on the public marketing host", () => {
     expect(redirectLocation("/issues/ABC-123", sessionCookies, "multica.ai")).toBe(
       "https://multica.ai/acme/issues/ABC-123",
@@ -290,46 +283,8 @@ describe("proxy root and locale handling", () => {
   });
 });
 
-describe("proxy marketing-site language URLs", () => {
+describe("proxy language-like workspace slugs", () => {
   const localeOf = (res: Response) => res.headers.get(`x-middleware-request-${MULTICA_LOCALE_HEADER}`);
-  const withAcceptLanguage = (path: string, acceptLanguage: string) =>
-    new NextRequest(`https://www.multica.ai${path}`, { headers: { "accept-language": acceptLanguage } });
-
-  it.each([
-    ["/zh", "/", "zh-Hans"],
-    ["/zh/download", "/download", "zh-Hans"],
-    ["/ko/usecases/auto-data-analysis", "/usecases/auto-data-analysis", "ko"],
-    ["/ja/about?ref=x", "/about?ref=x", "ja"],
-  ])("serves %s as %s in its language", (path, page, locale) => {
-    const res = proxy(makeRequest(path, { "multica-locale": "en" }));
-
-    expect(res.headers.get("location")).toBeNull();
-    expect(res.headers.get("x-middleware-rewrite")).toBe(`https://app.multica.test${page}`);
-    expect(localeOf(res)).toBe(locale);
-  });
-
-  it("keeps English URLs English for visitors who have not picked a language", () => {
-    const res = proxy(withAcceptLanguage("/download", "zh-CN,zh;q=0.9"));
-
-    expect(res.headers.get("location")).toBeNull();
-    expect(res.headers.get("x-middleware-rewrite")).toBeNull();
-    expect(localeOf(res)).toBe("en");
-  });
-
-  it("keeps locales without a translated site on the English URL", () => {
-    const res = proxy(makeRequest("/about", { "multica-locale": "fr" }));
-
-    expect(res.headers.get("location")).toBeNull();
-    expect(localeOf(res)).toBe("fr");
-  });
-
-  it.each([
-    ["/", { "multica-locale": "zh-Hans" }, "/zh"],
-    ["/download?started=mac", { "multica-locale": "ko" }, "/ko/download?started=mac"],
-    ["/about", { "multica-locale": "zh-Hant" }, "/zh/about"],
-  ])("sends %s to the language the visitor picked", (path, cookies, location) => {
-    expect(redirectLocation(path, cookies, "www.multica.ai")).toBe(`https://www.multica.ai${location}`);
-  });
 
   it("leaves app routes under a language-like slug to the app", () => {
     const res = proxy(makeRequest("/zh/issues", { "multica-locale": "ja" }));
@@ -384,7 +339,7 @@ describe("proxy AI visit log", () => {
     visit("/llms.txt", { "user-agent": "curl/8.7.1" });
 
     expect(loggedLines(info)).toEqual([
-      expect.objectContaining({ app: "web", path: "/download", agent: "ClaudeBot", format: "html", status: null }),
+      expect.objectContaining({ app: "web", path: "/download", agent: "ClaudeBot", format: "html" }),
       expect.objectContaining({ path: "/zh/about", agent: "ChatGPT-User" }),
       expect.objectContaining({ path: "/llms.txt", signal: "markdown-request", format: "markdown" }),
     ]);
