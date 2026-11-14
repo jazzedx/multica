@@ -29,5 +29,33 @@ services:
     volumes:
       - gitea_data:/data
 
+  # Runs Gitea Actions workflows, so pull requests get build results. Start it
+  # by name once GITEA_RUNNER_REGISTRATION_TOKEN is set (from
+  # `gitea actions generate-runner-token` inside the gitea container):
+  #
+  #   docker compose -f docker-compose.selfhost.yml -f docker-compose.gitea.yml up -d gitea-runner
+  #
+  # Each job runs in a container the runner starts through the host's Docker
+  # socket. That socket is root on the host: use this where the people who can
+  # push workflow files are trusted.
+  gitea-runner:
+    image: ${GITEA_RUNNER_IMAGE:-gitea/act_runner:latest}
+    restart: unless-stopped
+    profiles: ["ci"]
+    depends_on:
+      - gitea
+    environment:
+      # Job containers sit on a network of their own and clone from this
+      # address too, so it has to be one they can reach, not the service name.
+      GITEA_INSTANCE_URL: ${GITEA_ROOT_URL:-http://gitea:3000}
+      GITEA_RUNNER_REGISTRATION_TOKEN: ${GITEA_RUNNER_REGISTRATION_TOKEN:-}
+      GITEA_RUNNER_NAME: ${GITEA_RUNNER_NAME:-multica-runner}
+      # What `runs-on: ubuntu-latest` means here: an image with git and node.
+      GITEA_RUNNER_LABELS: ${GITEA_RUNNER_LABELS:-ubuntu-latest:docker://node:22-bookworm}
+    volumes:
+      - gitea_runner_data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+
 volumes:
   gitea_data:
+  gitea_runner_data:
