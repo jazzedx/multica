@@ -158,6 +158,9 @@ type Step struct {
 	Instructions  string  `json:"instructions"`
 	NextStatusKey string  `json:"next_status_key,omitempty"`
 	BackStatusKey string  `json:"back_status_key,omitempty"`
+	// Strict and MaxReturns bind the run that works the issue (rules.go).
+	Strict     bool `json:"strict,omitempty"`
+	MaxReturns int  `json:"max_returns,omitempty"`
 }
 
 // Definition is a decoded workflow.
@@ -185,6 +188,8 @@ type storedStep struct {
 	Instructions  string   `json:"instructions,omitempty"`
 	NextStatusKey string   `json:"next_status_key,omitempty"`
 	BackStatusKey string   `json:"back_status_key,omitempty"`
+	Strict        bool     `json:"strict,omitempty"`
+	MaxReturns    int      `json:"max_returns,omitempty"`
 }
 
 // Decode parses a stored workflow row.
@@ -214,6 +219,8 @@ func DecodeSteps(raw []byte) ([]Step, error) {
 			Instructions:  s.Instructions,
 			NextStatusKey: s.NextStatusKey,
 			BackStatusKey: s.BackStatusKey,
+			Strict:        s.Strict,
+			MaxReturns:    s.MaxReturns,
 		}
 		if s.Handler != nil && s.Handler.Type != "" {
 			steps[i].Handler = *s.Handler
@@ -235,7 +242,7 @@ func DecodeKeys(raw []byte) ([]string, error) {
 func EncodeSteps(steps []Step) ([]byte, error) {
 	stored := make([]storedStep, len(steps))
 	for i, s := range steps {
-		stored[i] = storedStep{StatusKey: s.StatusKey, NextStatusKey: s.NextStatusKey, BackStatusKey: s.BackStatusKey}
+		stored[i] = storedStep{StatusKey: s.StatusKey, NextStatusKey: s.NextStatusKey, BackStatusKey: s.BackStatusKey, Strict: s.Strict, MaxReturns: s.MaxReturns}
 		if s.HandsOff() {
 			h := s.Handler
 			stored[i].Handler = &h
@@ -486,7 +493,7 @@ func NormalizeHandoff(s Step) Step {
 	}
 	s.NextStatusKey = strings.TrimSpace(s.NextStatusKey)
 	s.BackStatusKey = strings.TrimSpace(s.BackStatusKey)
-	return s
+	return normalizeRules(s)
 }
 
 // ValidateHandoff checks one normalized handoff against its workflow.
@@ -517,7 +524,7 @@ func ValidateHandoff(s Step, def Definition) error {
 			return invalid("%q is not another status of this workflow", ref)
 		}
 	}
-	return nil
+	return validateRules(s, def)
 }
 
 // Querier is the read surface workflow resolution needs.
@@ -889,6 +896,7 @@ func Brief(in BriefInput) string {
 	default:
 		b.WriteString("Can't proceed  → comment why and leave the status as it is\n")
 	}
+	writeRules(&b, step)
 	if span.ok {
 		b.WriteString("Steps without a handler hand nothing off and start no run: finish all of the issue's work in this run before Step done.\n")
 	}
