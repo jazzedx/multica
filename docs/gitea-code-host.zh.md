@@ -94,4 +94,6 @@ multica issue create --title "集成测试" --parent MUL-20 --assignee <智能�
 ## 注意
 
 - 用 Gitea 的正式地址访问它。通过 `localhost` 调接口创建的 PR，链接里也会是 `localhost`。
+- 任务里的 PR 链接打开的是 Gitea 的页面。仓库是私有的而浏览器没有登录 Gitea 时，Gitea 返回 404 而不是跳到登录页；
+  先在同一个浏览器里登录 Gitea，或者把仓库设为公开。
 - 暴露到公网之前，先给 Multica 和 Gitea 配 HTTPS，并限制来源地址。
