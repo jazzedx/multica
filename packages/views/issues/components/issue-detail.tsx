@@ -18,6 +18,7 @@ import { AppLink, useBackOrReplace } from "../../navigation";
 import { IssueDuplicateBanner, IssueDuplicatesSection, isDuplicateIssue } from "./issue-duplicates";
 import { IssueDependencyStrip, SubIssueWaitingMarker } from "./issue-dependencies";
 import { SubIssueGraph } from "./sub-issue-graph";
+import { DeliveryOverview } from "./delivery-overview";
 import {
   AlertTriangle,
   Archive,
@@ -4127,6 +4128,9 @@ export function IssueDetail({ issueId, onDelete, onDone, onUnsubscribeArchive, d
                   clearSelectionOnApply
                 />
 
+                {!subIssuesCollapsed && (
+                  <DeliveryOverview issueId={issue.id} revision={childIssues.map((c) => c.status).join(",")} />
+                )}
                 {!subIssuesCollapsed && <SubIssueGraph parentId={issue.id} issues={childIssues} />}
 
                 {/* List */}
