@@ -1305,6 +1305,29 @@ describe("ApiClient", () => {
     );
   });
 
+  it("asks for each run's usage when the caller will show it", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify([
+          {
+            id: "task-1",
+            status: "completed",
+            usage: [{ provider: "anthropic", model: "claude-opus-5", input_tokens: 1200, output_tokens: 300 }],
+          },
+        ]),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = new ApiClient("https://api.example.test");
+    const { tasks } = await client.listAgentTasksPage("agent-1", { includeUsage: true });
+
+    const request = new URL(fetchMock.mock.calls[0]![0]);
+    expect(request.searchParams.get("include_usage")).toBe("true");
+    expect(tasks[0]?.usage?.[0]?.input_tokens).toBe(1200);
+  });
+
   it("reads a lossless task cursor and passes it to the next bounded request", async () => {
     const cursor = "2026-09-24T01:02:03.123456Z|00000000-0000-0000-0000-000000000001";
     const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response(
