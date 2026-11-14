@@ -1667,6 +1667,13 @@
       "from_template": "템플릿으로"
     },
     "editor": {
+      "strict_label": "Runs can only make these moves",
+      "strict_hint": "Any other status change from this step's run is refused. People are not limited.",
+      "max_returns_label": "Send back at most",
+      "max_returns_unlimited": "No limit",
+      "max_returns_times_other": "{{count}} times",
+      "max_returns_hint": "이후에는 실행이 이슈를 막힘 상태로 바꿔야 합니다.",
+      "max_returns_needs_blocked": "Add Blocked to this workflow to set a limit.",
       "create_title": "새 워크플로",
       "edit_title": "워크플로 편집",
       "name": "이름",

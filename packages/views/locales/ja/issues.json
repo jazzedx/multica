@@ -1667,6 +1667,13 @@
       "from_template": "テンプレートから"
     },
     "editor": {
+      "strict_label": "Runs can only make these moves",
+      "strict_hint": "Any other status change from this step's run is refused. People are not limited.",
+      "max_returns_label": "Send back at most",
+      "max_returns_unlimited": "No limit",
+      "max_returns_times_other": "{{count}} times",
+      "max_returns_hint": "それ以降、実行は課題をブロック中にする必要があります。",
+      "max_returns_needs_blocked": "Add Blocked to this workflow to set a limit.",
       "create_title": "新規ワークフロー",
       "edit_title": "ワークフローを編集",
       "name": "名前",
