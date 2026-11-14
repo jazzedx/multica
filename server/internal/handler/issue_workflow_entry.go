@@ -85,6 +85,9 @@ func (h *Handler) applyIssueWorkflow(ctx context.Context, prev db.Issue, params 
 		statusExplicit && params.Status.Valid && params.Status.String != prev.Status {
 		return nil, h.stepMovedError(ctx, prev, run.WorkflowStep.String)
 	}
+	if err := h.checkWorkflowStepRules(ctx, def, prev, params, statusExplicit, run); err != nil {
+		return nil, err
+	}
 	if assigneeTouched || prev.TriageState.Valid {
 		return nil, nil
 	}
@@ -158,6 +161,24 @@ func writeIssueWorkflowError(w http.ResponseWriter, err error) bool {
 			"code":           "workflow_step_moved",
 			"step":           moved.Step,
 			"current_status": moved.Current,
+		})
+		return true
+	}
+	var notAllowed *issueworkflow.MoveNotAllowedError
+	if errors.As(err, &notAllowed) {
+		writeJSON(w, http.StatusConflict, map[string]any{
+			"error":            notAllowed.Error(),
+			"code":             "workflow_move_not_allowed",
+			"allowed_statuses": notAllowed.Allowed,
+		})
+		return true
+	}
+	var limit *issueworkflow.ReturnLimitError
+	if errors.As(err, &limit) {
+		writeJSON(w, http.StatusConflict, map[string]any{
+			"error": limit.Error(),
+			"code":  "workflow_return_limit",
+			"limit": limit.Limit,
 		})
 		return true
 	}

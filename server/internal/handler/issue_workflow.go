@@ -69,6 +69,9 @@ type IssueWorkflowStepPayload struct {
 	Instructions  string                      `json:"instructions"`
 	NextStatusKey string                      `json:"next_status_key,omitempty"`
 	BackStatusKey string                      `json:"back_status_key,omitempty"`
+	// Strict and MaxReturns are the step's rules for runs (issueworkflow/rules.go).
+	Strict     bool `json:"strict,omitempty"`
+	MaxReturns int  `json:"max_returns,omitempty"`
 }
 
 type IssueWorkflowResponse struct {
@@ -114,6 +117,8 @@ func stepToPayload(s issueworkflow.Step) IssueWorkflowStepPayload {
 		Instructions:  s.Instructions,
 		NextStatusKey: s.NextStatusKey,
 		BackStatusKey: s.BackStatusKey,
+		Strict:        s.Strict,
+		MaxReturns:    s.MaxReturns,
 	}
 }
 
@@ -124,6 +129,8 @@ func payloadToStep(statusKey string, in IssueWorkflowStepPayload) issueworkflow.
 		Instructions:  in.Instructions,
 		NextStatusKey: in.NextStatusKey,
 		BackStatusKey: in.BackStatusKey,
+		Strict:        in.Strict,
+		MaxReturns:    in.MaxReturns,
 	}
 }
 
@@ -321,6 +328,9 @@ type IssueWorkflowStepInput struct {
 	Instructions  string                       `json:"instructions,omitempty"`
 	NextStatusKey string                       `json:"next_status_key,omitempty"`
 	BackStatusKey string                       `json:"back_status_key,omitempty"`
+	// Strict and MaxReturns are the step's rules for runs (issueworkflow/rules.go).
+	Strict     bool `json:"strict,omitempty"`
+	MaxReturns int  `json:"max_returns,omitempty"`
 }
 
 type IssueWorkflowWriteRequest struct {
@@ -367,6 +377,8 @@ func resolveStepInputs(ctx context.Context, qtx *db.Queries, wsUUID pgtype.UUID,
 			Instructions:  in.Instructions,
 			NextStatusKey: in.NextStatusKey,
 			BackStatusKey: in.BackStatusKey,
+			Strict:        in.Strict,
+			MaxReturns:    in.MaxReturns,
 		}
 		if in.Handler != nil {
 			step.Handler = issueworkflow.Handler{Type: in.Handler.Type, ID: in.Handler.ID}

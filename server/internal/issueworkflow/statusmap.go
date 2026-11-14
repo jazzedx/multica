@@ -65,6 +65,9 @@ func statusMapBrief(in BriefInput) string {
 	if in.Observer && !stepMoved {
 		b.WriteString("\nMoving the issue into a status that hands off reassigns it to that handler and starts their run.\n")
 	}
+	if !stepMoved && !in.Observer && !(terminal && !terminalMoves) {
+		writeStatusMapRules(&b, in, step)
+	}
 	return b.String()
 }
 
