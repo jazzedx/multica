@@ -4791,6 +4791,15 @@ func (d *Daemon) handlePendingWorkHint(runtimeID, kind string) {
 		return
 	}
 
+	// Directory listings answer someone typing a path, and are claimed the
+	// same way.
+	if kind == protocol.PendingWorkKindDirectoryListing {
+		if ctx := d.recoveryContext(); ctx.Err() == nil {
+			d.claimDirectoryListings(ctx, runtimeID)
+		}
+		return
+	}
+
 	d.pendingWorkMu.Lock()
 	if d.pendingWorkInflight == nil {
 		d.pendingWorkInflight = make(map[string]struct{})
