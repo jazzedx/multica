@@ -1,0 +1,6 @@
+# gitea-runner settings that cannot be passed as environment variables.
+# Everything not listed keeps the runner's default.
+container:
+  # Job containers join the stack's network, so they reach Gitea at
+  # http://gitea:3000 (the runner's instance URL) without leaving the host.
+  network: multica_default
