@@ -101,6 +101,17 @@
     "show_less": "상위 {{count}}개만",
     "no_data": "이 기간에는 에이전트 활동이 없습니다."
   },
+  "by_source": {
+    "title": "By source",
+    "header_source": "Source",
+    "header_share": "Share",
+    "sources": {
+      "chat": "Chat",
+      "issue": "Issues",
+      "autopilot": "Autopilots",
+      "other": "Other"
+    }
+  },
   "empty": {
     "title": "아직 사용량이 없습니다",
     "body": "에이전트가 실행되기 시작하면 토큰 사용량, 비용, 실패율이 여기에 표시됩니다."

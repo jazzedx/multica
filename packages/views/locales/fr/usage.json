@@ -103,6 +103,17 @@
     "show_less": "Afficher le top {{count}}",
     "no_data": "Aucune activité d'agent sur cette fenêtre."
   },
+  "by_source": {
+    "title": "By source",
+    "header_source": "Source",
+    "header_share": "Share",
+    "sources": {
+      "chat": "Chat",
+      "issue": "Issues",
+      "autopilot": "Autopilots",
+      "other": "Other"
+    }
+  },
   "empty": {
     "title": "Aucune consommation pour l'instant",
     "body": "Dès que les agents tournent, leur consommation de tokens, leur coût et leur taux d'échec s'affichent ici."

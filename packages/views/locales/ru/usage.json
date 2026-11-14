@@ -107,6 +107,17 @@
     "usage_unreported_pending_few": "{{count}} запуска не сообщили об использовании · итоги ещё обрабатываются",
     "usage_unreported_pending_many": "{{count}} запусков не сообщили об использовании · итоги ещё обрабатываются"
   },
+  "by_source": {
+    "title": "By source",
+    "header_source": "Source",
+    "header_share": "Share",
+    "sources": {
+      "chat": "Chat",
+      "issue": "Issues",
+      "autopilot": "Autopilots",
+      "other": "Other"
+    }
+  },
   "empty": {
     "title": "Данных пока нет",
     "body": "Как только агенты начнут работать, здесь появятся расход токенов, стоимость и доля запусков с ошибками."

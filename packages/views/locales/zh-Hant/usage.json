@@ -101,6 +101,17 @@
     "show_less": "只看前 {{count}} 個",
     "no_data": "所選時間範圍內暫無 AI 代理活動。"
   },
+  "by_source": {
+    "title": "依來源",
+    "header_source": "來源",
+    "header_share": "占比",
+    "sources": {
+      "chat": "聊天",
+      "issue": "任務",
+      "autopilot": "自動化",
+      "other": "其他"
+    }
+  },
   "empty": {
     "title": "暫無消耗資料",
     "body": "AI 代理開始執行後，這裡會顯示 token、費用和失敗率。"

@@ -101,6 +101,17 @@
     "show_less": "上位 {{count}} 件のみ",
     "no_data": "この期間にエージェントの活動はありません。"
   },
+  "by_source": {
+    "title": "By source",
+    "header_source": "Source",
+    "header_share": "Share",
+    "sources": {
+      "chat": "Chat",
+      "issue": "Issues",
+      "autopilot": "Autopilots",
+      "other": "Other"
+    }
+  },
   "empty": {
     "title": "まだ使用量はありません",
     "body": "エージェントが動き始めると、トークン使用量、コスト、失敗率がここに表示されます。"

@@ -103,6 +103,17 @@
     "show_less": "Mostrar los {{count}} principales",
     "no_data": "Sin actividad de agentes en este periodo."
   },
+  "by_source": {
+    "title": "By source",
+    "header_source": "Source",
+    "header_share": "Share",
+    "sources": {
+      "chat": "Chat",
+      "issue": "Issues",
+      "autopilot": "Autopilots",
+      "other": "Other"
+    }
+  },
   "empty": {
     "title": "Aún no hay uso",
     "body": "Cuando los agentes empiecen a ejecutarse, aquí aparecerán el uso de tokens, el coste y la tasa de fallos."

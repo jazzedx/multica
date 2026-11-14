@@ -66,6 +66,7 @@ import {
 import { ProjectFilter, TimeRangeFilter } from "./dashboard-filters";
 import { UsageTrendCard } from "./usage-trend-card";
 import { Leaderboard } from "./leaderboard";
+import { UsageBySource } from "./usage-by-source";
 import { ErrorsTab } from "./errors-tab";
 
 // Stable references — `data ?? []` would create a new empty array on
@@ -595,6 +596,8 @@ export function DashboardPage() {
                   weeklyTasks={weeklyTasks}
                   lessThanMinuteLabel={lessThanMinuteLabel}
                 />
+
+                <UsageBySource days={days} projectId={projectId} tz={viewTZ} />
 
                 <Leaderboard
                   rows={visibleAgentRows}

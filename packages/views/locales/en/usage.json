@@ -103,6 +103,17 @@
     "show_less": "Show top {{count}}",
     "no_data": "No agent activity in this window."
   },
+  "by_source": {
+    "title": "By source",
+    "header_source": "Source",
+    "header_share": "Share",
+    "sources": {
+      "chat": "Chat",
+      "issue": "Issues",
+      "autopilot": "Autopilots",
+      "other": "Other"
+    }
+  },
   "empty": {
     "title": "No usage yet",
     "body": "Once agents start running, token usage, cost, and failure rate show up here."
