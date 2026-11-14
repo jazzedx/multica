@@ -6,6 +6,24 @@
     "graph_external": "不是本任务的子任务",
     "graph_expand": "展开"
   },
+  "delivery_overview": {
+    "title": "交付概览",
+    "sub_issues": "子任务",
+    "cancelled": "已取消 {{count}} 个",
+    "runs": "运行",
+    "failed": "{{count}} 次失败",
+    "rework": "返工",
+    "rework_hint": "任务被退回到更早状态的次数",
+    "human": "人工介入",
+    "human_hint": "任务创建之后，成员发表的评论和做出的改动",
+    "merged": "合并的 PR",
+    "took": "历时",
+    "running_for": "已进行",
+    "under_minute": "不到 1 分钟",
+    "minutes": "{{minutes}} 分钟",
+    "hours": "{{hours}} 小时 {{minutes}} 分钟",
+    "days": "{{days}} 天 {{hours}} 小时"
+  },
   "web": {
     "open_in_desktop": "在桌面端打开"
   },

@@ -483,3 +483,4 @@ export type { WorkspaceWakeup, WorkspaceWakeupPage, WorkspaceWakeupFilters, Wake
 export type { WeixinInstallation, ListWeixinInstallationsResponse, WeixinLogin } from "./weixin";
 
 export * from "./doc";
+export type { IssueDeliveryOverview } from "./issue-delivery";
