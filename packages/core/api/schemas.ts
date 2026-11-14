@@ -705,6 +705,9 @@ const IssueWorkflowStepSchema = z.object({
   instructions: z.string().default(""),
   next_status_key: z.string().optional(),
   back_status_key: z.string().optional(),
+  // Unreadable rules read as no rules: the server still enforces what it stored.
+  strict: z.boolean().optional().catch(undefined),
+  max_returns: z.number().optional().catch(undefined),
 }).loose();
 
 export const IssueWorkflowSchema = z.object({
