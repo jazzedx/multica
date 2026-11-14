@@ -125,12 +125,14 @@ export const agentTasksKeys = {
 
 // History is fetched one bounded page at a time. Aggregate metrics use
 // agentActivity30dOptions so they do not depend on how many pages were opened.
+// Each run carries its usage, so its transcript shows what it cost here just as
+// it does when opened from an issue.
 export function agentTasksOptions(wsId: string, agentId: string) {
   return infiniteQueryOptions({
     queryKey: [...agentTasksKeys.detail(wsId, agentId), "pages"],
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam, signal }) =>
-      api.listAgentTasksPage(agentId, { limit: 200, before: pageParam, signal }),
+      api.listAgentTasksPage(agentId, { limit: 200, before: pageParam, signal, includeUsage: true }),
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,

@@ -866,8 +866,9 @@ export function AgentTranscriptDialog({
   const completedLabel = task.completed_at ? formatRunTime(task.completed_at, locale) : null;
   const hasTriggeredBy = !!task.attribution?.initiator;
   // This run's own spend. Present on transcripts opened from the issue
-  // execution log (the endpoint that hydrates usage); absent elsewhere, where
-  // the chip and the usage rows below simply don't render.
+  // execution log and from an agent's task history (the endpoints that hydrate
+  // usage); absent elsewhere, where the chip and the usage rows below simply
+  // don't render.
   //
   // `summarizeTaskUsage` prices through the custom-rate store, which it reads
   // imperatively — subscribing here is what makes a saved rate change reach

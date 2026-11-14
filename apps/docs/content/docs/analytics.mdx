@@ -49,6 +49,8 @@ In the clip below, a workspace with three agents (Engineer, Reviewer, and Docs) 
 
 <UsageDemo />
 
+**By source** splits the same usage by what started the run: **Chat**, **Issues**, **Autopilots** and **Other** (runs that belong to none of the three, such as creating an issue with an agent). Each source expands into the agents that spent it, with their share of that source. It reads runs directly rather than the periodic rollup, so it can be a few minutes ahead of the figures above. The card has no squad breakdown and is hidden while a squad is selected.
+
 ## Errors tab
 
 At the top are **Failed runs**, **Failure rate**, and **Agents affected**. The rate is taken over every run that finished in the range, and the card spells out both numbers underneath.

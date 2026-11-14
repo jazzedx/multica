@@ -117,6 +117,7 @@ import type {
   DashboardUsageDaily,
   DashboardUsageByAgent,
   DashboardUsageBySquad,
+  DashboardUsageBySource,
   DashboardAgentRunTime,
   DashboardSquadRunTime,
   DashboardRunTimeDaily,
@@ -379,6 +380,7 @@ import {
   DashboardFailureBySquadListSchema,
   DashboardUsageByAgentListSchema,
   DashboardUsageBySquadListSchema,
+  DashboardUsageBySourceListSchema,
   DashboardUsageDailyListSchema,
   EMPTY_APP_CONFIG,
   EMPTY_ATTACHMENT,
@@ -3227,6 +3229,15 @@ export class ApiClient {
     );
   }
 
+  async getDashboardUsageBySource(params: DashboardRequestParams): Promise<DashboardUsageBySource[]> {
+    return this.fetchDashboardRows(
+      "/api/dashboard/usage/by-source",
+      params,
+      DashboardUsageBySourceListSchema,
+      "GET /api/dashboard/usage/by-source",
+    );
+  }
+
   async getDashboardAgentRunTime(params: DashboardRequestParams): Promise<DashboardAgentRunTime[]> {
     return this.fetchDashboardRows(
       "/api/dashboard/agent-runtime",
@@ -3407,10 +3418,17 @@ export class ApiClient {
 
   async listAgentTasksPage(
     agentId: string,
-    options: { limit?: number; before?: string; signal?: AbortSignal } = {},
+    options: {
+      limit?: number;
+      before?: string;
+      signal?: AbortSignal;
+      /** Also load what each run used and cost; one more query per page on the server. */
+      includeUsage?: boolean;
+    } = {},
   ): Promise<{ tasks: AgentTask[]; nextCursor: string | null }> {
     const search = new URLSearchParams({ limit: String(options.limit ?? 200) });
     if (options.before) search.set("before", options.before);
+    if (options.includeUsage) search.set("include_usage", "true");
     const response = await this.fetchRaw(`/api/agents/${agentId}/tasks?${search}`, {
       signal: options.signal,
     });
@@ -3498,6 +3516,14 @@ export class ApiClient {
     const raw = await this.fetch<unknown>(`/api/issues/${issueId}/task-runs${query}`);
     return parseWithFallback<AgentTask[]>(raw, AgentTaskListSchema, [], {
       endpoint: "GET /api/issues/:id/task-runs",
+    });
+  }
+
+  /** Every run a chat produced, newest first, each with the usage it reported. */
+  async listChatSessionTaskRuns(sessionId: string): Promise<AgentTask[]> {
+    const raw = await this.fetch<unknown>(`/api/chat/sessions/${sessionId}/task-runs`);
+    return parseWithFallback<AgentTask[]>(raw, AgentTaskListSchema, [], {
+      endpoint: "GET /api/chat/sessions/:id/task-runs",
     });
   }
 

@@ -46,6 +46,12 @@ export const chatKeys = {
   messagesPage: (sessionId: string) => [...chatKeys.messagesPageAll(), sessionId] as const,
   pendingTaskAll: () => ["chat", "pending-task"] as const,
   pendingTask: (sessionId: string) => [...chatKeys.pendingTaskAll(), sessionId] as const,
+  /**
+   * A session's run history. Nested under its pending-task key on purpose:
+   * that key is invalidated whenever a run of the session starts or ends,
+   * which is exactly when this history changes.
+   */
+  taskRuns: (sessionId: string) => [...chatKeys.pendingTask(sessionId), "runs"] as const,
   /** Client-only marker: this session's last turn awaits a quick-actions supplement. */
   quickActionsPendingAll: () => ["chat", "quick-actions-pending"] as const,
   quickActionsPending: (sessionId: string) =>
@@ -180,6 +186,16 @@ export function pendingChatTaskOptions(sessionId: string) {
   return queryOptions({
     queryKey: chatKeys.pendingTask(sessionId),
     queryFn: () => api.getPendingChatTask(sessionId),
+    enabled: !!sessionId,
+    staleTime: Infinity,
+  });
+}
+
+/** Every run of a chat with its usage; see `chatKeys.taskRuns` for freshness. */
+export function chatSessionTaskRunsOptions(sessionId: string) {
+  return queryOptions({
+    queryKey: chatKeys.taskRuns(sessionId),
+    queryFn: () => api.listChatSessionTaskRuns(sessionId),
     enabled: !!sessionId,
     staleTime: Infinity,
   });

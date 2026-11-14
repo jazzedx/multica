@@ -39,8 +39,9 @@ describe("agent history query lifecycle", () => {
       queryClient.fetchInfiniteQuery(options),
     ]);
     expect(fetchPage).toHaveBeenCalledTimes(1);
+    // Usage rides along so a run's transcript can show what it cost.
     expect(fetchPage).toHaveBeenCalledWith("agent-1", {
-      limit: 200, before: undefined, signal: expect.any(AbortSignal),
+      limit: 200, before: undefined, signal: expect.any(AbortSignal), includeUsage: true,
     });
     expect(first).toEqual(second);
     expect(first.pages).toHaveLength(1);

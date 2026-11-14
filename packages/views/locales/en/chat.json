@@ -1,4 +1,9 @@
 {
+  "usage": {
+    "label": "Usage of this chat",
+    "runs": "Runs",
+    "run_time": "Run time"
+  },
   "page": {
     "title": "Chat",
     "no_agent_title": "No agent to chat with yet",
@@ -66,6 +71,7 @@
     "action_failed_toast": "Couldn't update the queued message"
   },
   "message_list": {
+    "transcript_action": "View transcript",
     "jump_to_latest": "Jump to latest",
     "new_reply": "New reply",
     "show_details": "Show details",

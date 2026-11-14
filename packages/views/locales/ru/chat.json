@@ -1,4 +1,9 @@
 {
+  "usage": {
+    "label": "Usage of this chat",
+    "runs": "Runs",
+    "run_time": "Run time"
+  },
   "page": {
     "title": "Чат",
     "select_prompt": "Выберите диалог или начните новый с помощью +",
@@ -72,6 +77,7 @@
     "title_many": "{{count}} сообщений в очереди"
   },
   "message_list": {
+    "transcript_action": "View transcript",
     "jump_to_latest": "К последним сообщениям",
     "new_reply": "Новый ответ",
     "show_details": "Показать детали",

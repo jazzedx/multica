@@ -1,4 +1,9 @@
 {
+  "usage": {
+    "label": "这次聊天的用量",
+    "runs": "运行次数",
+    "run_time": "运行时长"
+  },
   "page": {
     "title": "聊天",
     "no_agent_title": "还没有可以对话的智能体",
@@ -63,6 +68,7 @@
     "action_failed_toast": "无法更新排队消息"
   },
   "message_list": {
+    "transcript_action": "查看记录",
     "jump_to_latest": "跳到最新",
     "new_reply": "新回复",
     "show_details": "查看详情",
