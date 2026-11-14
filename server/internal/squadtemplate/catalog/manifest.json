@@ -1,0 +1,192 @@
+{
+  "source": {
+    "repository": "https://github.com/jazzedx/multica-best-practices",
+    "commit": "1424872e13725bc052c1b9017f877057dba678f4",
+    "path": "templates/zh_CN"
+  },
+  "root": "zh_CN",
+  "templates": [
+    {
+      "key": "software-development-reviewed",
+      "recommended": true,
+      "title": {
+        "en": "Software development with dedicated reviewers",
+        "zh": "软件开发（专业评审）"
+      },
+      "summary": {
+        "en": "Requirement to deployment, with a leader gate plus a dedicated reviewer for every producing role.",
+        "zh": "从需求到部署的完整流程：Leader 通用门禁之外，每个产出角色再配一名专属评审。"
+      },
+      "squad": {
+        "name": "软件开发小队（专业评审）",
+        "description": "需求到上线的交付物驱动小队：通用门禁 + 专业产出物评审",
+        "instructions_file": "squad/software-development-reviewed/squad.md",
+        "leader": "leader"
+      },
+      "agents": [
+        "leader",
+        "product-manager",
+        "architect",
+        "designer",
+        "frontend-developer",
+        "backend-developer",
+        "tester",
+        "devops",
+        "product-reviewer",
+        "arch-reviewer",
+        "design-reviewer",
+        "frontend-reviewer",
+        "backend-reviewer",
+        "test-reviewer"
+      ]
+    },
+    {
+      "key": "software-development",
+      "title": {
+        "en": "Software development",
+        "zh": "软件开发"
+      },
+      "summary": {
+        "en": "Requirement to deployment with one leader gate per stage and a single business reviewer.",
+        "zh": "从需求到部署的轻量流程：每个阶段由 Leader 判门，一名 Reviewer 做业务评审。"
+      },
+      "squad": {
+        "name": "软件开发小队",
+        "description": "需求到上线的交付物驱动小队（含评审门禁）",
+        "instructions_file": "squad/software-development/squad.md",
+        "leader": "leader"
+      },
+      "agents": [
+        "leader",
+        "product-manager",
+        "architect",
+        "designer",
+        "frontend-developer",
+        "backend-developer",
+        "tester",
+        "devops",
+        "reviewer"
+      ]
+    },
+    {
+      "key": "bug-fix",
+      "title": {
+        "en": "Bug fix",
+        "zh": "缺陷修复"
+      },
+      "summary": {
+        "en": "Reproduce, find the root cause, fix and verify; no design stage.",
+        "zh": "复现、定位根因、修复并验证，不经过设计阶段。"
+      },
+      "squad": {
+        "name": "缺陷修复小队",
+        "description": "最小修复组合：复现 → 根因 → 修复 → 独立验证",
+        "instructions_file": "squad/bug-fix/squad.md",
+        "leader": "leader"
+      },
+      "agents": [
+        "leader",
+        "frontend-developer",
+        "backend-developer",
+        "tester",
+        "reviewer"
+      ]
+    }
+  ],
+  "agents": {
+    "leader": {
+      "name": "Leader",
+      "role": "Leader",
+      "skills": ["multica-verification", "multica-manage-skills", "multica-platform-knowledge-base"]
+    },
+    "product-manager": {
+      "name": "ProductManager",
+      "role": "ProductManager",
+      "skills": [
+        "multica-pm-requirement-spec",
+        "multica-pm-artifact-publish",
+        "multica-platform-confluence",
+        "multica-platform-jira"
+      ]
+    },
+    "architect": {
+      "name": "Architect",
+      "role": "Architect",
+      "skills": ["multica-technical-design", "multica-artifact-architect"]
+    },
+    "designer": {
+      "name": "Designer",
+      "role": "Designer",
+      "skills": ["multica-design-ui-impl", "multica-platform-figma"]
+    },
+    "frontend-developer": {
+      "name": "FrontendDev",
+      "role": "FrontendDev",
+      "skills": ["multica-frontend-impl", "multica-artifact-frontend"]
+    },
+    "backend-developer": {
+      "name": "BackendDev",
+      "role": "BackendDev",
+      "skills": ["multica-backend-impl", "multica-artifact-backend"]
+    },
+    "tester": {
+      "name": "Tester",
+      "role": "Tester",
+      "skills": [
+        "multica-test-orchestration",
+        "multica-test-t1-design",
+        "multica-test-t2-coverage",
+        "multica-test-t3-ui-automation",
+        "multica-test-t3-api-automation",
+        "multica-platform-apifox"
+      ]
+    },
+    "devops": {
+      "name": "DevOps",
+      "role": "DevOps",
+      "skills": ["multica-artifact-cicd-sync", "multica-platform-jenkins"]
+    },
+    "reviewer": {
+      "name": "Reviewer",
+      "role": "Reviewer",
+      "skills": [
+        "multica-review-product",
+        "multica-review-architect",
+        "multica-review-designer",
+        "multica-review-frontend",
+        "multica-review-backend",
+        "multica-review-test"
+      ]
+    },
+    "product-reviewer": {
+      "name": "ProductReviewer",
+      "role": "Reviewer",
+      "skills": ["multica-review-product"]
+    },
+    "arch-reviewer": {
+      "name": "ArchReviewer",
+      "role": "Reviewer",
+      "skills": ["multica-review-architect"]
+    },
+    "design-reviewer": {
+      "name": "DesignReviewer",
+      "role": "Reviewer",
+      "skills": ["multica-review-designer"]
+    },
+    "frontend-reviewer": {
+      "name": "FrontendReviewer",
+      "role": "Reviewer",
+      "skills": ["multica-review-frontend"]
+    },
+    "backend-reviewer": {
+      "name": "BackendReviewer",
+      "role": "Reviewer",
+      "skills": ["multica-review-backend"]
+    },
+    "test-reviewer": {
+      "name": "TestReviewer",
+      "role": "Reviewer",
+      "skills": ["multica-review-test"]
+    }
+  }
+}
