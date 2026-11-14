@@ -2384,6 +2384,13 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 				})
 			})
 
+			// Squad templates shipped with this server. Installing creates
+			// agents on the caller's behalf, so machine credentials are refused.
+			r.Route("/api/squad-templates", func(r chi.Router) {
+				r.Get("/", h.ListSquadTemplates)
+				r.With(handler.RequireHumanActor).Post("/{key}/install", h.InstallSquadTemplate)
+			})
+
 			// Squad leader evaluation (writes to activity_log)
 			r.Post("/api/issues/{id}/squad-evaluated", h.RecordSquadLeaderEvaluation)
 

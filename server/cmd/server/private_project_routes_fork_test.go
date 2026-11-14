@@ -5,8 +5,9 @@ package main
 // not register. Applying them from here leaves that file as upstream has it.
 func init() {
 	for key, param := range map[string]outsideProjectParam{
-		"download/{goos}":   {why: "the operating system of a CLI build"},
-		"download/{goarch}": {why: "the architecture of a CLI build"},
+		"download/{goos}":       {why: "the operating system of a CLI build"},
+		"download/{goarch}":     {why: "the architecture of a CLI build"},
+		"squad-templates/{key}": {why: "a squad template in the server's catalog"},
 	} {
 		routeParamsOutsideProjects[key] = param
 	}
