@@ -35,6 +35,13 @@ export interface IssueWorkflowStep {
   next_status_key?: string;
   /** Status to send the issue back to when it needs changes. */
   back_status_key?: string;
+  /**
+   * The run working an issue at this step may only move it to the next status,
+   * the back status or blocked. People are not bound.
+   */
+  strict?: boolean;
+  /** How many times a run may send one issue to the back status; unset is no limit. */
+  max_returns?: number;
 }
 
 export interface IssueWorkflow {
@@ -150,4 +157,6 @@ export interface SetWorkflowHandoffRequest {
   instructions?: string;
   next_status_key?: string;
   back_status_key?: string;
+  strict?: boolean;
+  max_returns?: number;
 }
