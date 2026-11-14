@@ -1,5 +1,6 @@
 {
   "page": {
+    "template_button": "Start from a template",
     "title": "Команды",
     "new_button": "Новый отряд",
     "empty_no_match": "Нет команд, соответствующих фильтрам.",

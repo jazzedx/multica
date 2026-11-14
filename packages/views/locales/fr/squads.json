@@ -1,5 +1,6 @@
 {
   "page": {
+    "template_button": "Start from a template",
     "title": "Squads",
     "new_button": "Nouveau squad",
     "empty_no_match": "Aucun squad ne correspond à vos filtres.",
