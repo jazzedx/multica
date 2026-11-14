@@ -114,3 +114,72 @@ func TestStuckSubIssueOfAFinishedOrUnassignedParentWakesNobody(t *testing.T) {
 		t.Fatalf("a parent without an agent has no run to start, got %d", runs)
 	}
 }
+
+// A sub-issue reopened after others started or finished on its result leaves
+// them standing on an input that no longer holds. Nothing is stopped; whoever
+// planned the work is told which ones.
+func TestReopenedSubIssueTellsTheParentWhatWasBuiltOnIt(t *testing.T) {
+	escalationTestSetup(t)
+	dependencyTestSetup(t)
+	agentID := createHandlerTestAgent(t, "Escalation Reopen Agent", nil)
+
+	parent := createDependencyTestIssue(t, map[string]any{
+		"title": "Feature", "status": "backlog", "assignee_type": "agent", "assignee_id": agentID,
+	})
+	testPool.Exec(t.Context(), `UPDATE issue SET status = 'in_progress' WHERE id = $1`, parent.ID)
+	upstream := createDependencyTestIssue(t, map[string]any{"title": "Contract", "parent_issue_id": parent.ID})
+	building := createDependencyTestIssue(t, map[string]any{"title": "Server", "parent_issue_id": parent.ID, "blocked_by": []string{upstream.ID}})
+	finished := createDependencyTestIssue(t, map[string]any{"title": "Client", "parent_issue_id": parent.ID, "blocked_by": []string{upstream.ID}})
+	waiting := createDependencyTestIssue(t, map[string]any{"title": "Docs", "parent_issue_id": parent.ID, "blocked_by": []string{upstream.ID}})
+
+	setDependencyTestIssueStatus(t, upstream.ID, "done")
+	setDependencyTestIssueStatus(t, building.ID, "in_progress")
+	setDependencyTestIssueStatus(t, finished.ID, "done")
+	if notes := queuedRunNotes(t, parent.ID, agentID); len(notes) != 0 {
+		t.Fatalf("ordinary progress must not wake the parent, got %v", notes)
+	}
+
+	setDependencyTestIssueStatus(t, upstream.ID, "in_progress")
+	notes := queuedRunNotes(t, parent.ID, agentID)
+	if len(notes) != 1 {
+		t.Fatalf("a reopened sub-issue with work built on it must wake the parent once, got %v", notes)
+	}
+	for _, want := range []string{upstream.Identifier + " was reopened", building.Identifier + " (in progress)", finished.Identifier + " (done)", "nothing was stopped"} {
+		if !strings.Contains(notes[0], want) {
+			t.Fatalf("note %q is missing %q", notes[0], want)
+		}
+	}
+	// The one still waiting just waits again; it is not something to decide.
+	if strings.Contains(notes[0], waiting.Identifier) {
+		t.Fatalf("note %q names an issue that had not started", notes[0])
+	}
+	// Nothing was stopped or moved.
+	var buildingStatus, finishedStatus string
+	dbfx.QueryRow(t, `SELECT status FROM issue WHERE id = $1`, building.ID).Scan(&buildingStatus)
+	dbfx.QueryRow(t, `SELECT status FROM issue WHERE id = $1`, finished.ID).Scan(&finishedStatus)
+	if buildingStatus != "in_progress" || finishedStatus != "done" {
+		t.Fatalf("reopening changed the dependents: %s, %s", buildingStatus, finishedStatus)
+	}
+}
+
+func TestReopenedSubIssueNothingBuiltOnWakesNobody(t *testing.T) {
+	escalationTestSetup(t)
+	dependencyTestSetup(t)
+	agentID := createHandlerTestAgent(t, "Escalation Quiet Reopen Agent", nil)
+
+	parent := createDependencyTestIssue(t, map[string]any{
+		"title": "Feature", "status": "backlog", "assignee_type": "agent", "assignee_id": agentID,
+	})
+	testPool.Exec(t.Context(), `UPDATE issue SET status = 'in_progress' WHERE id = $1`, parent.ID)
+	upstream := createDependencyTestIssue(t, map[string]any{"title": "Contract", "parent_issue_id": parent.ID})
+	createDependencyTestIssue(t, map[string]any{"title": "Docs", "parent_issue_id": parent.ID, "blocked_by": []string{upstream.ID}})
+	alone := createDependencyTestIssue(t, map[string]any{"title": "Nothing depends on this", "parent_issue_id": parent.ID})
+
+	setDependencyTestIssueStatus(t, upstream.ID, "done")
+	setDependencyTestIssueStatus(t, alone.ID, "done")
+	setDependencyTestIssueStatus(t, upstream.ID, "in_progress")
+	setDependencyTestIssueStatus(t, alone.ID, "todo")
+	if notes := queuedRunNotes(t, parent.ID, agentID); len(notes) != 0 {
+		t.Fatalf("reopening work nothing was built on needs nobody, got %v", notes)
+	}
+}
