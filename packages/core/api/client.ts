@@ -3147,6 +3147,14 @@ export class ApiClient {
     });
   }
 
+  /** Every run a chat produced, newest first, each with the usage it reported. */
+  async listChatSessionTaskRuns(sessionId: string): Promise<AgentTask[]> {
+    const raw = await this.fetch<unknown>(`/api/chat/sessions/${sessionId}/task-runs`);
+    return parseWithFallback<AgentTask[]>(raw, AgentTaskListSchema, [], {
+      endpoint: "GET /api/chat/sessions/:id/task-runs",
+    });
+  }
+
   async retryTaskSupplement(issueId: string, taskId: string, commentId: string): Promise<void> {
     await this.fetch(`/api/issues/${issueId}/tasks/${taskId}/supplements/${commentId}/retry`, {
       method: "POST",
