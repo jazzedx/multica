@@ -1212,6 +1212,28 @@ export interface DashboardFailureBySquad {
   task_count: number;
 }
 
+// One (source, agent, provider, model) row for the workspace dashboard's usage
+// by source. `source` is "chat", "issue", "autopilot" or "other"; a string
+// because a newer server may add one. The rest is DashboardUsageByAgent's
+// shape, so the client prices both the same way, and `agent_id` may be the
+// same restricted-agents sentinel.
+export interface DashboardUsageBySource {
+  source: string;
+  agent_id: string;
+  provider: string;
+  model: string;
+  input_tokens: number;
+  output_tokens: number;
+  cache_read_tokens: number;
+  cache_write_tokens: number;
+  cost_usd_ticks?: number;
+  uncosted_input_tokens?: number;
+  uncosted_output_tokens?: number;
+  uncosted_cache_read_tokens?: number;
+  uncosted_cache_write_tokens?: number;
+  task_count: number;
+}
+
 // Per-agent total terminal-task run-time + counts. Powers the workspace
 // dashboard's "time by agent" list. failed_count is a subset of
 // task_count (failed tasks still contribute to total_seconds because

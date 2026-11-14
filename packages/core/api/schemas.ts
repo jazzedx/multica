@@ -2279,6 +2279,23 @@ const DashboardUsageBySquadSchema = DashboardUsageByAgentSchema.extend({
 
 export const DashboardUsageBySquadListSchema = z.array(DashboardUsageBySquadSchema);
 
+// A row without a source cannot be placed, so it fails the list rather than
+// landing in a bucket of its own; the fallback is an empty breakdown.
+const DashboardUsageBySourceSchema = z.object({
+  source: z.string(),
+  agent_id: z.string().default(""),
+  provider: z.string().default(""),
+  model: z.string().default(""),
+  input_tokens: z.number().default(0),
+  output_tokens: z.number().default(0),
+  cache_read_tokens: z.number().default(0),
+  cache_write_tokens: z.number().default(0),
+  ...CostSplitShape,
+  task_count: z.number().default(0),
+}).loose();
+
+export const DashboardUsageBySourceListSchema = z.array(DashboardUsageBySourceSchema);
+
 // `cancelled_count` defaults to 0 so an installed client pointed at a
 // backend that predates it still renders: those rows simply carry no
 // cancelled segment, which is exactly what that backend measured.
