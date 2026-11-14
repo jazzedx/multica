@@ -164,7 +164,21 @@
     "toast_ref_update_failed": "브랜치를 업데이트하지 못했습니다",
     "ref_error_commit": "이것은 브랜치가 아니라 커밋입니다. 특정 리비전이 필요하면 multica repo checkout --ref를 사용하세요.",
     "ref_default_label": "기본 브랜치",
-    "ref_running_note": "이미 진행 중인 작업에는 영향이 없습니다."
+    "ref_running_note": "이미 진행 중인 작업에는 영향이 없습니다.",
+    "remote_add": "Add a folder on another computer...",
+    "remote_title": "Add a folder on another computer",
+    "remote_description": "Runs on the chosen computer work in this folder instead of a fresh checkout.",
+    "remote_machine_label": "Computer",
+    "remote_machine_taken": "Already has a folder",
+    "remote_path_label": "Folder path",
+    "remote_path_placeholder": "Absolute path, such as /srv/project",
+    "remote_suggestions_label": "Folders",
+    "remote_reading": "Reading...",
+    "remote_status_ok": "This folder can be used.",
+    "remote_status_ok_git": "This folder can be used. It is a git repository.",
+    "remote_not_absolute": "Enter an absolute path.",
+    "remote_protected": "This folder covers too much. Choose a project folder inside it.",
+    "remote_unavailable": "This computer did not answer, so the path cannot be completed or checked. You can still type it and add it. If the computer is online, update its Multica CLI."
   },
   "delete_dialog": {
     "offline_error": "오프라인 상태입니다. 다시 연결한 후 삭제를 재시도하세요.",

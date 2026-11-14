@@ -67,6 +67,7 @@ import {
 } from "./local-directory-mode-options";
 import { GithubRefField, githubRefHasError } from "./github-ref-field";
 import { localDirectoryLabel } from "./local-directory-label";
+import { RemoteDirectoryAdder } from "./remote-directory-adder";
 import { buildRuntimeMachines } from "../../runtimes/components/runtime-machines";
 import { useT } from "../../i18n";
 import { githubShortLabel } from "../../common/github-url";
@@ -171,6 +172,12 @@ export function ProjectResourcesSection({ projectId }: { projectId: string }) {
               desktopMode={desktopMode}
             />
           )}
+          <RemoteDirectoryAdder
+            wsId={wsId}
+            projectId={projectId}
+            folders={folders}
+            standalone={!desktopMode && folders.length === 0}
+          />
           {others.map((resource) => (
             <UnknownResourceRow key={resource.id} resource={resource} />
           ))}
