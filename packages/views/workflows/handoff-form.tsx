@@ -11,6 +11,7 @@ import { projectListOptions } from "@multica/core/projects/queries";
 import { agentListOptions, memberListOptions, squadListOptions } from "@multica/core/workspace/queries";
 import type { IssueWorkflow, IssueWorkflowStep, Project } from "@multica/core/types";
 import { Button } from "@multica/ui/components/ui/button";
+import { Checkbox } from "@multica/ui/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -48,11 +49,21 @@ function modeOf(handler: IssueWorkflowStep["handler"]): HandoffMode {
  * The parts of a handoff that are saved. Instructions and next/back statuses
  * reach an agent's or squad leader's brief.
  */
-export function savedHandoff<T extends Pick<IssueWorkflowStep, "handler" | "instructions" | "next_status_key" | "back_status_key">>(
-  step: T,
-): T {
-  if (step.handler.type === "agent" || step.handler.type === "squad") return step;
-  return { ...step, instructions: "", next_status_key: undefined, back_status_key: undefined };
+export function savedHandoff<
+  T extends Pick<IssueWorkflowStep, "handler" | "instructions" | "next_status_key" | "back_status_key" | "strict" | "max_returns">,
+>(step: T): T {
+  if (step.handler.type === "agent" || step.handler.type === "squad") {
+    // A cap counts returns, so it goes when the way back does.
+    return step.back_status_key ? step : { ...step, max_returns: undefined };
+  }
+  return {
+    ...step,
+    instructions: "",
+    next_status_key: undefined,
+    back_status_key: undefined,
+    strict: undefined,
+    max_returns: undefined,
+  };
 }
 
 function sameStep(a: IssueWorkflowStep, b: IssueWorkflowStep): boolean {
@@ -61,7 +72,9 @@ function sameStep(a: IssueWorkflowStep, b: IssueWorkflowStep): boolean {
     (a.handler.id ?? "") === (b.handler.id ?? "") &&
     a.instructions === b.instructions &&
     (a.next_status_key ?? "") === (b.next_status_key ?? "") &&
-    (a.back_status_key ?? "") === (b.back_status_key ?? "")
+    (a.back_status_key ?? "") === (b.back_status_key ?? "") &&
+    !!a.strict === !!b.strict &&
+    (a.max_returns ?? 0) === (b.max_returns ?? 0)
   );
 }
 
@@ -153,6 +166,8 @@ export function WorkflowHandoffForm({
         instructions: out.instructions,
         next_status_key: out.next_status_key,
         back_status_key: out.back_status_key,
+        strict: out.strict,
+        max_returns: out.max_returns,
         copyForProjectId: copyFor?.id,
       });
       toast.success(
@@ -508,6 +523,81 @@ function HandlerPicker({
   );
 }
 
+/** Choices for the cap on sending an issue back; 0 is no limit. */
+const MAX_RETURNS_CHOICES = [0, 1, 2, 3, 5, 10];
+
+/**
+ * The step's rules for runs: whether the moves above are the only ones a run
+ * may make, and how often it may send one issue back. Both bind the run that
+ * works the issue and never a person.
+ */
+function StepRuleFields({
+  step,
+  workflow,
+  canEdit,
+  onPatch,
+}: {
+  step: IssueWorkflowStep;
+  workflow: Pick<IssueWorkflow, "steps">;
+  canEdit: boolean;
+  onPatch: (patch: Partial<IssueWorkflowStep>) => void;
+}) {
+  const { t } = useT("issues");
+  // A run at the cap has to stop with blocked, so the workflow must list it.
+  const hasBlocked = workflow.steps.some((s) => s.status_key === "blocked");
+  const limit = step.max_returns ?? 0;
+  const limitLabel = (count: number) =>
+    count === 0
+      ? t(($) => $.workflows.editor.max_returns_unlimited)
+      : t(($) => $.workflows.editor.max_returns_times, { count });
+  const choices = MAX_RETURNS_CHOICES.includes(limit) ? MAX_RETURNS_CHOICES : [...MAX_RETURNS_CHOICES, limit].sort((a, b) => a - b);
+  return (
+    <div className="space-y-2">
+      <label className={cn("flex items-start gap-2 text-body", canEdit && "cursor-pointer")}>
+        <Checkbox
+          className="mt-0.5"
+          checked={!!step.strict}
+          disabled={!canEdit}
+          onCheckedChange={(v) => onPatch({ strict: v === true ? true : undefined })}
+        />
+        <span>
+          {t(($) => $.workflows.editor.strict_label)}
+          <span className="block text-caption leading-5 text-muted-foreground">
+            {t(($) => $.workflows.editor.strict_hint)}
+          </span>
+        </span>
+      </label>
+      {step.back_status_key ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-caption font-medium">{t(($) => $.workflows.editor.max_returns_label)}</span>
+          <Select
+            items={choices.map((count) => ({ value: String(count), label: limitLabel(count) }))}
+            value={String(limit)}
+            disabled={!canEdit || !hasBlocked}
+            onValueChange={(v) => onPatch({ max_returns: Number(v) > 0 ? Number(v) : undefined })}
+          >
+            <SelectTrigger aria-label={t(($) => $.workflows.editor.max_returns_label)} className="w-32">
+              <span className="truncate">{limitLabel(limit)}</span>
+            </SelectTrigger>
+            <SelectContent>
+              {choices.map((count) => (
+                <SelectItem key={count} value={String(count)}>
+                  {limitLabel(count)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <span className="text-caption leading-5 text-muted-foreground">
+            {hasBlocked
+              ? t(($) => $.workflows.editor.max_returns_hint)
+              : t(($) => $.workflows.editor.max_returns_needs_blocked)}
+          </span>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function NextBackFields({
   step,
   workflow,
@@ -584,6 +674,7 @@ function NextBackFields({
           );
         })}
       </div>
+      <StepRuleFields step={step} workflow={workflow} canEdit={canEdit} onPatch={onPatch} />
       <p className="text-caption leading-5 text-muted-foreground">
         {t(($) => $.workflows.editor.next_hint)}
         {onPreview && (
@@ -651,6 +742,8 @@ export function BriefPreviewDialog({
         instructions: step.instructions,
         next_status_key: step.next_status_key,
         back_status_key: step.back_status_key,
+        strict: step.strict,
+        max_returns: step.max_returns,
       }),
     enabled: open,
   });

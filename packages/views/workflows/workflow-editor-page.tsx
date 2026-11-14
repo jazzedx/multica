@@ -92,7 +92,10 @@ const NEW_WORKFLOW_MIDDLE = ["in_progress", "in_review"];
 type DraftColumn = { id: string; status_key: string } | { id: string; new_name: string; category?: "unstarted" | "started" };
 
 /** What entering a column does, keyed in the draft by column id. */
-type Handoff = Pick<IssueWorkflowStep, "handler" | "instructions" | "next_status_key" | "back_status_key">;
+type Handoff = Pick<
+  IssueWorkflowStep,
+  "handler" | "instructions" | "next_status_key" | "back_status_key" | "strict" | "max_returns"
+>;
 
 const NO_HANDOFF: Handoff = { handler: { type: "none" }, instructions: "" };
 
@@ -114,14 +117,21 @@ function columnKey(column: DraftColumn): string {
 }
 
 function hasHandoff(h: Handoff | undefined): h is Handoff {
-  return !!h && (h.handler.type !== "none" || !!h.next_status_key || !!h.back_status_key);
+  return !!h && (h.handler.type !== "none" || !!h.next_status_key || !!h.back_status_key || !!h.strict);
 }
 
 function draftFrom(workflow: Pick<IssueWorkflow, "name" | "description" | "steps">): Draft {
   const keys = workflow.steps.map((s) => s.status_key);
   const handoffs: Record<string, Handoff> = {};
   for (const s of workflow.steps) {
-    const h = { handler: s.handler, instructions: s.instructions, next_status_key: s.next_status_key, back_status_key: s.back_status_key };
+    const h = {
+      handler: s.handler,
+      instructions: s.instructions,
+      next_status_key: s.next_status_key,
+      back_status_key: s.back_status_key,
+      strict: s.strict,
+      max_returns: s.max_returns,
+    };
     if (hasHandoff(h)) handoffs[s.status_key] = h;
   }
   return {
@@ -308,6 +318,11 @@ export function WorkflowEditorPage({
             ...(h.handler.type !== "none" ? { handler: h.handler, instructions: h.instructions } : {}),
             ...(h.next_status_key && listed.has(h.next_status_key) ? { next_status_key: h.next_status_key } : {}),
             ...(h.back_status_key && listed.has(h.back_status_key) ? { back_status_key: h.back_status_key } : {}),
+            ...(h.strict ? { strict: true } : {}),
+            // The cap goes with its way back, and needs blocked to stop at.
+            ...(h.max_returns && h.back_status_key && listed.has(h.back_status_key) && listed.has("blocked")
+              ? { max_returns: h.max_returns }
+              : {}),
           }
         : {};
       return "status_key" in c
