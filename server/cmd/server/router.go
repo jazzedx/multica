@@ -563,6 +563,7 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 		h.ModelCatalogCache = handler.NewRedisModelCatalogCache(rdb)
 		h.LocalSkillListStore = handler.NewRedisLocalSkillListStore(rdb)
 		h.LocalSkillImportStore = handler.NewRedisLocalSkillImportStore(rdb)
+		h.RuntimeDirectoryStore = handler.NewRedisRuntimeDirectoryStore(rdb)
 		h.LivenessStore = handler.NewRedisLivenessStore(rdb)
 		h.QoderRateLimiter = handler.NewRedisWebhookRateLimiter(rdb, handler.WebhookRateLimit{Limit: 6, Window: time.Minute})
 		h.WebhookRateLimiter = handler.NewRedisWebhookRateLimiter(rdb, handler.DefaultWebhookRateLimit())
@@ -1798,6 +1799,8 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 		r.Post("/runtimes/{runtimeId}/local-skills/import/{requestId}/result", h.ReportLocalSkillImportResult)
 		r.Post("/runtimes/{runtimeId}/environment-commands/claim", h.ClaimEnvironmentCommands)
 		r.Post("/runtimes/{runtimeId}/environment-commands/{commandId}/result", h.ReportEnvironmentCommandResult)
+		r.Post("/runtimes/{runtimeId}/directories/claim", h.ClaimRuntimeDirectoryRequests)
+		r.Post("/runtimes/{runtimeId}/directories/{requestId}/result", h.ReportRuntimeDirectoryResult)
 
 		r.Get("/tasks/{taskId}/status", h.GetTaskStatus)
 		r.Post("/tasks/{taskId}/start", h.StartTask)
@@ -2592,6 +2595,8 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 					r.Get("/local-skills/{requestId}", h.GetLocalSkillListRequest)
 					r.Post("/local-skills/import", h.InitiateImportLocalSkill)
 					r.Get("/local-skills/import/{requestId}", h.GetLocalSkillImportRequest)
+					r.Post("/directories", h.InitiateListRuntimeDirectory)
+					r.Get("/directories/{requestId}", h.GetRuntimeDirectoryRequest)
 					r.Delete("/", h.DeleteAgentRuntime)
 					// Confirmed variant of DELETE: unbind every agent bound to
 					// this runtime (they keep their configuration and chats and
