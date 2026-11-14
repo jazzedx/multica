@@ -67,6 +67,7 @@ import { ProjectFilter, TimeRangeFilter } from "./dashboard-filters";
 import { UsageTrendCard } from "./usage-trend-card";
 import { Leaderboard } from "./leaderboard";
 import { UsageBySource } from "./usage-by-source";
+import { useAgentVisibilityRefresh } from "../use-agent-visibility-refresh";
 import { ErrorsTab } from "./errors-tab";
 
 // Stable references — `data ?? []` would create a new empty array on
@@ -178,6 +179,7 @@ export function DashboardPage() {
   const { data: projects = [] } = useQuery(projectListOptions(wsId));
   const agentsQuery = useQuery(agentListOptions(wsId));
   const agents = agentsQuery.data ?? EMPTY_AGENTS;
+  useAgentVisibilityRefresh(wsId, agentsQuery.data?.map((agent) => agent.id));
 
   // Validate the picked project against the current workspace's list. A
   // stale UUID — left over from a project that's been deleted, or from the
