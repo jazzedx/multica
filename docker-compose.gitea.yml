@@ -1,0 +1,33 @@
+# Optional code host for a self-hosted Multica that cannot reach the company's
+# own Git server: a Gitea instance beside the stack. Connect it to a workspace
+# under Settings -> Code (see apps/docs/content/docs/vcs-integration.mdx).
+#
+#   docker compose -f docker-compose.selfhost.yml -f docker-compose.gitea.yml up -d gitea
+#
+# GITEA_ROOT_URL must be the address runtimes and browsers use to reach Gitea,
+# because Gitea writes it into clone URLs and webhook payloads.
+services:
+  gitea:
+    image: ${GITEA_IMAGE:-gitea/gitea:1}
+    restart: unless-stopped
+    environment:
+      USER_UID: "1000"
+      USER_GID: "1000"
+      GITEA__database__DB_TYPE: sqlite3
+      GITEA__server__ROOT_URL: ${GITEA_ROOT_URL:-http://localhost:3300/}
+      GITEA__server__SSH_PORT: ${GITEA_SSH_PORT:-2222}
+      # Skip the web installer; the first administrator is created from the CLI.
+      GITEA__security__INSTALL_LOCK: "true"
+      GITEA__service__DISABLE_REGISTRATION: "true"
+      # Gitea refuses webhooks to private addresses by default, and Multica
+      # sits on one here.
+      GITEA__webhook__ALLOWED_HOST_LIST: ${GITEA_WEBHOOK_ALLOWED_HOSTS:-private,loopback}
+      GITEA__actions__ENABLED: "true"
+    ports:
+      - "${GITEA_BIND:-0.0.0.0}:${GITEA_HTTP_PORT:-3300}:3000"
+      - "${GITEA_BIND:-0.0.0.0}:${GITEA_SSH_PORT:-2222}:22"
+    volumes:
+      - gitea_data:/data
+
+volumes:
+  gitea_data:
