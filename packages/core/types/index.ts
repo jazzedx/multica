@@ -449,3 +449,9 @@ export type {
   SubIssueBlockers,
 } from "./issue-dependency";
 export type { IssueDeliveryOverview } from "./issue-delivery";
+export type {
+  RuntimeDirectoryListing,
+  RuntimeDirectoryProblem,
+  RuntimeDirectoryRequest,
+  RuntimeDirectoryStatus,
+} from "./runtime-directory";

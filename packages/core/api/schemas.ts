@@ -4935,3 +4935,39 @@ export const IssueDeliveryOverviewSchema = z.object({
   started_at: z.string().default(""),
   finished_at: z.string().nullable().default(null),
 }).loose();
+
+// An unknown problem from a newer daemon reads as a plain error, and an
+// unknown status as a failure, so the page stops waiting and lets the path be
+// typed by hand.
+export const RuntimeDirectoryListingSchema = z.object({
+  path: z.string().default(""),
+  separator: z.enum(["/", "\\"]).catch("/").default("/"),
+  entries: z.array(z.string()).default([]),
+  truncated: z.boolean().default(false),
+  is_git_repo: z.boolean().default(false),
+  problem: z
+    .enum([
+      "",
+      "not_absolute",
+      "not_found",
+      "not_a_directory",
+      "not_readable",
+      "not_writable",
+      "protected",
+      "error",
+    ])
+    .catch("error")
+    .default(""),
+  detail: z.string().default(""),
+}).loose();
+
+export const RuntimeDirectoryRequestSchema = z.object({
+  id: z.string(),
+  runtime_id: z.string().default(""),
+  status: z
+    .enum(["pending", "running", "completed", "failed", "timeout"])
+    .catch("failed"),
+  path: z.string().default(""),
+  listing: RuntimeDirectoryListingSchema.nullable().default(null),
+  error: z.string().default(""),
+}).loose();
