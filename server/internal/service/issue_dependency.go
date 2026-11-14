@@ -38,14 +38,16 @@ func OpenIssueBlockers(ctx context.Context, q *db.Queries, issue db.Issue) ([]db
 }
 
 // waitsForBlockers reports whether a run for the issue must hold. A failed
-// lookup holds too: starting work whose inputs may be missing is the worse
-// mistake, and the write that asked can be repeated.
+// lookup does not hold: nearly every issue waits for nothing, and holding on
+// an error would silently drop the start of all of them, with no later event
+// to bring it back. An issue that does wait and starts early this way shows
+// up as having gone ahead of what it depends on.
 func (s *IssueService) waitsForBlockers(ctx context.Context, issue db.Issue) bool {
 	open, err := OpenIssueBlockers(ctx, s.Queries, issue)
 	if err != nil {
-		slog.Warn("issue dependency lookup failed; holding the run",
+		slog.Warn("issue dependency lookup failed; not holding the run",
 			"issue_id", util.UUIDToString(issue.ID), "error", err)
-		return true
+		return false
 	}
 	return len(open) > 0
 }
