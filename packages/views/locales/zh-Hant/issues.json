@@ -1505,6 +1505,17 @@
     "section_title": "重複項",
     "unmark_toast": "已重新開啟為待辦"
   },
+  "dependencies": {
+    "title": "相依",
+    "waiting_for": "等待",
+    "waited_for": "前置任務",
+    "starts_when_done": "全部完成後自動開始",
+    "cancelled_hint": "已取消的任務不會完成，移除後才會開始。",
+    "blocks": "後續任務",
+    "remove": "不再等待 {{identifier}}",
+    "remove_failed": "移除相依失敗",
+    "marker": "等待 {{identifiers}}"
+  },
   "pr_automation": {
     "link_action": "關聯 PR",
     "link_placeholder": "貼上 PR 連結",

@@ -1564,6 +1564,17 @@
     "section_title": "Duplicates",
     "unmark_toast": "Reopened as Todo"
   },
+  "dependencies": {
+    "title": "Dependencies",
+    "waiting_for": "Waiting for",
+    "waited_for": "Waited for",
+    "starts_when_done": "Starts on its own when they are done",
+    "cancelled_hint": "A cancelled issue will not finish. Remove it to let this one start.",
+    "blocks": "Unblocks",
+    "remove": "Stop waiting for {{identifier}}",
+    "remove_failed": "Could not remove the dependency",
+    "marker": "Waiting for {{identifiers}}"
+  },
   "pr_automation": {
     "link_action": "Link pull request",
     "link_placeholder": "Paste a pull request URL",

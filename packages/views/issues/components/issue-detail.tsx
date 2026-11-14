@@ -16,6 +16,7 @@ import { Virtuoso, type ListRange, type VirtuosoHandle } from "react-virtuoso";
 import { useDefaultLayout, usePanelRef } from "react-resizable-panels";
 import { AppLink, useBackOrReplace } from "../../navigation";
 import { IssueDuplicateBanner, IssueDuplicatesSection, isDuplicateIssue } from "./issue-duplicates";
+import { IssueDependencyStrip, SubIssueWaitingMarker } from "./issue-dependencies";
 import {
   AlertTriangle,
   Archive,
@@ -1046,6 +1047,7 @@ function SubIssueRow({
             >
               {child.title}
             </span>
+            <SubIssueWaitingMarker parentId={child.parent_issue_id} issueId={child.id} />
             {labels.length > 0 && (
               <span className="hidden max-w-[200px] shrink-0 items-center gap-1 overflow-hidden md:inline-flex">
                 {labels.slice(0, 2).map((label) => (
@@ -3790,6 +3792,7 @@ export function IssueDetail({ issueId, onDelete, onDone, onUnsubscribeArchive, d
               )
             }
           />
+          <IssueDependencyStrip issueId={issue.id} />
           <div id={descriptionSectionId}>
           <div data-mc="issue-title">
           {titleLazy.active && (
