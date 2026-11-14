@@ -151,6 +151,8 @@ Sub-issues can be given a **stage** to advance in batches — 1, 2, 3. A later s
 
 Once a sub-issue waits for another issue, by [blocker](#relations) or by stage, the parent issue draws its sub-issues as a **Dependency graph** above the list: what is done, running, ready and waiting, and for what. An edge from a cancelled issue is drawn as broken: the wait ended, but what it was to deliver never came. A sub-issue that is running or done while something it depends on is unfinished, usually because that was reopened, is marked **Upstream not done**.
 
+The parent issue's assignee is woken to plan again, the same way it is told when sub-issues finish, when a sub-issue is set to `blocked`, when one is cancelled while unstarted issues waited for it (they no longer wait, and may start without its result), or when one is reopened after others started or finished on it.
+
 ## Views and display settings [#switch-views]
 
 The Issues page offers five layouts — list, board, table, Gantt, and swimlane — filterable by status, assignee, project, and other properties. They all show the same issues.
