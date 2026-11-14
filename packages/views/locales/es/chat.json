@@ -1,4 +1,9 @@
 {
+  "usage": {
+    "label": "Usage of this chat",
+    "runs": "Runs",
+    "run_time": "Run time"
+  },
   "page": {
     "title": "Chat",
     "select_prompt": "Elige una conversación, o empieza una nueva con +",
@@ -66,6 +71,7 @@
     "action_failed_toast": "No se ha podido actualizar el mensaje en cola"
   },
   "message_list": {
+    "transcript_action": "View transcript",
     "jump_to_latest": "Ir a lo más reciente",
     "new_reply": "Nueva respuesta",
     "show_details": "Mostrar detalles",

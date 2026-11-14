@@ -1,4 +1,9 @@
 {
+  "usage": {
+    "label": "Usage of this chat",
+    "runs": "Runs",
+    "run_time": "Run time"
+  },
   "page": {
     "title": "チャット",
     "no_agent_title": "チャットできるエージェントはまだいません",
@@ -63,6 +68,7 @@
     "action_failed_toast": "キュー内のメッセージを更新できませんでした"
   },
   "message_list": {
+    "transcript_action": "View transcript",
     "jump_to_latest": "最新に移動",
     "new_reply": "新しい返信",
     "show_details": "詳細を表示",

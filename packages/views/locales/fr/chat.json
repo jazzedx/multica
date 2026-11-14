@@ -1,4 +1,9 @@
 {
+  "usage": {
+    "label": "Usage of this chat",
+    "runs": "Runs",
+    "run_time": "Run time"
+  },
   "page": {
     "title": "Discussion",
     "no_agent_title": "Aucun agent avec qui discuter pour l'instant",
@@ -66,6 +71,7 @@
     "action_failed_toast": "Impossible de mettre à jour le message en file d'attente"
   },
   "message_list": {
+    "transcript_action": "View transcript",
     "jump_to_latest": "Aller au plus récent",
     "new_reply": "Nouvelle réponse",
     "show_details": "Afficher les détails",

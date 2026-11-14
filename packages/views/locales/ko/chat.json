@@ -1,4 +1,9 @@
 {
+  "usage": {
+    "label": "Usage of this chat",
+    "runs": "Runs",
+    "run_time": "Run time"
+  },
   "page": {
     "title": "채팅",
     "no_agent_title": "아직 대화할 에이전트가 없습니다",
@@ -63,6 +68,7 @@
     "action_failed_toast": "대기 중인 메시지를 업데이트하지 못했습니다"
   },
   "message_list": {
+    "transcript_action": "View transcript",
     "jump_to_latest": "최신으로 이동",
     "new_reply": "새 답장",
     "show_details": "세부 정보 보기",
