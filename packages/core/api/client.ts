@@ -18,6 +18,7 @@ import type {
   BatchIssueLabelOps,
   BatchIssuePropertyOps,
   BatchUpdateIssuesResponse,
+  IssueDeliveryOverview,
   IssueDependencies,
   IssueDuplicates,
   GroupedIssuesResponse,
@@ -320,6 +321,7 @@ import {
   SendChatMessageResponseSchema,
   StartMikaOnboardingResponseSchema,
   ChildIssuesResponseSchema,
+  IssueDeliveryOverviewSchema,
   IssueDependenciesResponseSchema,
   SubIssueBlockersResponseSchema,
   IssueDuplicatesResponseSchema,
@@ -1840,6 +1842,25 @@ export class ApiClient {
       IssueDependenciesResponseSchema,
       { blocked_by: [], blocks: [] },
       { endpoint: "DELETE /api/issues/:id/dependencies/:blockerId" },
+    );
+  }
+
+  /** What it took to deliver an issue and everything under it. */
+  async getIssueDeliveryOverview(id: string): Promise<IssueDeliveryOverview> {
+    const raw = await this.fetch<unknown>(`/api/issues/${id}/delivery-overview`);
+    return parseWithFallback(
+      raw,
+      IssueDeliveryOverviewSchema,
+      {
+        sub_issues: { total: 0, done: 0, cancelled: 0 },
+        runs: { total: 0, failed: 0, active: 0 },
+        rework_rounds: 0,
+        human_actions: 0,
+        pull_requests_merged: 0,
+        started_at: "",
+        finished_at: null,
+      },
+      { endpoint: "GET /api/issues/:id/delivery-overview" },
     );
   }
 

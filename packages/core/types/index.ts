@@ -448,3 +448,4 @@ export type {
   SubIssueBlocker,
   SubIssueBlockers,
 } from "./issue-dependency";
+export type { IssueDeliveryOverview } from "./issue-delivery";

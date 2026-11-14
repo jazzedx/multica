@@ -4917,3 +4917,21 @@ export const SubIssueBlockersResponseSchema = z.object({
     blocked_by: IssueDependencyRefSchema,
   }).loose()).default([]),
 }).loose();
+
+export const IssueDeliveryOverviewSchema = z.object({
+  sub_issues: z.object({
+    total: z.number().default(0),
+    done: z.number().default(0),
+    cancelled: z.number().default(0),
+  }).default({ total: 0, done: 0, cancelled: 0 }),
+  runs: z.object({
+    total: z.number().default(0),
+    failed: z.number().default(0),
+    active: z.number().default(0),
+  }).default({ total: 0, failed: 0, active: 0 }),
+  rework_rounds: z.number().default(0),
+  human_actions: z.number().default(0),
+  pull_requests_merged: z.number().default(0),
+  started_at: z.string().default(""),
+  finished_at: z.string().nullable().default(null),
+}).loose();
