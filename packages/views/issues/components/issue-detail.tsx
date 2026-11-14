@@ -17,6 +17,7 @@ import { useDefaultLayout, usePanelRef } from "react-resizable-panels";
 import { AppLink, useBackOrReplace } from "../../navigation";
 import { IssueDuplicateBanner, IssueDuplicatesSection, isDuplicateIssue } from "./issue-duplicates";
 import { IssueDependencyStrip, SubIssueWaitingMarker } from "./issue-dependencies";
+import { SubIssueGraph } from "./sub-issue-graph";
 import {
   AlertTriangle,
   Archive,
@@ -4125,6 +4126,8 @@ export function IssueDetail({ issueId, onDelete, onDone, onUnsubscribeArchive, d
                   placement="inline"
                   clearSelectionOnApply
                 />
+
+                {!subIssuesCollapsed && <SubIssueGraph parentId={issue.id} issues={childIssues} />}
 
                 {/* List */}
                 {!subIssuesCollapsed && (() => {

@@ -1514,7 +1514,10 @@
     "blocks": "後續任務",
     "remove": "不再等待 {{identifier}}",
     "remove_failed": "移除相依失敗",
-    "marker": "等待 {{identifiers}}"
+    "marker": "等待 {{identifiers}}",
+    "graph_title": "相依圖",
+    "graph_external": "不是本任務的子任務",
+    "graph_expand": "展開"
   },
   "pr_automation": {
     "link_action": "關聯 PR",

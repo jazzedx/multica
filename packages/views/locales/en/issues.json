@@ -1573,7 +1573,10 @@
     "blocks": "Unblocks",
     "remove": "Stop waiting for {{identifier}}",
     "remove_failed": "Could not remove the dependency",
-    "marker": "Waiting for {{identifiers}}"
+    "marker": "Waiting for {{identifiers}}",
+    "graph_title": "Dependency graph",
+    "graph_external": "Not a sub-issue of this issue",
+    "graph_expand": "Expand"
   },
   "pr_automation": {
     "link_action": "Link pull request",
