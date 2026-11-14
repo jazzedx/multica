@@ -484,3 +484,9 @@ export type { WeixinInstallation, ListWeixinInstallationsResponse, WeixinLogin }
 
 export * from "./doc";
 export type { IssueDeliveryOverview } from "./issue-delivery";
+export type {
+  RuntimeDirectoryListing,
+  RuntimeDirectoryProblem,
+  RuntimeDirectoryRequest,
+  RuntimeDirectoryStatus,
+} from "./runtime-directory";

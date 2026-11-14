@@ -88,6 +88,7 @@ import {
   buildRuntimeMachines,
   type RuntimeMachine,
 } from "../../runtimes/components/runtime-machines";
+import { RemoteDirectoryAdder } from "./remote-directory-adder";
 import { useT } from "../../i18n";
 import { githubShortLabel } from "../../common/github-url";
 import {
@@ -283,6 +284,11 @@ export function ProjectResourcesSection({
             <UnknownResourceRow key={resource.id} resource={resource} readOnly={readOnly} />
           ))}
         </ObjectSectionCard>
+      )}
+      {/* The Add menu picks folders on this computer, which only the desktop
+          app can; a path on any connected computer can be typed from anywhere. */}
+      {!readOnly && (
+        <RemoteDirectoryAdder wsId={wsId} projectId={projectId} folders={folders} />
       )}
     </ObjectSection>
   );

@@ -255,6 +255,7 @@ type Handler struct {
 	ModelListStore        ModelListStore
 	LocalSkillListStore   LocalSkillListStore
 	LocalSkillImportStore LocalSkillImportStore
+	RuntimeDirectoryStore RuntimeDirectoryStore
 	FeatureFlags          *featureflag.Service
 	// Collab is the live co-editing service for docs. Nil turns live editing
 	// off: docs save through the REST autosave path.
@@ -553,6 +554,7 @@ func New(queries *db.Queries, txStarter txStarter, hub *realtime.Hub, bus *event
 		ModelCatalogCache:            NewInMemoryModelCatalogCache(),
 		LocalSkillListStore:          NewInMemoryLocalSkillListStore(),
 		LocalSkillImportStore:        NewInMemoryLocalSkillImportStore(),
+		RuntimeDirectoryStore:        NewInMemoryRuntimeDirectoryStore(),
 		LivenessStore:                NewNoopLivenessStore(),
 		HeartbeatScheduler:           NewPassthroughHeartbeatScheduler(queries),
 		Storage:                      store,

@@ -47,6 +47,7 @@ import type {
   BatchIssuePropertyOps,
   BatchUpdateIssuesResponse,
   IssueDeliveryOverview,
+  RuntimeDirectoryRequest,
   IssueDuplicates,
   ListIssuesResponse,
   SearchIssuesResponse,
@@ -362,6 +363,7 @@ import {
   StartMikaOnboardingResponseSchema,
   ChildIssuesResponseSchema,
   IssueDeliveryOverviewSchema,
+  RuntimeDirectoryRequestSchema,
   IssueDuplicatesResponseSchema,
   ChildIssueProgressResponseSchema,
   CommentsListSchema,
@@ -2064,6 +2066,46 @@ export class ApiClient {
         finished_at: null,
       },
       { endpoint: "GET /api/issues/:id/delivery-overview" },
+    );
+  }
+
+  /**
+   * Asks a runtime's machine what is at a path. The server holds the call
+   * open briefly for the answer; a request that comes back unanswered is read
+   * again with `getRuntimeDirectoryRequest`.
+   */
+  async listRuntimeDirectory(
+    runtimeId: string,
+    path: string,
+    options: { probeWrite?: boolean; signal?: AbortSignal } = {},
+  ): Promise<RuntimeDirectoryRequest> {
+    const raw = await this.fetch<unknown>(`/api/runtimes/${runtimeId}/directories`, {
+      method: "POST",
+      body: JSON.stringify({ path, probe_write: options.probeWrite === true }),
+      signal: options.signal,
+    });
+    return parseWithFallback<RuntimeDirectoryRequest>(
+      raw,
+      RuntimeDirectoryRequestSchema,
+      { id: "", runtime_id: runtimeId, status: "failed", path, listing: null, error: "" },
+      { endpoint: "POST /api/runtimes/:id/directories" },
+    );
+  }
+
+  async getRuntimeDirectoryRequest(
+    runtimeId: string,
+    requestId: string,
+    signal?: AbortSignal,
+  ): Promise<RuntimeDirectoryRequest> {
+    const raw = await this.fetch<unknown>(
+      `/api/runtimes/${runtimeId}/directories/${requestId}`,
+      { signal },
+    );
+    return parseWithFallback<RuntimeDirectoryRequest>(
+      raw,
+      RuntimeDirectoryRequestSchema,
+      { id: requestId, runtime_id: runtimeId, status: "failed", path: "", listing: null, error: "" },
+      { endpoint: "GET /api/runtimes/:id/directories/:requestId" },
     );
   }
 
