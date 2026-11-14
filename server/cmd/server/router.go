@@ -2105,6 +2105,7 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 					r.Post("/dependencies", h.AddIssueDependency)
 					r.Delete("/dependencies/{blockerId}", h.RemoveIssueDependency)
 					r.Get("/sub-issue-blockers", h.ListSubIssueBlockers)
+					r.Get("/delivery-overview", h.GetIssueDeliveryOverview)
 					r.Get("/duplicates", h.ListIssueDuplicates)
 					r.Get("/labels", h.ListLabelsForIssue)
 					r.Post("/labels", h.AttachLabel)
