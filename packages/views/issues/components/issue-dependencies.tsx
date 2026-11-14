@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Hourglass, X } from "@multica/ui/icons";
+import { Hourglass, TriangleAlert, X } from "@multica/ui/icons";
 import type { IssueDependencyRef } from "@multica/core/types";
 import {
   isWaiting,
@@ -76,7 +76,14 @@ function DependencyChip({
  * Self-contained on purpose: it owns its query and renders nothing for an
  * issue without dependencies, so the page hosting it needs one line.
  */
-export function IssueDependencyStrip({ issueId }: { issueId: string }) {
+export function IssueDependencyStrip({
+  issueId,
+  status,
+}: {
+  issueId: string;
+  /** The issue's own status, when the host has it: it tells waiting from having gone ahead. */
+  status?: string;
+}) {
   const { t } = useT("issues");
   const wsId = useWorkspaceId();
   const { categoryOf } = useIssueStatuses(wsId);
@@ -87,7 +94,13 @@ export function IssueDependencyStrip({ issueId }: { issueId: string }) {
   const blocks = data?.blocks ?? [];
   if (blockedBy.length === 0 && blocks.length === 0) return null;
 
-  const waiting = isWaiting(data);
+  const unmet = isWaiting(data);
+  // An issue that has started or finished is not waiting for anything. If what
+  // it depends on is not done, that was reopened, or the issue was started
+  // early: either way it stands on an input that may have changed.
+  const ownCategory = status === undefined ? undefined : categoryOf(status);
+  const stale = unmet && (ownCategory === "started" || ownCategory === "done");
+  const waiting = unmet && !stale;
   // A cancelled issue (the closed category) never becomes done, so waiting
   // for one never ends.
   const stuck = blockedBy.some(
@@ -101,8 +114,12 @@ export function IssueDependencyStrip({ issueId }: { issueId: string }) {
     >
       {blockedBy.length > 0 ? (
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="flex shrink-0 items-center gap-1 text-muted-foreground">
-            <Hourglass aria-hidden="true" className="size-3.5" />
+          <span className={`flex shrink-0 items-center gap-1 ${stale ? "text-warning" : "text-muted-foreground"}`}>
+            {stale ? (
+              <TriangleAlert aria-hidden="true" className="size-3.5" />
+            ) : (
+              <Hourglass aria-hidden="true" className="size-3.5" />
+            )}
             {waiting ? t(($) => $.dependencies.waiting_for) : t(($) => $.dependencies.waited_for)}
           </span>
           {blockedBy.map((blocker) => {
@@ -127,6 +144,7 @@ export function IssueDependencyStrip({ issueId }: { issueId: string }) {
                 : t(($) => $.dependencies.starts_when_done)}
             </span>
           ) : null}
+          {stale ? <span className="text-muted-foreground">{t(($) => $.dependencies.stale_hint)}</span> : null}
         </div>
       ) : null}
       {blocks.length > 0 ? (
@@ -145,19 +163,24 @@ export function IssueDependencyStrip({ issueId }: { issueId: string }) {
 const MARKER_LIMIT = 2;
 
 /**
- * "Waiting for MUL-12" beside a sub-issue that is being held. Every row of a
- * parent shares one request, and a row that is not waiting renders nothing.
- * Plain text, not a link: the row it sits in is already one.
+ * "Waiting for MUL-12" beside a sub-issue that is being held, or a warning
+ * beside one that went ahead while what it depends on is not done. Every row
+ * of a parent shares one request, and a row with nothing unmet renders
+ * nothing. Plain text, not a link: the row it sits in is already one.
  */
 export function SubIssueWaitingMarker({
   parentId,
   issueId,
+  status,
 }: {
   parentId: string | null | undefined;
   issueId: string;
+  /** The sub-issue's own status, which tells waiting from having gone ahead. */
+  status?: string;
 }) {
   const { t } = useT("issues");
   const wsId = useWorkspaceId();
+  const { categoryOf } = useIssueStatuses(wsId);
   const { data } = useQuery({
     ...subIssueBlockersOptions(wsId, parentId ?? ""),
     enabled: Boolean(parentId),
@@ -169,14 +192,24 @@ export function SubIssueWaitingMarker({
 
   const named = open.slice(0, MARKER_LIMIT).map((blocker) => blocker.identifier).join(", ");
   const rest = open.length - MARKER_LIMIT;
+  const identifiers = rest > 0 ? `${named} +${rest}` : named;
   const tooltip = open.map((blocker) => `${blocker.identifier} ${blocker.title}`).join("\n");
+  const ownCategory = status === undefined ? undefined : categoryOf(status);
+  if (ownCategory === "closed") return null;
+  const stale = ownCategory === "started" || ownCategory === "done";
   return (
     <span
       title={tooltip}
-      className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted/60 px-1.5 py-0.5 text-micro text-muted-foreground"
+      className={`inline-flex shrink-0 items-center gap-1 rounded-full bg-muted/60 px-1.5 py-0.5 text-micro ${stale ? "text-warning" : "text-muted-foreground"}`}
     >
-      <Hourglass aria-hidden="true" className="size-3" />
-      {t(($) => $.dependencies.marker, { identifiers: rest > 0 ? `${named} +${rest}` : named })}
+      {stale ? (
+        <TriangleAlert aria-hidden="true" className="size-3" />
+      ) : (
+        <Hourglass aria-hidden="true" className="size-3" />
+      )}
+      {stale
+        ? t(($) => $.dependencies.stale_marker, { identifiers })
+        : t(($) => $.dependencies.marker, { identifiers })}
     </span>
   );
 }

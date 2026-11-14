@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, Hourglass, Maximize2 } from "@multica/ui/icons";
+import { ChevronDown, Hourglass, Maximize2, TriangleAlert } from "@multica/ui/icons";
 import { Button } from "@multica/ui/components/ui/button";
 import {
   Dialog,
@@ -30,10 +30,12 @@ const SIZE = { nodeWidth: 196, nodeHeight: 56, gapX: 44, gapY: 12 };
 const DIALOG_PADDING = 32;
 
 /**
- * What the graph says about a node. `waiting` and `stuck` are the two a list
- * of statuses cannot show: both read as unstarted there.
+ * What the graph says about a node. `waiting`, `stuck` and `stale` are the
+ * ones a list of statuses cannot show: the first two read as unstarted there,
+ * and `stale` as ordinary progress. A stale node has started or finished while
+ * something it depends on is not done, typically because that was reopened.
  */
-type NodeState = "done" | "cancelled" | "active" | "ready" | "waiting" | "stuck";
+type NodeState = "done" | "cancelled" | "active" | "ready" | "waiting" | "stuck" | "stale";
 
 interface GraphNode {
   id: string;
@@ -54,13 +56,19 @@ const NODE_CLASS: Record<NodeState, string> = {
   ready: "bg-background",
   waiting: "border-dashed bg-background",
   stuck: "border-dashed border-destructive/60 bg-background",
+  stale: "border-warning bg-background",
 };
 
-/** An edge is met once its source is done, and broken when the source was cancelled. */
+/**
+ * An edge is met once its source is done and broken when the source was
+ * cancelled. It is stale when the source is not done but the work at its far
+ * end went ahead anyway.
+ */
 const EDGE_CLASS = {
   met: "text-muted-foreground/40",
   pending: "text-muted-foreground",
   broken: "text-destructive",
+  stale: "text-warning",
 } as const;
 
 /**
@@ -127,11 +135,15 @@ export function SubIssueGraph({ parentId, issues }: { parentId: string; issues: 
       .filter((edge) => edge.to === id)
       .map((edge) => graph.nodes.get(edge.from)!)
       .filter((blocker) => !isDone(blocker));
+  /** Work went ahead here: the sub-issue is in progress or finished. */
+  const wentAhead = (node: GraphNode) =>
+    !!node.issue && (isDone(node) || categoryOf(node.status) === "started");
   const stateOf = (node: GraphNode): NodeState => {
+    const blockers = openBlockers(node.id);
+    if (wentAhead(node) && blockers.length > 0) return "stale";
     if (isDone(node)) return "done";
     if (isCancelled(node)) return "cancelled";
     if (categoryOf(node.status) === "started") return "active";
-    const blockers = openBlockers(node.id);
     if (blockers.length === 0) return "ready";
     return blockers.some(isCancelled) ? "stuck" : "waiting";
   };
@@ -146,7 +158,13 @@ export function SubIssueGraph({ parentId, issues }: { parentId: string; issues: 
       >
         {graph.layout.edges.map((edge) => {
           const source = graph.nodes.get(edge.from)!;
-          const kind = isDone(source) ? "met" : isCancelled(source) ? "broken" : "pending";
+          const kind = isDone(source)
+            ? "met"
+            : wentAhead(graph.nodes.get(edge.to)!)
+              ? "stale"
+              : isCancelled(source)
+                ? "broken"
+                : "pending";
           return (
             <g key={`${edge.from}>${edge.to}`} data-edge={kind} className={EDGE_CLASS[kind]}>
               <path
@@ -166,14 +184,15 @@ export function SubIssueGraph({ parentId, issues }: { parentId: string; issues: 
           const node = graph.nodes.get(placed.id)!;
           const state = stateOf(node);
           const held = state === "waiting" || state === "stuck";
+          const blockerNames = openBlockers(node.id).map((blocker) => blocker.identifier).join(", ");
           const tooltip = held
-            ? t(($) => $.dependencies.marker, {
-                identifiers: openBlockers(node.id).map((blocker) => blocker.identifier).join(", "),
-              })
-            : node.issue
-              ? undefined
-              : t(($) => $.dependencies.graph_external);
-          const finished = state === "done" || state === "cancelled";
+            ? t(($) => $.dependencies.marker, { identifiers: blockerNames })
+            : state === "stale"
+              ? t(($) => $.dependencies.stale_marker, { identifiers: blockerNames })
+              : node.issue
+                ? undefined
+                : t(($) => $.dependencies.graph_external);
+          const finished = state === "done" || state === "cancelled" || (state === "stale" && isDone(node));
           return (
             <li
               key={node.id}
@@ -208,6 +227,9 @@ export function SubIssueGraph({ parentId, issues }: { parentId: string; issues: 
                         state === "stuck" ? "text-destructive" : "text-muted-foreground",
                       )}
                     />
+                  ) : null}
+                  {state === "stale" ? (
+                    <TriangleAlert aria-hidden="true" className="size-3 shrink-0 text-warning" />
                   ) : null}
                   {node.issue ? (
                     <span className="ml-auto flex shrink-0 items-center gap-1">

@@ -1048,7 +1048,7 @@ function SubIssueRow({
             >
               {child.title}
             </span>
-            <SubIssueWaitingMarker parentId={child.parent_issue_id} issueId={child.id} />
+            <SubIssueWaitingMarker parentId={child.parent_issue_id} issueId={child.id} status={child.status} />
             {labels.length > 0 && (
               <span className="hidden max-w-[200px] shrink-0 items-center gap-1 overflow-hidden md:inline-flex">
                 {labels.slice(0, 2).map((label) => (
@@ -3793,7 +3793,7 @@ export function IssueDetail({ issueId, onDelete, onDone, onUnsubscribeArchive, d
               )
             }
           />
-          <IssueDependencyStrip issueId={issue.id} />
+          <IssueDependencyStrip issueId={issue.id} status={issue.status} />
           <div id={descriptionSectionId}>
           <div data-mc="issue-title">
           {titleLazy.active && (

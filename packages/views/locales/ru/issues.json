@@ -1691,6 +1691,8 @@
     "remove": "Stop waiting for {{identifier}}",
     "remove_failed": "Could not remove the dependency",
     "marker": "Waiting for {{identifiers}}",
+    "stale_marker": "Upstream not done: {{identifiers}}",
+    "stale_hint": "This issue went ahead, but what it depends on is not done. Its input may have changed.",
     "graph_title": "Dependency graph",
     "graph_external": "Not a sub-issue of this issue",
     "graph_expand": "Expand"

@@ -1515,6 +1515,8 @@
     "remove": "不再等待 {{identifier}}",
     "remove_failed": "移除依赖失败",
     "marker": "等待 {{identifiers}}",
+    "stale_marker": "上游未完成：{{identifiers}}",
+    "stale_hint": "这条任务已经开工，但它依赖的任务并未完成，依据的产出可能已经变了。",
     "graph_title": "依赖图",
     "graph_external": "不是本任务的子任务",
     "graph_expand": "展开"

@@ -88,6 +88,26 @@ describe("IssueDependencyStrip", () => {
     expect(strip).not.toHaveTextContent("全部完成后自动开始");
   });
 
+  // The issue itself has started: it is not waiting, it went ahead.
+  it("warns instead of promising a start once the issue has gone ahead", async () => {
+    mocks.listIssueDependencies.mockResolvedValue({ blocked_by: [ref(1, "in_progress")], blocks: [] });
+    renderInClient(<IssueDependencyStrip issueId="issue-3" status="done" />);
+
+    const strip = await screen.findByRole("region", { name: "Dependencies" });
+    expect(strip).toHaveTextContent("what it depends on is not done");
+    expect(strip).not.toHaveTextContent("Starts on its own");
+    expect(strip).not.toHaveTextContent("Waiting for");
+  });
+
+  it("still says waiting for an issue that has not started", async () => {
+    mocks.listIssueDependencies.mockResolvedValue({ blocked_by: [ref(1, "in_progress")], blocks: [] });
+    renderInClient(<IssueDependencyStrip issueId="issue-3" status="todo" />);
+
+    const strip = await screen.findByRole("region", { name: "Dependencies" });
+    expect(strip).toHaveTextContent("Waiting for");
+    expect(strip).toHaveTextContent("Starts on its own when they are done");
+  });
+
   it("removes a dependency and shows what the server says is left", async () => {
     mocks.listIssueDependencies.mockResolvedValue({ blocked_by: [ref(1, "cancelled"), ref(2, "todo")], blocks: [] });
     mocks.removeIssueDependency.mockResolvedValue({ blocked_by: [ref(2, "todo")], blocks: [] });
@@ -123,6 +143,16 @@ describe("SubIssueWaitingMarker", () => {
 
     expect(await screen.findByText("Waiting for MUL-2, MUL-3 +1")).toBeInTheDocument();
     expect(mocks.listSubIssueBlockers).toHaveBeenCalledWith("parent");
+  });
+
+  it("warns on a sub-issue that went ahead, and says nothing on a cancelled one", async () => {
+    mocks.listSubIssueBlockers.mockResolvedValue({ edges: [{ issue_id: "issue-9", blocked_by: ref(2, "in_progress") }] });
+    renderInClient(<SubIssueWaitingMarker parentId="parent" issueId="issue-9" status="done" />);
+    expect(await screen.findByText("Upstream not done: MUL-2")).toBeInTheDocument();
+
+    const { container } = renderInClient(<SubIssueWaitingMarker parentId="parent" issueId="issue-9" status="cancelled" />);
+    await waitFor(() => expect(mocks.listSubIssueBlockers).toHaveBeenCalledTimes(2));
+    expect(container).toBeEmptyDOMElement();
   });
 
   it("renders nothing for a sub-issue that is not waiting", async () => {

@@ -1515,6 +1515,8 @@
     "remove": "不再等待 {{identifier}}",
     "remove_failed": "移除相依失敗",
     "marker": "等待 {{identifiers}}",
+    "stale_marker": "上游未完成：{{identifiers}}",
+    "stale_hint": "這條任務已經開工，但它相依的任務並未完成，依據的產出可能已經變了。",
     "graph_title": "相依圖",
     "graph_external": "不是本任務的子任務",
     "graph_expand": "展開"
