@@ -1,4 +1,15 @@
 {
+  "by_source": {
+    "title": "By source",
+    "header_source": "Source",
+    "header_share": "Share",
+    "sources": {
+      "chat": "Chat",
+      "issue": "Issues",
+      "autopilot": "Autopilots",
+      "other": "Other"
+    }
+  },
   "title": "Analytics",
   "tab_usage": "Usage",
   "header": {

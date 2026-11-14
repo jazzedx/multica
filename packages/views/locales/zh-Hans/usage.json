@@ -1,4 +1,15 @@
 {
+  "by_source": {
+    "title": "按来源",
+    "header_source": "来源",
+    "header_share": "占比",
+    "sources": {
+      "chat": "聊天",
+      "issue": "任务",
+      "autopilot": "自动化",
+      "other": "其他"
+    }
+  },
   "title": "统计",
   "tab_usage": "用量",
   "header": {
