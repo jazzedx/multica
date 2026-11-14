@@ -93,6 +93,25 @@ shortcuts. `project resource update` merges shortcut edits with the existing
 issue dates). On `project update`, pass an empty string (`--start-date ""`) to
 clear a date; an unset flag leaves it untouched.
 
+### Adding a local_directory for a machine
+
+`--daemon-id` names the machine, not a runtime: every runtime that machine
+registers shares the folder. Read it from the runtimes:
+
+```bash
+multica runtime list --output json   # each row carries daemon_id
+```
+
+A project takes one `local_directory` per daemon; a second add for the same
+daemon is refused with a conflict, so update or remove the existing one. Add one
+resource per machine that should work in a folder; machines without one keep
+checking out the project's repositories.
+
+The add checks only that the path is absolute. Whether it exists, is writable
+and (for `worktree`) is a git repository is checked by the daemon when the first
+task starts there, and a wrong path fails that task. You can inspect only the
+machine your own run is on, so take paths on other machines from the user.
+
 ## local_directory execution modes
 
 `--execution-mode` decides how tasks share a `local_directory`.
