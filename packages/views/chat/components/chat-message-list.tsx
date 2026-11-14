@@ -53,6 +53,7 @@ import { FOLLOW_EDGE_THRESHOLD } from "../../common/task-transcript/transcript-f
 import { LIVE_END_ROW_ATTR, useStickToBottom } from "./stick-to-bottom";
 import { JumpToLiveEndButton, useJumpToLiveEnd } from "./jump-to-live-end";
 import { formatElapsedMs } from "../lib/format";
+import { ChatRunTranscriptButton } from "./chat-run-transcript";
 import {
   canonicalAnswerText,
   extractCopyText,
@@ -992,6 +993,9 @@ function MessageFooter({
       )}
       {showCopy && (
         <MessageCopyButton content={copyContent} />
+      )}
+      {!isPending && (
+        <ChatRunTranscriptButton sessionId={message.chat_session_id} taskId={message.task_id} />
       )}
     </div>
   );

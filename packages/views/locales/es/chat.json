@@ -101,6 +101,7 @@
     "process_steps_one": "{{count}} paso",
     "process_steps_other": "{{count}} pasos",
     "copy_action": "Copiar",
+    "transcript_action": "View transcript",
     "copied_toast": "Copiado",
     "copy_failed_toast": "Error al copiar",
     "loading_older": "Cargando mensajes anteriores…",
@@ -318,5 +319,10 @@
     },
     "queue_label": "Recordatorio: {{title}}",
     "queue_fallback": "Recordatorio"
+  },
+  "usage": {
+    "label": "Usage of this chat",
+    "runs": "Runs",
+    "run_time": "Run time"
   }
 }

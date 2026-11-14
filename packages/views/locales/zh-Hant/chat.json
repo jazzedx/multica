@@ -96,6 +96,7 @@
     "tool_result_unnamed": "結果：",
     "process_steps_other": "{{count}} 步",
     "copy_action": "複製",
+    "transcript_action": "檢視記錄",
     "copied_toast": "已複製",
     "copy_failed_toast": "複製失敗",
     "loading_older": "正在載入更早的訊息…",
@@ -313,5 +314,10 @@
     },
     "queue_label": "喚醒：{{title}}",
     "queue_fallback": "喚醒"
+  },
+  "usage": {
+    "label": "這次聊天的用量",
+    "runs": "執行次數",
+    "run_time": "執行時長"
   }
 }

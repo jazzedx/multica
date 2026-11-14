@@ -101,6 +101,7 @@
     "process_steps_one": "{{count}} étape",
     "process_steps_other": "{{count}} étapes",
     "copy_action": "Copier",
+    "transcript_action": "View transcript",
     "copied_toast": "Copié",
     "copy_failed_toast": "Échec de la copie",
     "loading_older": "Chargement des messages plus anciens…",
@@ -318,5 +319,10 @@
     },
     "queue_label": "Réveil : {{title}}",
     "queue_fallback": "Réveil"
+  },
+  "usage": {
+    "label": "Usage of this chat",
+    "runs": "Runs",
+    "run_time": "Run time"
   }
 }

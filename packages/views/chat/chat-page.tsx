@@ -28,6 +28,7 @@ import { ChatQueue } from "./components/chat-queue";
 import { ChatWakeupStrip, useChatWakeups } from "./components/chat-wakeups";
 import { ChatThreadList } from "./components/chat-thread-list";
 import { ChatSessionHeader } from "./components/chat-session-header";
+import { ChatSessionUsage } from "./components/chat-session-usage";
 import { EmptyState } from "./components/chat-empty-state";
 import { NewChatButton } from "./components/new-chat-button";
 import { useChatController } from "./components/use-chat-controller";
@@ -326,6 +327,7 @@ export function ChatPage() {
           session={c.currentSession}
           agent={c.activeAgent}
           onArchive={handleArchive}
+          trailing={<ChatSessionUsage sessionId={c.currentSession.id} />}
         />
       )}
       {c.showSkeleton ? (

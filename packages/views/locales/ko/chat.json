@@ -96,6 +96,7 @@
     "tool_result_unnamed": "결과: ",
     "process_steps_other": "단계 {{count}}개",
     "copy_action": "복사",
+    "transcript_action": "View transcript",
     "copied_toast": "복사했습니다",
     "copy_failed_toast": "복사 실패",
     "loading_older": "이전 메시지를 불러오는 중…",
@@ -313,5 +314,10 @@
     },
     "queue_label": "웨이크업: {{title}}",
     "queue_fallback": "웨이크업"
+  },
+  "usage": {
+    "label": "Usage of this chat",
+    "runs": "Runs",
+    "run_time": "Run time"
   }
 }

@@ -96,6 +96,7 @@
     "tool_result_unnamed": "结果：",
     "process_steps_other": "{{count}} 步",
     "copy_action": "复制",
+    "transcript_action": "查看记录",
     "copied_toast": "已复制",
     "copy_failed_toast": "复制失败",
     "loading_older": "正在加载更早的消息…",
@@ -313,5 +314,10 @@
     },
     "queue_label": "唤醒：{{title}}",
     "queue_fallback": "唤醒"
+  },
+  "usage": {
+    "label": "这次聊天的用量",
+    "runs": "运行次数",
+    "run_time": "运行时长"
   }
 }

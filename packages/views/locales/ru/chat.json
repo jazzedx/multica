@@ -107,6 +107,7 @@
     "process_steps_one": "{{count}} шаг",
     "process_steps_other": "{{count}} шага",
     "copy_action": "Копировать",
+    "transcript_action": "View transcript",
     "copied_toast": "Скопировано",
     "copy_failed_toast": "Не удалось скопировать",
     "loading_older": "Загрузка более ранних сообщений…",
@@ -328,5 +329,10 @@
     },
     "queue_label": "Напоминание: {{title}}",
     "queue_fallback": "Напоминание"
+  },
+  "usage": {
+    "label": "Usage of this chat",
+    "runs": "Runs",
+    "run_time": "Run time"
   }
 }

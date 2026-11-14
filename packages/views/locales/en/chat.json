@@ -101,6 +101,7 @@
     "process_steps_one": "{{count}} step",
     "process_steps_other": "{{count}} steps",
     "copy_action": "Copy",
+    "transcript_action": "View transcript",
     "copied_toast": "Copied",
     "copy_failed_toast": "Copy failed",
     "loading_older": "Loading older messages…",
@@ -318,5 +319,10 @@
     },
     "queue_label": "Wakeup: {{title}}",
     "queue_fallback": "Wakeup"
+  },
+  "usage": {
+    "label": "Usage of this chat",
+    "runs": "Runs",
+    "run_time": "Run time"
   }
 }

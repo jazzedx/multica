@@ -46,6 +46,7 @@ export function ChatSessionHeader({
   agent,
   onArchive,
   leading,
+  trailing,
 }: {
   session: ChatSession;
   agent: Agent | null;
@@ -58,6 +59,8 @@ export function ChatSessionHeader({
    * back to the list at compact widths. Nothing renders there without one.
    */
   leading?: ReactNode;
+  /** Shown before the ⋯ menu, e.g. what the chat has used so far. */
+  trailing?: ReactNode;
 }) {
   const { t } = useT("chat");
   const { t: tCommon } = useT("common");
@@ -233,6 +236,7 @@ export function ChatSessionHeader({
         actions={
           <div className="flex items-center gap-0.5">
           <ChatWakeupHeaderButton sessionId={session.id} wakeups={wakeups} />
+          {trailing}
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
