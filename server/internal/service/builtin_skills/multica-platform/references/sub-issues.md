@@ -103,6 +103,34 @@ Read each sub-issue's description before promoting and only promote items whose
 stated dependencies are met; if a description conflicts with the parent's
 breakdown, leave it `backlog` and comment to confirm first.
 
+### Dependencies: let the platform start each sub-issue when its inputs are done
+
+Stages order whole groups and need you to promote each one. When sub-issues
+depend on *specific* other sub-issues, state that instead and the platform does
+the sequencing: `--blocked-by <issue>` (repeatable) creates an issue that
+**starts no run until every issue it waits for is `done`, then starts on its
+own** — no promotion, no parent run in between. Independent branches run in
+parallel; a join waits for all of its inputs.
+
+```bash
+# Design first; API and UI in parallel after it; the integration test after both
+multica issue create --title "Design the contract" --parent <id> --assignee <agent> --status todo      # prints MUL-21
+multica issue create --title "Implement the API"   --parent <id> --assignee <agent> --status todo --blocked-by MUL-21   # MUL-22
+multica issue create --title "Implement the UI"    --parent <id> --assignee <agent> --status todo --blocked-by MUL-21   # MUL-23
+multica issue create --title "Integration test"    --parent <id> --assignee <agent> --status todo --blocked-by MUL-22 --blocked-by MUL-23
+```
+
+Create waiting sub-issues as `todo`, not `backlog`: the dependency is what holds
+them, and `backlog` would keep them parked after it is met. The run that starts
+is told which issues it waited for; read what they delivered first.
+
+A `cancelled` issue is not `done`: whatever waited for it keeps waiting, because
+its input was never delivered. Decide what that means, then either remove the
+dependency (`multica issue dependency remove <issue> <blocker>`, which starts
+the issue if nothing else holds it) or cancel the waiting issue too.
+`multica issue dependency list <issue>` shows both directions; `add` refuses a
+cycle. The parent is still woken once when the last sub-issue closes.
+
 ## Incorrect to correct
 
 Splitting one feature:
