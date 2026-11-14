@@ -3407,10 +3407,17 @@ export class ApiClient {
 
   async listAgentTasksPage(
     agentId: string,
-    options: { limit?: number; before?: string; signal?: AbortSignal } = {},
+    options: {
+      limit?: number;
+      before?: string;
+      signal?: AbortSignal;
+      /** Also load what each run used and cost; one more query per page on the server. */
+      includeUsage?: boolean;
+    } = {},
   ): Promise<{ tasks: AgentTask[]; nextCursor: string | null }> {
     const search = new URLSearchParams({ limit: String(options.limit ?? 200) });
     if (options.before) search.set("before", options.before);
+    if (options.includeUsage) search.set("include_usage", "true");
     const response = await this.fetchRaw(`/api/agents/${agentId}/tasks?${search}`, {
       signal: options.signal,
     });
