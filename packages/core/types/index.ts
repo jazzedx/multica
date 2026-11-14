@@ -402,6 +402,16 @@ export type {
   SquadHandoffMode,
   SquadBrief,
   SquadBriefsResponse,
+  SquadTemplateText,
+  SquadTemplateAgent,
+  SquadTemplate,
+  SquadTemplateAction,
+  SquadTemplateSkillPlan,
+  SquadTemplateAgentPlan,
+  SquadTemplateSquadPlan,
+  SquadTemplatePlan,
+  SquadTemplateRemoval,
+  SquadTemplateRemovalPlan,
 } from "./squad";
 export { SQUAD_HANDOFF_ROUND_LIMIT, SQUAD_HANDOFF_DAILY_LIMIT } from "./squad";
 export type {
