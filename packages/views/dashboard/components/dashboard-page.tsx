@@ -85,6 +85,7 @@ import { ProjectFilter, SquadFilter, TimeRangeFilter } from "./dashboard-filters
 import { UsageTrendCard } from "./usage-trend-card";
 import { Leaderboard, type LeaderboardGroupBy } from "./leaderboard";
 import { UsageBySource } from "./usage-by-source";
+import { useAgentVisibilityRefresh } from "../use-agent-visibility-refresh";
 import { ErrorsTab } from "./errors-tab";
 import {
   earliestReadableDay,
@@ -256,6 +257,7 @@ export function DashboardPage() {
   const agents = agentsQuery.data ?? EMPTY_AGENTS;
   const squadsQuery = useQuery(squadListOptions(wsId));
   const squads = squadsQuery.data ?? EMPTY_SQUADS;
+  useAgentVisibilityRefresh(wsId, agentsQuery.data?.map((agent) => agent.id));
 
   const projectId = useMemo(() => {
     if (projectValue === ALL_PROJECTS) return null;
