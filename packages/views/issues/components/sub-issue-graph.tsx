@@ -65,7 +65,7 @@ const NODE_CLASS: Record<NodeState, string> = {
  * end went ahead anyway.
  */
 const EDGE_CLASS = {
-  met: "text-muted-foreground/40",
+  met: "text-faint-foreground",
   pending: "text-muted-foreground",
   broken: "text-destructive",
   stale: "text-warning",
