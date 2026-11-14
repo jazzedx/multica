@@ -1873,6 +1873,16 @@
       "usage_default_many": "{{count}} проектов и задачи без проекта"
     },
     "editor": {
+      "strict_label": "Runs can only make these moves",
+      "strict_hint": "Any other status change from this step's run is refused. People are not limited.",
+      "max_returns_label": "Send back at most",
+      "max_returns_unlimited": "No limit",
+      "max_returns_times_few": "{{count}} times",
+      "max_returns_times_many": "{{count}} times",
+      "max_returns_times_one": "{{count}} time",
+      "max_returns_times_other": "{{count}} times",
+      "max_returns_hint": "После этого запуск должен перевести задачу в статус «Заблокировано».",
+      "max_returns_needs_blocked": "Add Blocked to this workflow to set a limit.",
       "create_title": "Новый рабочий процесс",
       "edit_title": "Изменить рабочий процесс",
       "name": "Название",

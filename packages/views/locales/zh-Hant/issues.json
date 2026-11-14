@@ -1661,6 +1661,13 @@
       "from_template": "從模板建立"
     },
     "editor": {
+      "strict_label": "智慧體只能按以上去向改狀態",
+      "strict_hint": "這一步的執行改成其他狀態會被拒絕，成員不受限。",
+      "max_returns_label": "最多退回",
+      "max_returns_unlimited": "不限",
+      "max_returns_times_other": "{{count}} 次",
+      "max_returns_hint": "用完後只能把任務轉為受阻。",
+      "max_returns_needs_blocked": "工作流程加上「受阻」後才能設上限。",
       "create_title": "新建工作流",
       "edit_title": "編輯工作流",
       "name": "名稱",

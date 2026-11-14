@@ -1725,6 +1725,14 @@
       "default_covers_no_project": "También se aplica a las tareas sin proyecto"
     },
     "editor": {
+      "strict_label": "Runs can only make these moves",
+      "strict_hint": "Any other status change from this step's run is refused. People are not limited.",
+      "max_returns_label": "Send back at most",
+      "max_returns_unlimited": "No limit",
+      "max_returns_times_one": "{{count}} time",
+      "max_returns_times_other": "{{count}} times",
+      "max_returns_hint": "After that the run has to set the issue to blocked.",
+      "max_returns_needs_blocked": "Add Blocked to this workflow to set a limit.",
       "create_title": "Nuevo flujo de trabajo",
       "edit_title": "Editar flujo de trabajo",
       "name": "Nombre",

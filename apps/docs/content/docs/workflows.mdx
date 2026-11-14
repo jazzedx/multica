@@ -78,6 +78,13 @@ When the previous assignee is an agent with a run underway or waiting to start, 
 
 You can see the handoff and its instructions in the issue's timeline. Open the workflow menu on the project board to view the full flow.
 
+### Hold an agent's run to the step
+
+Where to move the issue next is an instruction the agent normally follows. Two settings on a step's handoff make the server enforce it:
+
+- **Runs can only make these moves**: the step's run may move the issue only to the step that follows, to the one it sends work back to, or to Blocked. Any other status change from that run is refused and the agent is told which moves are open. People are not limited.
+- **Send back at most**: how many times one issue may be sent back from this step. After that the run has to set the issue to Blocked and say what is still wrong, so two agents cannot pass an issue back and forth forever. The workflow needs a Blocked column for a limit to be set.
+
 ## Adjust a workflow
 
 A workflow can be shared by several projects. Changes saved in **Settings → Workflows** apply to every project using it. To give one project a different process, duplicate the workflow and select the copy in that project.
