@@ -2,6 +2,7 @@
   "page": {
     "title": "小队",
     "new_button": "新建小队",
+    "template_button": "从模板创建",
     "empty_no_match": "没有匹配筛选条件的小队。",
     "table": {
       "name": "小队",

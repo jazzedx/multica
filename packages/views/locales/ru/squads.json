@@ -2,6 +2,7 @@
   "page": {
     "title": "Команды",
     "new_button": "Новый отряд",
+    "template_button": "Start from a template",
     "empty_no_match": "Нет команд, соответствующих фильтрам.",
     "table": {
       "name": "Команда",

@@ -2,6 +2,7 @@
   "page": {
     "title": "스쿼드",
     "new_button": "새 스쿼드",
+    "template_button": "Start from a template",
     "empty_no_match": "필터와 일치하는 스쿼드가 없습니다.",
     "table": {
       "name": "스쿼드",

@@ -9,6 +9,7 @@ import { SquadsPage } from "./squads-page";
 
 const mocks = vi.hoisted(() => ({
   squads: [] as Squad[],
+  members: [] as { user_id: string; role: string }[],
   openModal: vi.fn(),
   viewState: {
     scope: "all" as SquadsScope,
@@ -28,7 +29,12 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@tanstack/react-query", () => ({
   useQuery: (options: { queryKey?: readonly unknown[] }) => ({
-    data: options.queryKey?.[0] === "squads" ? mocks.squads : [],
+    data:
+      options.queryKey?.[0] === "squads"
+        ? mocks.squads
+        : options.queryKey?.[0] === "members"
+          ? mocks.members
+          : [],
     isLoading: false,
   }),
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
@@ -96,6 +102,7 @@ function renderPage() {
 
 beforeEach(() => {
   mocks.squads = [squad("s1", "Strike Team", "me"), squad("s2", "Design Crew", "someone")];
+  mocks.members = [{ user_id: "me", role: "member" }];
   mocks.viewState.scope = "all";
   mocks.viewState.filters = { leaders: [], creators: [] };
   mocks.viewState.setScope.mockReset();
@@ -166,5 +173,29 @@ describe("SquadsPage header", () => {
     );
     await user.click(within(intro).getByRole("button", { name: "New squad" }));
     expect(mocks.openModal).toHaveBeenCalledWith("create-squad");
+  });
+});
+
+describe("SquadsPage templates", () => {
+  it("lets a workspace admin start from a template", async () => {
+    mocks.members = [{ user_id: "me", role: "admin" }];
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: "Start from a template" }));
+    expect(mocks.openModal).toHaveBeenCalledWith("squad-templates");
+  });
+
+  it("offers the template on the empty page too, to admins only", () => {
+    mocks.squads = [];
+    mocks.members = [{ user_id: "me", role: "owner" }];
+    renderPage();
+    expect(screen.getAllByRole("button", { name: "Start from a template" }).length).toBeGreaterThan(0);
+  });
+
+  it("hides templates from members who cannot install them", () => {
+    mocks.squads = [];
+    renderPage();
+    expect(screen.queryByRole("button", { name: "Start from a template" })).not.toBeInTheDocument();
   });
 });

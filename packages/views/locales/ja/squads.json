@@ -2,6 +2,7 @@
   "page": {
     "title": "スクワッド",
     "new_button": "新規スクワッド",
+    "template_button": "Start from a template",
     "empty_no_match": "フィルターに一致するスクワッドはありません。",
     "table": {
       "name": "スカッド",

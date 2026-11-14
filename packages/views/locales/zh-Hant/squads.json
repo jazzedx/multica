@@ -2,6 +2,7 @@
   "page": {
     "title": "小隊",
     "new_button": "新建小隊",
+    "template_button": "從範本建立",
     "empty_no_match": "沒有匹配篩選條件的小隊。",
     "table": {
       "name": "小隊",

@@ -121,6 +121,64 @@
     "toast_failed": "Failed to create squad",
     "toast_member_add_failed": "Failed to add {{name}}: {{error}}"
   },
+  "squad_templates": {
+    "title": "Start from a template",
+    "description": "Sets up a squad, its agents and the skills they use. Anything this workspace already has under the same name is reused.",
+    "recommended": "Recommended",
+    "counts": "{{agents}} agents · {{skills}} skills",
+    "empty": "This server ships no templates.",
+    "plan_failed": "Could not work out what this template would set up.",
+    "retry": "Try again",
+    "runtime_hint": "New agents run here. Agents that already exist keep their runtime.",
+    "already_set_up": "This template is already set up in this workspace.",
+    "section_squad": "Squad",
+    "section_agents": "Agents",
+    "section_skills": "Skills",
+    "add_members": "Members to add: {{n}}",
+    "add_skills": "Skills to add: {{n}}",
+    "overwrite_label": "Also replace skills that were edited in this workspace",
+    "action": {
+      "create": "New",
+      "update": "Update",
+      "restore": "Restore",
+      "unchanged": "Up to date",
+      "exists": "Already here",
+      "keep": "Edited here, kept"
+    },
+    "cancel": "Cancel",
+    "install": "Set up squad",
+    "installing": "Setting up...",
+    "open_squad": "Open squad",
+    "toast_installed": "Squad set up",
+    "toast_failed": "Could not set up the squad",
+    "uninstall": {
+      "open": "Uninstall...",
+      "title": "Uninstall {{name}}",
+      "description": "Archives this template's squad and agents and deletes its skills. Archived agents can be restored on the Agents page; deleted skills cannot.",
+      "plan_failed": "Could not work out what uninstalling would remove.",
+      "nothing": "Nothing of this template can be removed.",
+      "remove_modified_label": "Also remove what was changed after it was set up",
+      "kept_because": "Kept: {{reason}}",
+      "action": {
+        "archive": "Archive",
+        "delete": "Delete",
+        "absent": "Not here",
+        "keep": "Kept"
+      },
+      "reason": {
+        "modified": "changed here",
+        "in_squad": "still in a squad",
+        "open_issues": "has unfinished issues",
+        "in_use": "an agent still uses it",
+        "not_installed": "not set up by a template"
+      },
+      "back": "Back",
+      "confirm": "Uninstall",
+      "confirming": "Uninstalling...",
+      "toast_done": "Template uninstalled",
+      "toast_failed": "Could not uninstall the template"
+    }
+  },
   "create_project": {
     "title": "New Project",
     "title_breadcrumb": "New project",

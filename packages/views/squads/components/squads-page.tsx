@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import {
   ExternalLink,
+  LayoutTemplate,
   Loader2,
   Trash2,
   Users,
@@ -30,6 +31,7 @@ import {
 } from "@multica/core/squads/stores";
 import type { Agent, MemberWithUser, Squad } from "@multica/core/types";
 import { Button } from "@multica/ui/components/ui/button";
+import { IconButton } from "@multica/ui/components/common/icon-button";
 import { SquadsIntro } from "./squads-intro";
 import {
   Dialog,
@@ -396,6 +398,7 @@ export function SquadsPage() {
 
   const hasActiveFilters = countActiveFilters(filters) > 0;
   const openCreateSquad = () => useModalStore.getState().open("create-squad");
+  const openSquadTemplates = () => useModalStore.getState().open("squad-templates");
 
   const scopeLabels: Record<SquadsScope, string> = {
     mine: t(($) => $.scope.mine),
@@ -599,6 +602,16 @@ export function SquadsPage() {
               onToggleColumn={(key) => toggleColumn(key as SquadColumnKey)}
               sort={sort}
             />
+            {isWorkspaceAdmin ? (
+              <IconButton
+                tooltipSide="bottom"
+                label={t(($) => $.page.template_button)}
+                className="shrink-0 text-muted-foreground"
+                onClick={openSquadTemplates}
+              >
+                <LayoutTemplate />
+              </IconButton>
+            ) : null}
             <CollectionCreateButton
               label={t(($) => $.page.new_button)}
               onClick={openCreateSquad}
@@ -608,7 +621,10 @@ export function SquadsPage() {
       />
 
       {!isLoading && squads.length === 0 ? (
-        <SquadsIntro onCreate={openCreateSquad} />
+        <SquadsIntro
+          onCreate={openCreateSquad}
+          onUseTemplate={isWorkspaceAdmin ? openSquadTemplates : undefined}
+        />
       ) : (
         <CollectionList
           label={scopeLabels[scope]}

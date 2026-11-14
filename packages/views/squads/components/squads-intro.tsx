@@ -1,6 +1,6 @@
 "use client";
 
-import { Crown, Plus, Users } from "@multica/ui/icons";
+import { Crown, LayoutTemplate, Plus, Users } from "@multica/ui/icons";
 import { Button } from "@multica/ui/components/ui/button";
 import { ActorAvatar } from "@multica/ui/components/common/actor-avatar";
 import { formatAvatarEmoji } from "@multica/ui/lib/avatar-emoji";
@@ -22,7 +22,14 @@ const KEPLER = { name: "Kepler", initials: "K", avatarUrl: formatAvatarEmoji("ðŸ
 const MIA = { name: "Mia", initials: "M" };
 const ISSUE_ID = "MUL-128";
 
-export function SquadsIntro({ onCreate }: { onCreate: () => void }) {
+export function SquadsIntro({
+  onCreate,
+  onUseTemplate,
+}: {
+  onCreate: () => void;
+  /** Present when the viewer may install a squad template. */
+  onUseTemplate?: () => void;
+}) {
   const { t } = useT("squads");
 
   return (
@@ -44,6 +51,14 @@ export function SquadsIntro({ onCreate }: { onCreate: () => void }) {
           <Plus aria-hidden="true" />
           {t(($) => $.page.new_button)}
         </Button>
+      }
+      secondaryAction={
+        onUseTemplate ? (
+          <Button variant="outline" onClick={onUseTemplate}>
+            <LayoutTemplate aria-hidden="true" />
+            {t(($) => $.page.template_button)}
+          </Button>
+        ) : undefined
       }
     >
       <FeatureIntroCarousel
