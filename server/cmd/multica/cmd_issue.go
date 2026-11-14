@@ -698,6 +698,7 @@ func init() {
 	issueCreateCmd.Flags().Bool("assignee-picker", false, "Assign to the agent or squad selected in Quick Create (requires quick-create task context; mutually exclusive with --assignee and --assignee-id)")
 	issueCreateCmd.Flags().String("parent", "", "Parent issue ID")
 	issueCreateCmd.Flags().Int("stage", 0, "Stage ordinal (>=1) grouping this sub-issue into an ordered barrier group under its parent; omit for unstaged. The parent assignee is woken only when every sub-issue in a stage finishes.")
+	issueCreateCmd.Flags().StringArray("blocked-by", nil, "Issue this one waits for (key like MUL-123, or UUID; repeat for several). The new issue starts no run until all of them are done, then starts on its own. See `issue dependency`.")
 	issueCreateCmd.Flags().String("project", "", "Project ID")
 	issueCreateCmd.Flags().String("start-date", "", "Start date (calendar day, YYYY-MM-DD)")
 	issueCreateCmd.Flags().String("due-date", "", "Due date (calendar day, YYYY-MM-DD)")
@@ -1812,6 +1813,9 @@ func runIssueCreate(cmd *cobra.Command, _ []string) error {
 			return fmt.Errorf("--stage must be >= 1")
 		}
 		body["stage"] = stage
+	}
+	if v, _ := cmd.Flags().GetStringArray("blocked-by"); len(v) > 0 {
+		body["blocked_by"] = v
 	}
 	if v, _ := cmd.Flags().GetString("start-date"); v != "" {
 		body["start_date"] = v
