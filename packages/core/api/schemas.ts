@@ -4893,3 +4893,24 @@ export const WorkspaceListItemSchema = z.object({
 export const WorkspacePinnedSchema = z.object({
   pinned_at: z.iso.datetime({ offset: true }).nullable().catch(null),
 });
+
+const IssueDependencyRefSchema = z.object({
+  id: z.string(),
+  identifier: z.string().default(""),
+  title: z.string().default(""),
+  status: z.string().default(""),
+  // A ref without the flag reads as still open: holding is the safe side.
+  done: z.boolean().default(false),
+}).loose();
+
+export const IssueDependenciesResponseSchema = z.object({
+  blocked_by: z.array(IssueDependencyRefSchema).default([]),
+  blocks: z.array(IssueDependencyRefSchema).default([]),
+}).loose();
+
+export const SubIssueBlockersResponseSchema = z.object({
+  edges: z.array(z.object({
+    issue_id: z.string(),
+    blocked_by: IssueDependencyRefSchema,
+  }).loose()).default([]),
+}).loose();

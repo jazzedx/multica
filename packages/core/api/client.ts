@@ -18,6 +18,7 @@ import type {
   BatchIssueLabelOps,
   BatchIssuePropertyOps,
   BatchUpdateIssuesResponse,
+  IssueDependencies,
   IssueDuplicates,
   GroupedIssuesResponse,
   ListIssuesResponse,
@@ -251,6 +252,7 @@ import type {
   ListTelegramInstallationsResponse,
   RegisterTelegramRequest,
   RedeemTelegramBindingTokenResponse,
+  SubIssueBlockers,
   Squad,
   SquadMember,
   SquadMemberStatusListResponse,
@@ -318,6 +320,8 @@ import {
   SendChatMessageResponseSchema,
   StartMikaOnboardingResponseSchema,
   ChildIssuesResponseSchema,
+  IssueDependenciesResponseSchema,
+  SubIssueBlockersResponseSchema,
   IssueDuplicatesResponseSchema,
   ChildIssueProgressResponseSchema,
   CommentsListSchema,
@@ -1798,6 +1802,55 @@ export class ApiClient {
       IssueDuplicatesResponseSchema,
       { duplicate_of: null, duplicates: [] },
       { endpoint: "GET /api/issues/:id/duplicates" },
+    );
+  }
+
+  /** What an issue waits for and what waits for it. */
+  async listIssueDependencies(id: string): Promise<IssueDependencies> {
+    const raw = await this.fetch<unknown>(`/api/issues/${id}/dependencies`);
+    return parseWithFallback(
+      raw,
+      IssueDependenciesResponseSchema,
+      { blocked_by: [], blocks: [] },
+      { endpoint: "GET /api/issues/:id/dependencies" },
+    );
+  }
+
+  /** Makes the issue wait for another one, named by id or identifier. */
+  async addIssueDependency(id: string, blockedBy: string): Promise<IssueDependencies> {
+    const raw = await this.fetch<unknown>(`/api/issues/${id}/dependencies`, {
+      method: "POST",
+      body: JSON.stringify({ blocked_by: blockedBy }),
+    });
+    return parseWithFallback(
+      raw,
+      IssueDependenciesResponseSchema,
+      { blocked_by: [], blocks: [] },
+      { endpoint: "POST /api/issues/:id/dependencies" },
+    );
+  }
+
+  /** Stops the issue waiting for `blockerId`; it starts if nothing else holds it. */
+  async removeIssueDependency(id: string, blockerId: string): Promise<IssueDependencies> {
+    const raw = await this.fetch<unknown>(`/api/issues/${id}/dependencies/${blockerId}`, {
+      method: "DELETE",
+    });
+    return parseWithFallback(
+      raw,
+      IssueDependenciesResponseSchema,
+      { blocked_by: [], blocks: [] },
+      { endpoint: "DELETE /api/issues/:id/dependencies/:blockerId" },
+    );
+  }
+
+  /** What each sub-issue of a parent waits for: the edges of its graph. */
+  async listSubIssueBlockers(parentId: string): Promise<SubIssueBlockers> {
+    const raw = await this.fetch<unknown>(`/api/issues/${parentId}/sub-issue-blockers`);
+    return parseWithFallback(
+      raw,
+      SubIssueBlockersResponseSchema,
+      { edges: [] },
+      { endpoint: "GET /api/issues/:id/sub-issue-blockers" },
     );
   }
 

@@ -442,3 +442,9 @@ export type { IssueWakeup, IssueWakeupInput, SystemWakeup, WorkspaceSystemWakeup
 export type { WorkspaceWakeup, WorkspaceWakeupPage, WorkspaceWakeupFilters, WakeupScope } from "./issue-wakeup";
 
 export type { WeixinInstallation, ListWeixinInstallationsResponse, WeixinLogin } from "./weixin";
+export type {
+  IssueDependencies,
+  IssueDependencyRef,
+  SubIssueBlocker,
+  SubIssueBlockers,
+} from "./issue-dependency";
