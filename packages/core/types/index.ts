@@ -387,6 +387,16 @@ export type {
   SquadActiveIssueBrief,
   SquadMemberStatus,
   SquadMemberStatusListResponse,
+  SquadTemplateText,
+  SquadTemplateAgent,
+  SquadTemplate,
+  SquadTemplateAction,
+  SquadTemplateSkillPlan,
+  SquadTemplateAgentPlan,
+  SquadTemplateSquadPlan,
+  SquadTemplatePlan,
+  SquadTemplateRemoval,
+  SquadTemplateRemovalPlan,
 } from "./squad";
 export type {
   BillingBalance,

@@ -2894,6 +2894,97 @@ export const EMPTY_SQUAD: Squad = {
   member_preview: [],
 };
 
+// Squad templates (`/api/squad-templates` GET). A template that fails to parse
+// drops the whole list to empty: the picker then offers nothing, and creating a
+// squad by hand still works.
+const SquadTemplateTextSchema = z
+  .object({ en: z.string().default(""), zh: z.string().default("") })
+  .loose();
+
+export const SquadTemplateListSchema = z.array(
+  z
+    .object({
+      key: z.string(),
+      recommended: z.boolean().default(false),
+      title: SquadTemplateTextSchema.default({ en: "", zh: "" }),
+      summary: SquadTemplateTextSchema.default({ en: "", zh: "" }),
+      squad_name: z.string().default(""),
+      squad_description: z.string().default(""),
+      leader: z.string().default(""),
+      agents: z
+        .array(
+          z
+            .object({
+              name: z.string(),
+              role: z.string().default(""),
+              skills: z.array(z.string()).default([]),
+            })
+            .loose(),
+        )
+        .default([]),
+      skills: z.array(z.string()).default([]),
+    })
+    .loose(),
+);
+
+// The plan for one template (`/api/squad-templates/:key/install` POST, dry run
+// or not). `action` stays a string so a value this client does not know yet
+// still parses. There is no fallback: an empty plan would read as "nothing to
+// install", so a malformed body fails the call instead.
+export const SquadTemplatePlanSchema = z
+  .object({
+    template: z.string().default(""),
+    dry_run: z.boolean().default(false),
+    skills: z
+      .array(z.object({ name: z.string(), action: z.string(), id: z.string().optional() }).loose())
+      .default([]),
+    agents: z
+      .array(
+        z
+          .object({
+            name: z.string(),
+            role: z.string().default(""),
+            action: z.string(),
+            id: z.string().optional(),
+            add_skills: z.number().default(0),
+          })
+          .loose(),
+      )
+      .default([]),
+    squad: z
+      .object({
+        name: z.string(),
+        action: z.string(),
+        id: z.string().optional(),
+        add_members: z.number().default(0),
+      })
+      .loose(),
+  })
+  .loose();
+
+// The removal plan for one template (`/api/squad-templates/:key/uninstall`
+// POST, dry run or not). Same rules as the install plan: unknown actions and
+// reasons parse, and a malformed body fails rather than reading as "nothing to
+// remove".
+const SquadTemplateRemovalSchema = z
+  .object({
+    name: z.string(),
+    action: z.string(),
+    reason: z.string().optional(),
+    id: z.string().optional(),
+  })
+  .loose();
+
+export const SquadTemplateRemovalPlanSchema = z
+  .object({
+    template: z.string().default(""),
+    dry_run: z.boolean().default(false),
+    squad: SquadTemplateRemovalSchema,
+    agents: z.array(SquadTemplateRemovalSchema).default([]),
+    skills: z.array(SquadTemplateRemovalSchema).default([]),
+  })
+  .loose();
+
 // Squad member status — backs the Squad detail page's Members tab. status
 // is `string | null` (not the narrow `SquadMemberStatusValue` union) so a
 // new server-side status doesn't fail the parse; the UI defaults to a

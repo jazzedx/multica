@@ -118,3 +118,89 @@ export interface SquadMemberStatus {
 export interface SquadMemberStatusListResponse {
   members: SquadMemberStatus[];
 }
+
+/** Copy for the template picker, in the two languages the catalog carries. */
+export interface SquadTemplateText {
+  en: string;
+  zh: string;
+}
+
+export interface SquadTemplateAgent {
+  name: string;
+  role: string;
+  skills: string[];
+}
+
+/** A ready-made squad the server ships: its agents and the skills they carry. */
+export interface SquadTemplate {
+  key: string;
+  recommended: boolean;
+  title: SquadTemplateText;
+  summary: SquadTemplateText;
+  squad_name: string;
+  squad_description: string;
+  leader: string;
+  agents: SquadTemplateAgent[];
+  skills: string[];
+}
+
+/**
+ * What an install does with one resource: `create`, `update`, `unchanged`,
+ * `keep` (differs from the template and is left alone), `exists` (reused) or
+ * `restore` (an archived agent brought back and reused). An uninstall uses
+ * `archive`, `delete`, `keep` and `absent`. A string because a newer server
+ * may add one.
+ */
+export type SquadTemplateAction = string;
+
+export interface SquadTemplateSkillPlan {
+  name: string;
+  action: SquadTemplateAction;
+  id?: string;
+}
+
+export interface SquadTemplateAgentPlan {
+  name: string;
+  role: string;
+  action: SquadTemplateAction;
+  id?: string;
+  /** Template skills an existing agent does not carry yet. */
+  add_skills: number;
+}
+
+export interface SquadTemplateSquadPlan {
+  name: string;
+  action: SquadTemplateAction;
+  id?: string;
+  /** Template agents an existing squad does not have yet. */
+  add_members: number;
+}
+
+/** A dry run says what an install would do; an install says what it did. */
+export interface SquadTemplatePlan {
+  template: string;
+  dry_run: boolean;
+  skills: SquadTemplateSkillPlan[];
+  agents: SquadTemplateAgentPlan[];
+  squad: SquadTemplateSquadPlan;
+}
+
+export interface SquadTemplateRemoval {
+  name: string;
+  action: SquadTemplateAction;
+  /**
+   * Why a kept resource stays: `modified`, `in_squad`, `open_issues`, `in_use`
+   * or `not_installed`. Only `modified` yields to `remove_modified`.
+   */
+  reason?: string;
+  id?: string;
+}
+
+/** A dry run says what an uninstall would do; an uninstall says what it did. */
+export interface SquadTemplateRemovalPlan {
+  template: string;
+  dry_run: boolean;
+  squad: SquadTemplateRemoval;
+  agents: SquadTemplateRemoval[];
+  skills: SquadTemplateRemoval[];
+}
