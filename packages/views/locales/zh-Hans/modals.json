@@ -1,4 +1,62 @@
 {
+  "squad_templates": {
+    "title": "从模板创建小队",
+    "description": "一次建好小队、智能体和它们用到的 skill。工作区里已有的同名内容会直接复用。",
+    "recommended": "推荐",
+    "counts": "{{agents}} 个智能体 · {{skills}} 个 skill",
+    "empty": "这台服务器还没有配置小队模板，需要运维配置模板目录。",
+    "plan_failed": "无法确定这个模板会创建哪些内容。",
+    "retry": "重试",
+    "runtime_hint": "新建的智能体在这里运行，已存在的智能体保持原有运行时。",
+    "already_set_up": "这个模板已经在当前工作区建好了。",
+    "section_squad": "小队",
+    "section_agents": "智能体",
+    "section_skills": "Skills",
+    "add_members": "待加入成员：{{n}}",
+    "add_skills": "待关联 skill：{{n}}",
+    "overwrite_label": "同时替换在这个工作区里改过的 skill",
+    "action": {
+      "create": "新建",
+      "update": "更新",
+      "restore": "恢复",
+      "unchanged": "已是最新",
+      "exists": "已存在",
+      "keep": "本地改过，保留"
+    },
+    "cancel": "取消",
+    "install": "创建小队",
+    "installing": "创建中...",
+    "open_squad": "打开小队",
+    "toast_installed": "小队已建好",
+    "toast_failed": "创建小队失败",
+    "uninstall": {
+      "open": "卸载...",
+      "title": "卸载\"{{name}}\"",
+      "description": "归档这个模板的小队和智能体，删除它的 skill。归档的智能体可以在智能体页恢复，删除的 skill 无法恢复。",
+      "plan_failed": "无法确定卸载会移除哪些内容。",
+      "nothing": "这个模板没有可以移除的内容。",
+      "remove_modified_label": "同时移除安装后改过的内容",
+      "kept_because": "保留：{{reason}}",
+      "action": {
+        "archive": "归档",
+        "delete": "删除",
+        "absent": "不存在",
+        "keep": "保留"
+      },
+      "reason": {
+        "modified": "安装后改过",
+        "in_squad": "仍在小队中",
+        "open_issues": "有未完成的任务",
+        "in_use": "仍有智能体在用",
+        "not_installed": "不是模板安装的"
+      },
+      "back": "返回",
+      "confirm": "卸载",
+      "confirming": "卸载中...",
+      "toast_done": "模板已卸载",
+      "toast_failed": "卸载模板失败"
+    }
+  },
   "common": {
     "back": "返回",
     "close": "关闭",

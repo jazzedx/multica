@@ -38,7 +38,7 @@ MULTICA_ARGS ?= $(ARGS)
 COMPOSE := docker compose
 SELFHOST_BUILD_COMPOSE_FILES ?= -f docker-compose.selfhost.yml -f docker-compose.selfhost.build.yml
 # MULTICA_ADDONS (.env) lists the optional parts of the self-hosted stack,
-# comma-separated: proxy. Each name adds docker-compose.<name>.yml
+# comma-separated: proxy, squad-templates. Each name adds docker-compose.<name>.yml
 # when that file exists and turns on the compose profile of the same name.
 comma := ,
 SELFHOST_ADDONS := $(strip $(subst $(comma), ,$(MULTICA_ADDONS)))

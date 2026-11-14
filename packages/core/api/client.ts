@@ -285,6 +285,9 @@ import type {
   SquadMemberStatusListResponse,
   SquadBriefsResponse,
   SquadHandoffMode,
+  SquadTemplate,
+  SquadTemplatePlan,
+  SquadTemplateRemovalPlan,
   BillingBalance,
   BillingTransactionsPage,
   BillingBatchesPage,
@@ -454,6 +457,9 @@ import {
   SquadMemberStatusListResponseSchema,
   SquadBriefsResponseSchema,
   EMPTY_SQUAD_BRIEFS,
+  SquadTemplateListSchema,
+  SquadTemplatePlanSchema,
+  SquadTemplateRemovalPlanSchema,
   SubscribersListSchema,
   TaskMessageListSchema,
   TaskContextReceiptResponseSchema,
@@ -5682,6 +5688,58 @@ export class ApiClient {
 
   async updateSquadMemberRole(squadId: string, data: { member_type: string; member_id: string; role: string }): Promise<SquadMember> {
     return this.fetch(`/api/squads/${squadId}/members/role`, { method: "PATCH", body: JSON.stringify(data) });
+  }
+
+  async listSquadTemplates(): Promise<SquadTemplate[]> {
+    const raw = await this.fetch<unknown>("/api/squad-templates");
+    return parseWithFallback<SquadTemplate[]>(raw, SquadTemplateListSchema, [], {
+      endpoint: "GET /api/squad-templates",
+    });
+  }
+
+  /** What installing the template would do in this workspace; changes nothing. */
+  async planSquadTemplate(key: string, options: { overwrite_modified_skills?: boolean } = {}): Promise<SquadTemplatePlan> {
+    return this.postSquadTemplate(key, { ...options, dry_run: true });
+  }
+
+  async installSquadTemplate(
+    key: string,
+    data: { runtime_id?: string; overwrite_modified_skills?: boolean },
+  ): Promise<SquadTemplatePlan> {
+    return this.postSquadTemplate(key, data);
+  }
+
+  private async postSquadTemplate(key: string, body: Record<string, unknown>): Promise<SquadTemplatePlan> {
+    const raw = await this.fetch<unknown>(`/api/squad-templates/${encodeURIComponent(key)}/install`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    const parsed = parseWithFallback<SquadTemplatePlan | null>(raw, SquadTemplatePlanSchema, null, {
+      endpoint: "POST /api/squad-templates/:key/install",
+    });
+    if (!parsed) throw new Error("POST /api/squad-templates/:key/install returned a malformed body");
+    return parsed;
+  }
+
+  /** What uninstalling the template would remove from this workspace; changes nothing. */
+  async planSquadTemplateRemoval(key: string, options: { remove_modified?: boolean } = {}): Promise<SquadTemplateRemovalPlan> {
+    return this.postSquadTemplateRemoval(key, { ...options, dry_run: true });
+  }
+
+  async uninstallSquadTemplate(key: string, data: { remove_modified?: boolean } = {}): Promise<SquadTemplateRemovalPlan> {
+    return this.postSquadTemplateRemoval(key, data);
+  }
+
+  private async postSquadTemplateRemoval(key: string, body: Record<string, unknown>): Promise<SquadTemplateRemovalPlan> {
+    const raw = await this.fetch<unknown>(`/api/squad-templates/${encodeURIComponent(key)}/uninstall`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    const parsed = parseWithFallback<SquadTemplateRemovalPlan | null>(raw, SquadTemplateRemovalPlanSchema, null, {
+      endpoint: "POST /api/squad-templates/:key/uninstall",
+    });
+    if (!parsed) throw new Error("POST /api/squad-templates/:key/uninstall returned a malformed body");
+    return parsed;
   }
 
   // Per-squad members status snapshot: one row per member with derived

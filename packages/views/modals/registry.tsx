@@ -5,6 +5,7 @@ import { useModalStore } from "@multica/core/modals";
 import { CreateIssueDialog } from "./create-issue-dialog";
 import { CreateProjectModal } from "./create-project";
 import { CreateSquadModal } from "./create-squad";
+import { SquadTemplatesModal } from "./squad-templates";
 import { FeedbackModal } from "./feedback";
 import { SetParentIssueModal } from "./set-parent-issue";
 import { MarkDuplicateIssueModal } from "./mark-duplicate-issue";
@@ -123,6 +124,16 @@ export function ModalRegistry() {
       case "create-squad":
         activeModal = (
           <CreateSquadModal
+            key={sessionKey}
+            open={isOpen}
+            onClose={close}
+            onOpenChangeComplete={handleOpenChangeComplete}
+          />
+        );
+        break;
+      case "squad-templates":
+        activeModal = (
+          <SquadTemplatesModal
             key={sessionKey}
             open={isOpen}
             onClose={close}

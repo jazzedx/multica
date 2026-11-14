@@ -1,0 +1,15 @@
+# Squad templates for the Squads page: the backend reads them from a directory
+# the operator keeps, mounted read-only. Set MULTICA_SQUAD_TEMPLATES_PATH in
+# .env to that directory (a checkout of the organization's template
+# repository), then:
+#
+#   docker compose -f docker-compose.selfhost.yml -f docker-compose.squad-templates.yml up -d
+#
+# The directory is read on every request, so updating it (git pull) takes
+# effect without a restart. See docs/squad-templates.zh.md.
+services:
+  backend:
+    environment:
+      MULTICA_SQUAD_TEMPLATES_DIR: /squad-templates
+    volumes:
+      - ${MULTICA_SQUAD_TEMPLATES_PATH:?set MULTICA_SQUAD_TEMPLATES_PATH in .env to the squad template directory}:/squad-templates:ro

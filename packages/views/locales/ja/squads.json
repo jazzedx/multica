@@ -1,5 +1,6 @@
 {
   "page": {
+    "template_button": "Start from a template",
     "title": "スクワッド",
     "new_button": "新規スクワッド",
     "empty_no_match": "フィルターに一致するスクワッドはありません。",

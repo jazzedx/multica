@@ -2533,6 +2533,15 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 				})
 			})
 
+			// Squad templates shipped with this server. Installing creates agents
+			// on the caller's behalf and uninstalling archives them, so machine
+			// credentials are refused for both.
+			r.Route("/api/squad-templates", func(r chi.Router) {
+				r.Get("/", h.ListSquadTemplates)
+				r.With(handler.RequireHumanActor).Post("/{key}/install", h.InstallSquadTemplate)
+				r.With(handler.RequireHumanActor).Post("/{key}/uninstall", h.UninstallSquadTemplate)
+			})
+
 			// Squad leader evaluation (writes to activity_log)
 			r.Post("/api/issues/{id}/squad-evaluated", h.RecordSquadLeaderEvaluation)
 

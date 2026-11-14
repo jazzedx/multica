@@ -1,5 +1,6 @@
 {
   "page": {
+    "template_button": "從範本建立",
     "title": "小隊",
     "new_button": "新建小隊",
     "empty_no_match": "沒有匹配篩選條件的小隊。",

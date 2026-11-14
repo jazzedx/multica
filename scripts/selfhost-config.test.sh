@@ -597,6 +597,14 @@ require_config "$config" 'ALPINE_MIRROR: https://alpine.example'
 require_config "$config" 'GOPROXY: https://goproxy.example'
 require_config "$config" 'NPM_REGISTRY: https://npm.example'
 
+# The squad-templates part mounts the operator's directory read-only into the
+# backend and tells the server where it is.
+templates_files=(-f docker-compose.selfhost.yml -f docker-compose.squad-templates.yml)
+config="$(MULTICA_SQUAD_TEMPLATES_PATH=/srv/squad-templates docker compose --env-file "$tmp_env" "${templates_files[@]}" config)"
+require_config "$config" 'MULTICA_SQUAD_TEMPLATES_DIR: /squad-templates'
+require_config "$config" 'source: /srv/squad-templates'
+require_config "$config" 'read_only: true'
+
 # Runs a make target in a copy of the recipe that has no .env.
 run_target_without_env() {
   local target=$1 make_args=$2
