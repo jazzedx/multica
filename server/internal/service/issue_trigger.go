@@ -155,6 +155,11 @@ func (s *IssueService) WillEnqueueRun(ctx context.Context, in IssueTriggerInput,
 	if issue.TriageState.Valid {
 		return declineRun(dispatch.ReasonIssueInTriage)
 	}
+	// An issue that waits for another one starts when that one is done, not
+	// on a write to itself (issue_dependency.go).
+	if s.waitsForBlockers(ctx, issue) {
+		return declineRun(dispatch.ReasonDeferred)
+	}
 	// Backlog is the parking lot: assigning into backlog never starts a run.
 	if source == RunSourceAssign && currentStatus == "backlog" {
 		return declineRun(dispatch.ReasonDeferred)

@@ -3231,6 +3231,10 @@ type CreateIssueRequest struct {
 
 	AllowDuplicate         bool `json:"allow_duplicate,omitempty"`
 	PRAutoCompleteDisabled bool `json:"pr_auto_complete_disabled,omitempty"`
+
+	// BlockedBy are ids or identifiers of issues the new one waits for. Its
+	// run starts when they are all done (issue_dependency.go).
+	BlockedBy []string `json:"blocked_by,omitempty"`
 }
 
 // CreateIssueResponse echoes the atomic PR setting without expanding issue reads.
@@ -3653,7 +3657,13 @@ func (h *Handler) CreateIssue(w http.ResponseWriter, r *http.Request) {
 		return out
 	}
 
+	blockedBy, ok := h.resolveCreateBlockers(w, r, req.BlockedBy)
+	if !ok {
+		return
+	}
+
 	res, err := h.IssueService.Create(r.Context(), service.IssueCreateParams{
+		BlockedBy:              blockedBy,
 		WorkspaceID:            wsUUID,
 		Title:                  req.Title,
 		Description:            ptrToText(req.Description),

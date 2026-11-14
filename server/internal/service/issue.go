@@ -88,6 +88,9 @@ type IssueCreateParams struct {
 	AllowDuplicate bool
 	// PRAutoCompleteDisabled is persisted before the issue becomes visible.
 	PRAutoCompleteDisabled bool
+	// BlockedBy are the issues the new one waits for, already checked to be
+	// in this workspace.
+	BlockedBy []pgtype.UUID
 	// Stage groups this issue into an ordered barrier group under its parent
 	// (NULL = unstaged). See issue_wakeup_system.go for the staged-barrier wake.
 	Stage pgtype.Int4
@@ -491,6 +494,10 @@ func (s *IssueService) createOnce(ctx context.Context, p IssueCreateParams, opts
 		// whether to heal and retry, and the transport reports a board-integrity
 		// problem instead of a generic create failure.
 		return IssueCreateResult{}, classifyIssueNumberCollision(fmt.Errorf("create issue: %w", err), issueNumber)
+	}
+
+	if err := addIssueBlockers(ctx, qtx, issue.ID, p.BlockedBy); err != nil {
+		return IssueCreateResult{}, fmt.Errorf("add issue blockers: %w", err)
 	}
 
 	if p.PRAutoCompleteDisabled {
@@ -951,6 +958,9 @@ func (s *IssueService) maybeEnqueueOnAssign(ctx context.Context, issue db.Issue,
 	// Triage refuses for a different reason and so returns just as quietly: the
 	// entry is not yet work anyone agreed to do (MUL-7189 §2.3).
 	if issue.TriageState.Valid || issuestatus.Effective(ctx, s.Queries, issue.WorkspaceID, issue.Status) == "backlog" {
+		return pgtype.UUID{}
+	}
+	if s.waitsForBlockers(ctx, issue) {
 		return pgtype.UUID{}
 	}
 	verdict, admitted := agentAssigneeVerdict(ctx, s.runtimeLookup(s.Queries), issue)
