@@ -147,6 +147,10 @@ Creating a sub-issue from a parent prefills its project and, when set, its assig
 
 Sub-issues can be given a **stage** to advance in batches — 1, 2, 3. A later stage automatically waits for every sub-issue in all earlier stages to reach `done` or `cancelled`: sub-issues created in `todo` start automatically once earlier stages finish, while sub-issues parked in `backlog` stay parked and wake the parent's assignee to review and promote them. The parent is also woken when every sub-issue closes (sub-issues without a stage count as one batch and notify once when they all finish). See [Relations](#relations) and [Issue wakeups](/issue-wakeups) for the full rules.
 
+## Dependency graph and re-planning
+
+Once a sub-issue waits for another issue, by [blocker](#relations) or by stage, the parent issue draws its sub-issues as a **Dependency graph** above the list: what is done, running, ready and waiting, and for what. An edge from a cancelled issue is drawn as broken: the wait ended, but what it was to deliver never came. A sub-issue that is running or done while something it depends on is unfinished, usually because that was reopened, is marked **Upstream not done**.
+
 ## Views and display settings [#switch-views]
 
 The Issues page offers five layouts — list, board, table, Gantt, and swimlane — filterable by status, assignee, project, and other properties. They all show the same issues.

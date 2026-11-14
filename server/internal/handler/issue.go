@@ -2674,10 +2674,13 @@ func (h *Handler) ListChildIssues(w http.ResponseWriter, r *http.Request) {
 	// built-in statuses still cost no query, and a list full of custom ones
 	// costs one catalog read rather than one per row.
 	statusResolver := issuestatus.NewResolver(issue.WorkspaceID)
+	// The sub-issue graph draws its edges from each child's blockers.
+	fillBlockers := h.newIssueBlockerFiller(r.Context(), issue.WorkspaceID, ids)
 	resp := make([]IssueResponse, len(children))
 	for i, child := range children {
 		resp[i] = issueToResponse(child, prefix)
 		resp[i].StatusCategory = issuestatus.WireCategory(child.Status, statusResolver.Category(r.Context(), h.Queries, child.Status))
+		fillBlockers(&resp[i])
 		labels := labelsMap[resp[i].ID]
 		if labels == nil {
 			labels = []LabelResponse{}
