@@ -40,7 +40,7 @@ A resource's `ref` sets the branch, tag, or commit that later checkouts use by d
 
 ## Add a local directory
 
-The UI for adding a local directory is Desktop-only, because browsers cannot pick folders on your computer.
+Desktop can pick a folder on the computer it runs on. The web app cannot pick folders, but it can take a typed path for any connected computer; see [Add a folder on another computer](#add-a-folder-on-another-computer).
 
 <Callout type="warning">
 **This is for special cases; do not pick it just because it is convenient.** `local_directory` exists for people who have no other option — the canonical case is a game project whose checkout is tens of gigabytes, where re-cloning per run is simply not viable.
@@ -82,6 +82,14 @@ In the default `in_place` mode a local directory is not an isolated environment:
 </Callout>
 
 <span id="how-tasks-share-the-directory" />
+
+### Add a folder on another computer
+
+A server without a desktop environment has no Desktop to pick a folder with. On the web, open **Resources**, click **Add a folder on another computer...**, choose the computer, and type the folder's absolute path.
+
+As you type, the daemon on that computer lists the folders at the current level for completion: Tab takes the first one, and the arrow keys followed by Enter take the one you select. It also checks that the path exists and whether it is a git repository; clicking **Add folder** then checks that it can be written to. Only members who can run agents on that computer can look at its folders this way, and only folder names are returned.
+
+If the computer does not answer, the path can still be typed and added, and the daemon checks it when a task starts. Completion needs a Multica CLI on that computer that includes this feature.
 
 ## How runs share the directory
 
