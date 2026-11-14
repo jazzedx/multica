@@ -94,7 +94,7 @@ describe("step rules in the handoff form", () => {
       project_ids: [],
       created_at: "",
       updated_at: "",
-    } as IssueWorkflow;
+    } as unknown as IssueWorkflow;
     mutateAsync.mockReset().mockResolvedValue(workflow);
     renderWithI18n(
       <QueryClientProvider client={client()}>
