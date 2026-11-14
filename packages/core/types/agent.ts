@@ -319,6 +319,8 @@ export interface AgentTask {
   issue_title?: string;
   wakeup_id?: string;
   id: string;
+  /** The workspace the run belongs to; absent from servers that predate it. */
+  workspace_id?: string;
   agent_id: string;
   runtime_id: string;
   // Empty string ("") when the task has no linked issue — either chat- or
