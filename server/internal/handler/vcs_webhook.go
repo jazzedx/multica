@@ -300,6 +300,8 @@ func (h *Handler) mirrorVCSPullRequest(ctx context.Context, conn db.VcsConnectio
 		return
 	}
 
+	h.afterVCSPullRequestMirrored(conn, pr, prevState)
+
 	workspaceID := uuidToString(conn.WorkspaceID)
 	resp := vcsPullRequestToResponse(pr)
 
