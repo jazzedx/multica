@@ -64,11 +64,10 @@ var (
 	errPRSnapshotsUnavailable = errors.New("PR checks cannot be evaluated: GitHub snapshot refresh is unavailable on this server; ask the server administrator to configure the GitHub App snapshot client")
 	errPRNotLinked            = errors.New("No pull request is linked to this issue; link the PR to this issue (a parent issue's PR is not included), or wait for the linking webhook")
 	errPRSnapshotPending      = errors.New("PR check snapshot is not available yet; inspect this issue's pull-requests snapshot_available field and ask the server administrator to check snapshot refresh if it persists")
-	errPRConflictsUnsupported = errors.New("Merge conflicts can only be detected on GitHub pull requests; this issue links only self-hosted (Forgejo/Gitea/GitLab) pull requests")
 )
 
 func conditionDiagnostic(err error) bool {
-	return errors.Is(err, errPRSnapshotsUnavailable) || errors.Is(err, errPRNotLinked) || errors.Is(err, errPRSnapshotPending) || errors.Is(err, errPRConflictsUnsupported)
+	return errors.Is(err, errPRSnapshotsUnavailable) || errors.Is(err, errPRNotLinked) || errors.Is(err, errPRSnapshotPending)
 }
 
 func badCondition(msg string) error {
@@ -330,10 +329,12 @@ func (s *IssueWakeupService) evaluateCondition(ctx context.Context, tx pgx.Tx, q
 		vcsRows, err := tx.Query(ctx, `SELECT pr.id,pr.pr_number,pr.provider,pr.state,pr.head_sha,
 				COALESCE(SUM(CASE WHEN cs.state='failed' THEN 1 ELSE 0 END),0),
 				COALESCE(SUM(CASE WHEN cs.state='pending' THEN 1 ELSE 0 END),0),
-				COUNT(cs.state)
+				COUNT(cs.state),
+				COALESCE(MAX(m.head_sha),''),COALESCE(MAX(m.state),'')
 			FROM vcs_pull_request pr
 			JOIN issue_vcs_pull_request ipr ON ipr.pull_request_id=pr.id
 			LEFT JOIN vcs_commit_status cs ON cs.connection_id=pr.connection_id AND cs.sha=pr.head_sha AND pr.head_sha<>''
+			LEFT JOIN vcs_pull_request_mergeability m ON m.pull_request_id=pr.id
 			WHERE ipr.issue_id=$1
 			GROUP BY pr.id`, w.IssueID)
 		if err != nil {
@@ -342,9 +343,9 @@ func (s *IssueWakeupService) evaluateCondition(ctx context.Context, tx pgx.Tx, q
 		for vcsRows.Next() {
 			var id pgtype.UUID
 			var number int32
-			var provider, state, head string
+			var provider, state, head, verdictHead, verdict string
 			var failed, pending, total int64
-			if err = vcsRows.Scan(&id, &number, &provider, &state, &head, &failed, &pending, &total); err != nil {
+			if err = vcsRows.Scan(&id, &number, &provider, &state, &head, &failed, &pending, &total, &verdictHead, &verdict); err != nil {
 				vcsRows.Close()
 				return false, "", nil, err
 			}
@@ -367,6 +368,23 @@ func (s *IssueWakeupService) evaluateCondition(ctx context.Context, tx pgx.Tx, q
 					keys = append(keys, fmt.Sprintf("vcs:%s@%s:%s", util.UUIDToString(id), head, checks))
 					prs = append(prs, map[string]any{"number": number, "provider": provider, "head_sha": head, "checks": strings.ToLower(checks)})
 				}
+			case "conflicts":
+				if state != "open" && state != "draft" {
+					continue
+				}
+				// The server reads the verdict from the provider; one for an
+				// older head, or none yet, says nothing about this head.
+				if head == "" || verdictHead != head {
+					missingSnapshot = true
+					continue
+				}
+				// A provider that is checking again after a base-branch move
+				// keeps the previous verdict on the same head, as for GitHub.
+				key := fmt.Sprintf("vcs:%s@%s:conflicting", util.UUIDToString(id), head)
+				if verdict == "conflicting" || (verdict == "unknown" && previous[key] > 0) {
+					keys = append(keys, key)
+					prs = append(prs, map[string]any{"number": number, "provider": provider, "head_sha": head, "mergeable": "conflicting"})
+				}
 			}
 		}
 		vcsRows.Close()
@@ -382,9 +400,6 @@ func (s *IssueWakeupService) evaluateCondition(ctx context.Context, tx pgx.Tx, q
 			}
 			if linked == 0 && vcsLinked == 0 {
 				return false, "", nil, errPRNotLinked
-			}
-			if c.Event == "conflicts" && linked == 0 {
-				return false, "", nil, errPRConflictsUnsupported
 			}
 			if c.Event != "merged" && missingSnapshot {
 				return false, "", nil, errPRSnapshotPending
