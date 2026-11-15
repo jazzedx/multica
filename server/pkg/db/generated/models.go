@@ -2246,6 +2246,13 @@ type VcsPullRequest struct {
 	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
 }
 
+type VcsPullRequestMergeability struct {
+	PullRequestID pgtype.UUID        `json:"pull_request_id"`
+	HeadSha       string             `json:"head_sha"`
+	State         string             `json:"state"`
+	CheckedAt     pgtype.Timestamptz `json:"checked_at"`
+}
+
 type VerificationCode struct {
 	ID        pgtype.UUID        `json:"id"`
 	Email     string             `json:"email"`

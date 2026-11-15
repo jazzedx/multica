@@ -486,6 +486,10 @@ deleted_vcs_commit_statuses AS (
     DELETE FROM vcs_commit_status
     WHERE connection_id IN (SELECT id FROM ws_vcs_connections)
 ),
+deleted_vcs_pr_mergeability AS (
+    DELETE FROM vcs_pull_request_mergeability
+    WHERE pull_request_id IN (SELECT id FROM ws_vcs_prs)
+),
 deleted_channel_chat_bindings AS (
     DELETE FROM channel_chat_session_binding
     WHERE installation_id IN (SELECT id FROM ws_channel_installations)

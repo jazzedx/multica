@@ -268,6 +268,10 @@ cleared_vcs_commit_statuses AS (
     DELETE FROM vcs_commit_status
     WHERE connection_id IN (SELECT id FROM ws_vcs_connections)
 ),
+cleared_vcs_pr_mergeability AS (
+    DELETE FROM vcs_pull_request_mergeability
+    WHERE pull_request_id IN (SELECT id FROM ws_vcs_prs)
+),
 cleared_vcs_prs AS (
     DELETE FROM vcs_pull_request WHERE workspace_id = $1
 ),
