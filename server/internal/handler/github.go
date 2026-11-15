@@ -1164,8 +1164,10 @@ func (h *Handler) ListPullRequestsForIssue(w http.ResponseWriter, r *http.Reques
 		writeError(w, http.StatusInternalServerError, "failed to list pull requests")
 		return
 	}
+	vcsMergeability := h.vcsMergeabilityByPullRequest(r.Context(), vcsRows)
 	for _, row := range vcsRows {
 		resp := vcsPullRequestRowToResponse(row)
+		resp.Mergeable = vcsMergeability[row.ID]
 		resp.LinkSource = prLinkSource(row.LinkedByType, identifier, row.Title, row.Branch.String)
 		out = append(out, resp)
 	}
