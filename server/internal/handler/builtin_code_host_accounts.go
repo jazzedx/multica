@@ -62,6 +62,12 @@ func (h *Handler) builtinCodeHostPublicURL() string {
 	return strings.TrimRight(strings.TrimSpace(h.cfg.BuiltinCodeHost.PublicURL), "/")
 }
 
+// builtinCodeHostAgentEmail is the address of an agent's account. Commits the
+// agent makes carry it too, which is how Gitea ties them to the account.
+func builtinCodeHostAgentEmail(agentID pgtype.UUID) string {
+	return "agent-" + uuidToString(agentID) + "@multica.local"
+}
+
 // builtinCodeHostUsername turns a display name into an account name Gitea
 // accepts: lower-case letters, digits and single dashes, starting and ending
 // with a letter or digit.
@@ -171,14 +177,15 @@ func (h *Handler) ensureBuiltinCodeHostAgentAccount(ctx context.Context, client 
 	}
 	username := account.Username
 	if username == "" {
-		base := builtinCodeHostUsername(agentName)
-		if base == "" {
-			base = "agent"
-		}
 		short := strings.ReplaceAll(uuidToString(agentID), "-", "")[:6]
-		username, err = createBuiltinCodeHostUser(ctx, client,
-			[]string{base, base + "-" + short},
-			agentName, "agent-"+uuidToString(agentID)+"@multica.local")
+		candidates := []string{"agent-" + short}
+		// A name with no letters or digits Gitea accepts (a Chinese one, say)
+		// gets only the numbered form: people see the agent's name, which is
+		// the account's display name, not the account name.
+		if base := builtinCodeHostUsername(agentName); base != "" {
+			candidates = []string{base, base + "-" + short}
+		}
+		username, err = createBuiltinCodeHostUser(ctx, client, candidates, agentName, builtinCodeHostAgentEmail(agentID))
 		if err != nil {
 			return db.BuiltinCodeHostAccount{}, fmt.Errorf("create account: %w", err)
 		}
@@ -281,9 +288,10 @@ func (h *Handler) builtinCodeHostReaderCredentials(ctx context.Context, wsID pgt
 	}}
 }
 
-// withBuiltinCodeHostEnv adds the agent's own code host credentials to the
-// environment its task runs with: variables for the API, and git settings
-// that authenticate pushes and fetches without anything on the runtime host.
+// withBuiltinCodeHostEnv adds the agent's own code host identity to the
+// environment its task runs with: variables for the API, git settings that
+// authenticate pushes and fetches without anything on the runtime host, and
+// the agent as the author of its commits.
 // The agent's configured variables win, and nothing is added for a workspace
 // that is not linked. The agent's account is created here when the task
 // arrives before the background pass got to it.
@@ -332,6 +340,12 @@ func (h *Handler) withBuiltinCodeHostEnv(ctx context.Context, agent db.Agent, en
 	add("GITEA_ORG", state.OrgName)
 	add("GITEA_USER", account.Username)
 	add("GITEA_TOKEN", token)
+	// Commits are the agent's too, not whoever set up git on the runtime
+	// host. Gitea ties them to the agent's account through the address.
+	add("GIT_AUTHOR_NAME", agent.Name)
+	add("GIT_AUTHOR_EMAIL", builtinCodeHostAgentEmail(agent.ID))
+	add("GIT_COMMITTER_NAME", agent.Name)
+	add("GIT_COMMITTER_EMAIL", builtinCodeHostAgentEmail(agent.ID))
 	// Git reads settings from these variables. An agent that sets its own is
 	// left alone: the numbered entries cannot be merged safely from here.
 	if _, own := out["GIT_CONFIG_COUNT"]; !own {
