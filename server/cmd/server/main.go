@@ -767,6 +767,7 @@ func main() {
 	go runEnvironmentLogSweeper(sweepCtx, queries)
 	go runCommentIdempotencySweeper(sweepCtx, queries)
 	go runVCSMergeabilitySweeper(sweepCtx, h)
+	go runBuiltinCodeHostSweeper(sweepCtx, h)
 	if h.ConnectedApps != nil {
 		go h.ConnectedApps.RunSweeper(sweepCtx)
 	}

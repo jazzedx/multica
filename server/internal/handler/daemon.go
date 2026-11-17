@@ -367,6 +367,10 @@ type daemonWorkspaceReposResponse struct {
 	// CACerts carries the backend's extra CA certificates (PEM) for the
 	// daemon's git. Older daemons ignore it.
 	CACerts string `json:"ca_certs,omitempty"`
+	// GitCredentials lets the daemon clone and fetch repositories of the
+	// bundled code host without credentials on its host. Older daemons
+	// ignore it.
+	GitCredentials []GitCredential `json:"git_credentials,omitempty"`
 }
 
 func normalizeWorkspaceRepos(repos []RepoData) []RepoData {
@@ -1136,6 +1140,9 @@ func (h *Handler) DaemonRegister(w http.ResponseWriter, r *http.Request) {
 	if repoResp.CACerts != "" {
 		body["ca_certs"] = repoResp.CACerts
 	}
+	if creds := h.builtinCodeHostReaderCredentials(r.Context(), ws.ID); len(creds) > 0 {
+		body["git_credentials"] = creds
+	}
 	writeJSON(w, http.StatusOK, body)
 }
 
@@ -1348,7 +1355,9 @@ func (h *Handler) GetDaemonWorkspaceRepos(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	writeJSON(w, http.StatusOK, workspaceReposResponse(workspaceID, ws.Repos, ws.Settings, h.cfg.GitExtraCACerts))
+	resp := workspaceReposResponse(workspaceID, ws.Repos, ws.Settings, h.cfg.GitExtraCACerts)
+	resp.GitCredentials = h.builtinCodeHostReaderCredentials(r.Context(), ws.ID)
+	writeJSON(w, http.StatusOK, resp)
 }
 
 // daemonCredentialSeesWorkspaceConfig reports whether a daemon request may
@@ -3095,6 +3104,7 @@ func (h *Handler) buildClaimedTaskResponse(r *http.Request, task *db.AgentTaskQu
 			slog.Warn("failed to unmarshal agent custom_env", "agent_id", uuidToString(agent.ID), "error", err)
 		}
 	}
+	customEnv = h.withBuiltinCodeHostEnv(r.Context(), agent, customEnv)
 	var customArgs []string
 	if agent.CustomArgs != nil {
 		if err := json.Unmarshal(agent.CustomArgs, &customArgs); err != nil {

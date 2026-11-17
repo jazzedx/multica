@@ -432,6 +432,7 @@ func (h *Handler) CreateWorkspace(w http.ResponseWriter, r *http.Request) {
 	// a schema change, and the event stream answers the question exactly.
 	obsmetrics.RecordEvent(h.Analytics, h.Metrics, analytics.WorkspaceCreated(userID, wsID))
 	h.notifyDaemonWorkspacesChanged(userID)
+	h.reconcileBuiltinCodeHostWorkspaceAsync(ws.ID)
 
 	slog.Info("workspace created", append(logger.RequestAttrs(r), "workspace_id", wsID, "name", ws.Name, "slug", ws.Slug)...)
 	writeJSON(w, http.StatusCreated, h.workspaceToResponse(ws))

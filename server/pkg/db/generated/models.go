@@ -425,6 +425,26 @@ type AutopilotTrigger struct {
 	CreatedByID pgtype.UUID `json:"created_by_id"`
 }
 
+type BuiltinCodeHostAccount struct {
+	AgentID        pgtype.UUID        `json:"agent_id"`
+	WorkspaceID    pgtype.UUID        `json:"workspace_id"`
+	Username       string             `json:"username"`
+	TokenEncrypted string             `json:"token_encrypted"`
+	InTeam         bool               `json:"in_team"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+}
+
+type BuiltinCodeHostWorkspace struct {
+	WorkspaceID          pgtype.UUID        `json:"workspace_id"`
+	OrgName              string             `json:"org_name"`
+	SyncedRepos          []string           `json:"synced_repos"`
+	ReaderUsername       string             `json:"reader_username"`
+	ReaderTokenEncrypted string             `json:"reader_token_encrypted"`
+	CreatedAt            pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt            pgtype.Timestamptz `json:"updated_at"`
+}
+
 type ChannelBindingToken struct {
 	TokenHash      string             `json:"token_hash"`
 	WorkspaceID    pgtype.UUID        `json:"workspace_id"`

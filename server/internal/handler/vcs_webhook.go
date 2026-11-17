@@ -183,6 +183,11 @@ func (h *Handler) HandleVCSWebhook(w http.ResponseWriter, r *http.Request) {
 		}
 	default:
 		// Acknowledge unmodelled events so the provider doesn't flag the hook.
+		// A repository event of the bundled instance means the workspace's
+		// organization gained or lost a repository.
+		if h.isBuiltinCodeHostConnection(conn) && r.Header.Get("X-Gitea-Event") == "repository" {
+			h.reconcileBuiltinCodeHostWorkspaceAsync(conn.WorkspaceID)
+		}
 	}
 	w.WriteHeader(http.StatusAccepted)
 }
