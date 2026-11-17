@@ -1,0 +1,80 @@
+# HTTPS entry for the self-hosted stack (docker-compose.proxy.yml).
+#   :443  Multica (frontend; its WebSockets go straight to the backend)
+#   :3443 Gitea, when docker-compose.gitea.yml is part of the stack
+#   :80   redirects to Multica over HTTPS
+# The container always listens on these ports; PROXY_*_PORT only change the
+# host side of the mapping.
+
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
+# Docker's DNS, queried per request through the variables below: a recreated
+# container's new address is picked up, and nginx starts without Gitea.
+resolver 127.0.0.11 valid=10s ipv6=off;
+
+ssl_certificate     /etc/nginx/certs/fullchain.pem;
+ssl_certificate_key /etc/nginx/certs/privkey.pem;
+ssl_protocols       TLSv1.2 TLSv1.3;
+ssl_session_cache   shared:SSL:10m;
+
+proxy_http_version 1.1;
+proxy_set_header Host              $http_host;
+proxy_set_header X-Real-IP         $remote_addr;
+proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+proxy_set_header X-Forwarded-Proto $scheme;
+proxy_set_header Upgrade           $http_upgrade;
+proxy_set_header Connection        $connection_upgrade;
+
+server {
+    listen 80 default_server;
+
+    return 301 https://$host:${PROXY_HTTPS_PORT}$request_uri;
+}
+
+server {
+    listen 443 ssl default_server;
+    http2 on;
+
+    # Attachments are capped at 100 MiB by the backend.
+    client_max_body_size 110m;
+
+    location / {
+        set $frontend http://frontend:3000;
+        proxy_pass $frontend;
+    }
+
+    # Next.js rewrites cannot carry a WebSocket upgrade, so both sockets (the
+    # browser's and the daemons') go to the backend directly.
+    location = /ws {
+        set $backend http://backend:8080;
+        proxy_pass $backend;
+        proxy_read_timeout 1d;
+        proxy_send_timeout 1d;
+    }
+
+    location = /api/daemon/ws {
+        set $backend http://backend:8080;
+        proxy_pass $backend;
+        proxy_read_timeout 1d;
+        proxy_send_timeout 1d;
+    }
+}
+
+server {
+    listen 3443 ssl;
+    http2 on;
+
+    client_max_body_size 1g;
+
+    location / {
+        set $gitea http://gitea:3000;
+        proxy_pass $gitea;
+        proxy_read_timeout 1h;
+        proxy_send_timeout 1h;
+        # Stream clones and pushes instead of spooling them to disk.
+        proxy_buffering off;
+        proxy_request_buffering off;
+    }
+}
