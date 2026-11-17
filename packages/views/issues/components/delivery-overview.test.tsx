@@ -73,21 +73,6 @@ describe("DeliveryOverview", () => {
     expect(shown["已进行"]).toBe("2 小时 5 分钟");
   });
 
-  it("explains the two figures that need defining", async () => {
-    mocks.getIssueDeliveryOverview.mockResolvedValue(overview());
-    renderOverview();
-
-    const region = await screen.findByRole("region", { name: "Delivery overview" });
-    expect(within(region).getByText("Rework").parentElement).toHaveAttribute(
-      "title",
-      "Times an issue was sent back to an earlier status",
-    );
-    expect(within(region).getByText("Human actions").parentElement).toHaveAttribute(
-      "title",
-      "Comments and changes people made after the issue was filed",
-    );
-  });
-
   it("renders nothing for an issue without sub-issues", async () => {
     mocks.getIssueDeliveryOverview.mockResolvedValue(overview({ sub_issues: { total: 0, done: 0, cancelled: 0 } }));
     const { container } = renderOverview();

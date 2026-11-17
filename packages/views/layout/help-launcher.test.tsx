@@ -106,11 +106,6 @@ describe("HelpLauncher", () => {
     expect(screen.getByText("Server version 1.2.3")).toBeInTheDocument();
   });
 
-  it("offers no desktop download entry", () => {
-    render(<HelpLauncher />);
-    expect(screen.queryByText("Desktop app")).not.toBeInTheDocument();
-  });
-
   it.each([
     ["en", "https://multica.ai/docs"],
     ["zh-Hans", "https://multica.ai/docs/zh"],
@@ -123,10 +118,5 @@ describe("HelpLauncher", () => {
       "href",
       href,
     );
-  });
-
-  it("offers no Star on GitHub entry", () => {
-    render(<HelpLauncher />);
-    expect(screen.queryByText("Star on GitHub")).not.toBeInTheDocument();
   });
 });

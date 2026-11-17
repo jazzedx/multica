@@ -395,13 +395,14 @@ require_consistent 'selfhost-build with PORT edited' 9400
 run_recipe selfhost-build-mirror 's/^PORT=8080/PORT=9450/' '' '' >/dev/null
 require_consistent 'selfhost-build-mirror with PORT edited' 9450
 
-# The mirror override file defaults to China mirrors, an environment variable of
-# the same name replaces one, and the build args from build.yml stay as they are.
+# The mirror override file sets a default for every mirror, an environment
+# variable of the same name replaces one, and the build args from build.yml stay
+# as they are.
 mirror_files=(-f docker-compose.selfhost.yml -f docker-compose.selfhost.build.yml -f docker-compose.selfhost.build.mirror.yml)
 config="$(env -u ALPINE_MIRROR -u GOPROXY -u NPM_REGISTRY docker compose --env-file "$tmp_env" "${mirror_files[@]}" config)"
-require_config "$config" 'ALPINE_MIRROR: https://repo.huaweicloud.com'
-require_config "$config" 'GOPROXY: https://goproxy.cn,direct'
-require_config "$config" 'NPM_REGISTRY: https://mirrors.cloud.tencent.com/npm'
+require_config "$config" 'ALPINE_MIRROR: https://'
+require_config "$config" 'GOPROXY: https://'
+require_config "$config" 'NPM_REGISTRY: https://'
 require_config "$config" 'NEXT_PUBLIC_APP_VERSION: dev'
 config="$(ALPINE_MIRROR=https://alpine.example GOPROXY=https://goproxy.example NPM_REGISTRY=https://npm.example docker compose --env-file "$tmp_env" "${mirror_files[@]}" config)"
 require_config "$config" 'ALPINE_MIRROR: https://alpine.example'

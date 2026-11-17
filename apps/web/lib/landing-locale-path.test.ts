@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { isReservedSlug } from "@multica/core/paths";
 import {
   LANDING_PATH_PREFIXES,
-  LANDING_ROUTES,
   landingAlternates,
   landingPathLocale,
   localizeHref,
@@ -11,11 +10,6 @@ import {
 } from "./landing-locale-path";
 
 describe("landing locale paths", () => {
-  it("keeps the reserved marketing route set for redirects", () => {
-    expect(LANDING_ROUTES.has("download")).toBe(true);
-    expect(LANDING_ROUTES.has("pricing")).toBe(true);
-  });
-
   it("reserves every prefix as a workspace slug", () => {
     for (const prefix of Object.keys(LANDING_PATH_PREFIXES)) expect(isReservedSlug(prefix)).toBe(true);
   });

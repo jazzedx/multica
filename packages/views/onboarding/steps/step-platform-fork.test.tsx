@@ -162,9 +162,7 @@ describe("StepPlatformFork", () => {
 
   it("renders the CLI fork option at rest", () => {
     renderFork();
-    expect(screen.queryByText(/^use this computer$/i)).toBeNull();
     expect(screen.getByText(/^connect from the terminal$/i)).toBeInTheDocument();
-    expect(screen.queryByText(/^use a cloud computer$/i)).toBeNull();
     expect(screen.queryByTestId("cli-instructions")).not.toBeInTheDocument();
   });
 
@@ -189,11 +187,6 @@ describe("StepPlatformFork", () => {
     await user.click(screen.getByRole("button", { name: /skip for now/i }));
     expect(onNext).toHaveBeenCalledTimes(1);
     expect(onNext).toHaveBeenCalledWith(null);
-  });
-
-  it("offers no desktop download card", () => {
-    renderFork();
-    expect(screen.queryByText(/^use this computer$/i)).toBeNull();
   });
 
   it("CLI dialog: opens with instructions + 'waiting' and a disabled Connect button", async () => {

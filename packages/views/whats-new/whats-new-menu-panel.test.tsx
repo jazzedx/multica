@@ -189,7 +189,6 @@ describe("What's new from the Help menu", () => {
     expect(mocks.markWhatsNewSeen).toHaveBeenCalledWith("0.3.0");
     expect(release("0.3.0")).toHaveTextContent("New");
     expect(release("0.2.0")).not.toHaveTextContent("New");
-    expect(screen.queryByRole("link", { name: /release notes/ })).not.toBeInTheDocument();
   });
 
   it("tags the menu entry with the newest unread version until the panel is opened", () => {

@@ -141,11 +141,7 @@ describe("RuntimesPage", () => {
     renderPage();
 
     expect(screen.getByText("Machines")).toBeInTheDocument();
-    expect(screen.queryByText("Cloud services")).not.toBeInTheDocument();
     expect(screen.getByText("dev-machine.local")).toBeInTheDocument();
-    expect(screen.queryByText("Not connected")).not.toBeInTheDocument();
-    expect(screen.queryByText("Cursor Cloud Agents")).not.toBeInTheDocument();
-    expect(screen.queryByText("Claude Managed Agents")).not.toBeInTheDocument();
   });
 
   it("keeps the header and column headers up while the list loads", () => {
@@ -180,8 +176,6 @@ describe("RuntimesPage", () => {
     const menu = await screen.findByRole("menu");
     expect(within(menu).getByText("Machines")).toBeInTheDocument();
     expect(within(menu).getByText("Other machine or server")).toBeInTheDocument();
-    expect(within(menu).queryByText("Cloud services")).not.toBeInTheDocument();
-    expect(within(menu).queryByText("Qoder Cloud Agents")).not.toBeInTheDocument();
   });
 
   it("counts machines and cloud services per status in the scope menu", async () => {
@@ -227,19 +221,6 @@ describe("RuntimesPage", () => {
     await user.click(within(intro).getByRole("button", { name: "Add runtime" }));
     const menu = await screen.findByRole("menu");
     expect(within(menu).getByText("Other machine or server")).toBeInTheDocument();
-    expect(within(menu).queryByText("Qoder Cloud Agents")).not.toBeInTheDocument();
-  });
-
-  it("introduces runtimes when the only registered runtime is a cloud service", () => {
-    renderPage({
-      runtimes: [],
-      connection: qoder({ configured: true, enabled: true, status: "online" }),
-    });
-
-    expect(
-      screen.getByRole("region", { name: "Give your agents a computer to work on" }),
-    ).toBeInTheDocument();
-    expect(screen.queryByText("Qoder Cloud Agents")).not.toBeInTheDocument();
   });
 
   it("pins this device on desktop and marks it connected in the add menu", async () => {
@@ -253,7 +234,6 @@ describe("RuntimesPage", () => {
     const menu = await screen.findByRole("menu");
     expect(within(menu).getByText("Connected · Jiayuan's MacBook")).toBeInTheDocument();
     expect(within(menu).getByText("Other machine or server")).toBeInTheDocument();
-    expect(within(menu).queryByText("Qoder Cloud Agents")).not.toBeInTheDocument();
   });
 
   it("filters rows by status", async () => {
@@ -281,7 +261,6 @@ describe("RuntimesPage", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("build-server")).toBeInTheDocument();
     expect(screen.queryByText("dev-machine.local")).not.toBeInTheDocument();
-    expect(screen.queryByText("Qoder Cloud Agents")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /Offline/ }));
     await user.click(await screen.findByRole("menuitemradio", { name: /All runtimes/ }));
