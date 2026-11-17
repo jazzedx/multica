@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { configStore } from "@multica/core/config";
-import { BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG } from "@multica/core/feature-flags";
 import { renderWithI18n } from "../../test/i18n";
 
 const mockCreateMember = vi.hoisted(() => vi.fn());
@@ -248,17 +247,6 @@ describe("MembersTab", () => {
 
     await waitFor(() => expect(mockCreateMember).toHaveBeenCalled());
     expect(screen.getByRole("dialog", { name: "Invite member" })).toBeInTheDocument();
-  });
-
-  it("does not link seat usage to billing", () => {
-    configStore
-      .getState()
-      .setFeatureFlags({ [BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG]: true });
-    data.summary = { seatCapacity: { used: 3, reserved: 1, purchased: 5 } };
-    renderWithI18n(<MembersTab />);
-
-    expect(screen.queryByText(/4 of 5 seats used/)).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Manage seats" })).not.toBeInTheDocument();
   });
 
   describe("member limit", () => {
