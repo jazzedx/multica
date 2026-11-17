@@ -154,6 +154,8 @@ var workspaceDeletionManifest = map[string]workspaceDeleteAction{
 	"user":                               workspaceDeleteKeep,
 	"user_composio_connection":           workspaceDeleteKeep,
 	"vcs_commit_status":                  workspaceDelete,
+	"builtin_code_host_account":          workspaceDelete,
+	"builtin_code_host_workspace":        workspaceDelete,
 	"vcs_connection":                     workspaceDelete,
 	"vcs_pull_request":                   workspaceDelete,
 	"vcs_pull_request_mergeability":      workspaceDelete,
