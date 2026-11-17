@@ -63,6 +63,7 @@ Part of MUL-123                    # body mention only → no link at all
 In the final issue comment, include the PR URL when a PR exists. If the task did
 not produce a PR because no code changed or the user asked not to create one, say
 that explicitly.
+With `GITEA_URL` set, open the PR as `references/runtimes.md` describes: `gh` cannot.
 
 ## Reading a linked PR's real state
 
