@@ -1107,6 +1107,9 @@
     }
   },
   "vcs": {
+    "builtin_label": "Built-in",
+    "builtin_hint": "Repositories created under the {{org}} organization are added to this workspace.",
+    "builtin_open": "Open",
     "section_title": "Git auto-hébergé",
     "page_description": "Connectez une instance auto-hébergée de Forgejo, Gitea ou GitLab pour refléter les pull requests sur les tâches. Chaque connexion utilise un jeton d'accès ; les agents poussent leurs branches et ouvrent les PR avec les identifiants git propres au runtime.",
     "connect_title": "Connecter une instance de fournisseur",

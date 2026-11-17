@@ -1127,6 +1127,9 @@
     }
   },
   "vcs": {
+    "builtin_label": "Built-in",
+    "builtin_hint": "Repositories created under the {{org}} organization are added to this workspace.",
+    "builtin_open": "Open",
     "section_title": "Git (self-hosted)",
     "page_description": "Подключите собственный экземпляр Forgejo, Gitea или GitLab, чтобы зеркалировать pull request'ы в задачи. Каждое подключение использует токен доступа; агенты отправляют ветки и открывают PR, используя собственные Git-учётные данные среды выполнения.",
     "connect_title": "Подключить экземпляр провайдера",

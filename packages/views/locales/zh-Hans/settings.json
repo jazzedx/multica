@@ -1097,6 +1097,9 @@
     }
   },
   "vcs": {
+    "builtin_label": "内置",
+    "builtin_hint": "在 {{org}} 组织下创建的仓库会自动加入此工作区。",
+    "builtin_open": "打开",
     "section_title": "自托管 Git",
     "page_description": "连接自托管的 Forgejo、Gitea 或 GitLab 实例，将 Pull Request 镜像到任务上。每个连接使用一个访问令牌；智能体使用运行时自身的 Git 凭据推送分支并创建 PR。",
     "connect_title": "连接代码托管实例",

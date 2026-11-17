@@ -1097,6 +1097,9 @@
     }
   },
   "vcs": {
+    "builtin_label": "內建",
+    "builtin_hint": "在 {{org}} 組織下建立的儲存庫會自動加入此工作區。",
+    "builtin_open": "開啟",
     "section_title": "自託管 Git",
     "page_description": "連線自託管的 Forgejo、Gitea 或 GitLab 例項，將 Pull Request 映象到任務上。每個連線使用一個訪問令牌；AI 代理使用執行時自身的 Git 憑據推送分支並建立 PR。",
     "connect_title": "連線程式碼託管例項",
