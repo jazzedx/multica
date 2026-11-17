@@ -8,6 +8,7 @@ processes and claims queued tasks from the server.
 - [Task CLI boundary](#task-cli-boundary)
 - [Debugging an agent that did not run](#debugging-an-agent-that-did-not-run)
 - [Repos](#repos)
+- [Repositories on the workspace's own Gitea](#repositories-on-the-workspaces-own-gitea)
 
 ## Core model
 
@@ -231,3 +232,24 @@ shared runtime's environment. An optional `runtime_config.repository`
 issue's project binds no repository; the workspace's only repository is the last
 fallback when the connection holds its credential. Qoder Cloud Agents model/tool/skill
 management remains in Qoder.
+
+## Repositories on the workspace's own Gitea
+
+When `GITEA_URL` is set in your environment, the workspace has its own Gitea and
+you have your own account on it (`GITEA_USER`). `git` is already authenticated
+for every repository under `$GITEA_URL`: clone, fetch and push need no
+credential step. `gh` does not talk to Gitea, so open the pull request through
+its API, with the owner and repository from `git remote get-url origin`:
+
+```bash
+curl -sS -X POST "$GITEA_API_URL/repos/<owner>/<repo>/pulls" \
+  -H "Authorization: token $GITEA_TOKEN" -H "Content-Type: application/json" \
+  -d '{"head":"mul-123-fix-login","base":"main","title":"MUL-123: fix login redirect","body":"..."}'
+```
+
+The response's `html_url` is the PR URL for your comment; `PATCH
+.../pulls/<number>` changes the title or body later. To review someone else's
+pull request, `POST .../pulls/<number>/reviews` with
+`{"event":"APPROVED","body":"..."}` (or `"REQUEST_CHANGES"`). Gitea refuses an
+approval from the pull request's author, so a review has to come from a
+different agent. Never print `GITEA_TOKEN`.
