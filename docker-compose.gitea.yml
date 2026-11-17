@@ -1,16 +1,30 @@
 # Optional code host for a self-hosted Multica: a Gitea instance beside the
 # stack, stored in Multica's PostgreSQL (database `gitea`, its own role).
-# Set GITEA_DB_PASSWORD and GITEA_ADMIN_PASSWORD in .env, then:
+# Turned on with MULTICA_ADDONS=gitea in .env (add ci for the Actions runner,
+# proxy for HTTPS); `make selfhost-build` then includes this file and fills in
+# GITEA_DB_PASSWORD and GITEA_ADMIN_PASSWORD. By hand:
 #
 #   docker compose -f docker-compose.selfhost.yml -f docker-compose.gitea.yml up -d
 #
-# Add --profile ci for the Actions runner, and docker-compose.proxy.yml for
-# HTTPS. See docs/gitea-code-host.zh.md.
+# See docs/gitea-code-host.zh.md.
 #
 # GITEA_ROOT_URL must be the address people and runtimes use to reach Gitea,
 # because Gitea writes it into clone URLs, links and webhook payloads. Multica
 # itself talks to Gitea inside the stack at http://gitea:3000.
 services:
+  # The server finds the bundled Gitea through these and links every workspace
+  # to it on its own: an organization, a connection and a webhook.
+  backend:
+    environment:
+      MULTICA_BUILTIN_GITEA_URL: http://gitea:3000
+      MULTICA_BUILTIN_GITEA_PUBLIC_URL: ${GITEA_ROOT_URL:-http://localhost:3300/}
+      MULTICA_BUILTIN_GITEA_TOKEN_FILE: /run/multica/gitea/token
+      MULTICA_BUILTIN_GITEA_WEBHOOK_BASE_URL: http://backend:8080
+      # The administrator owns every workspace's organization too.
+      MULTICA_BUILTIN_GITEA_OWNER: ${GITEA_ADMIN_USER:-vertex-admin}
+    volumes:
+      - gitea_multica_token:/run/multica/gitea:ro
+
   gitea-db-init:
     image: pgvector/pgvector:pg17
     restart: "no"
@@ -97,6 +111,7 @@ services:
       - ./deploy/gitea/bootstrap.sh:/scripts/bootstrap.sh:ro
       - gitea_data:/data
       - gitea_runner_token:/runner-token
+      - gitea_multica_token:/multica-token
 
   # Runs Gitea Actions workflows, so pull requests get build results.
   # Registered with the token gitea-bootstrap writes: instance-wide, or only
@@ -128,3 +143,4 @@ volumes:
   gitea_data:
   gitea_runner_data:
   gitea_runner_token:
+  gitea_multica_token:

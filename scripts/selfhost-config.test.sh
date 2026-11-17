@@ -293,7 +293,7 @@ chmod +x "$stub_dir/docker" "$stub_dir/curl"
 recipe_dir="$tmp_dir/recipe"
 mkdir -p "$recipe_dir/scripts"
 cp Makefile .env.example docker-compose.selfhost.yml docker-compose.selfhost.build.yml docker-compose.selfhost.build.mirror.yml "$recipe_dir/"
-cp scripts/selfhost-wait.sh scripts/selfhost-mirror-env.sh "$recipe_dir/scripts/"
+cp scripts/selfhost-wait.sh scripts/selfhost-mirror-env.sh scripts/selfhost-addon-secrets.sh "$recipe_dir/scripts/"
 
 record="$tmp_dir/published"
 curl_log="$tmp_dir/probed"
