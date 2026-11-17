@@ -10,6 +10,7 @@ import {
   parseWithFallback,
 } from "@multica/core/api";
 import { useAuthStore } from "@multica/core/auth";
+import { useDaemonSetupCommands } from "@multica/core/runtimes";
 import {
   completeOnboarding,
   ONBOARDING_STEP_ORDER,
@@ -29,7 +30,7 @@ import { StepPlatformFork } from "./steps/step-platform-fork";
 import { OnboardingLogoutButton } from "./components/onboarding-logout-button";
 import {
   getMikaOnboarding,
-  INSTALL_RUNTIME_ISSUE_BODY,
+  buildInstallRuntimeIssueBody,
   INSTALL_RUNTIME_ISSUE_TITLE,
   pickContentLang,
 } from "./templates";
@@ -147,6 +148,9 @@ export function OnboardingFlow({
 }: OnboardingFlowProps) {
   const { t, i18n } = useT("onboarding");
   const user = useAuthStore((s) => s.user);
+  // The skip path's guide embeds this deployment's CLI install and connect
+  // commands, so it is read here rather than at write time.
+  const setupCommands = useDaemonSetupCommands();
   if (!user) {
     throw new Error("OnboardingFlow requires an authenticated user");
   }
@@ -310,7 +314,7 @@ export function OnboardingFlow({
           const issue = await api.createIssue(
             {
               title: INSTALL_RUNTIME_ISSUE_TITLE[contentLang],
-              description: INSTALL_RUNTIME_ISSUE_BODY[contentLang],
+              description: buildInstallRuntimeIssueBody(contentLang, setupCommands),
               status: "in_progress",
               priority: "high",
               assignee_type: "member",
@@ -350,7 +354,7 @@ export function OnboardingFlow({
       }
       onComplete(workspace, { kind: "issue", issueId });
     },
-    [answers, bootstrapMika, i18n.language, workspace, onComplete, t, user.id],
+    [answers, bootstrapMika, i18n.language, setupCommands, workspace, onComplete, t, user.id],
   );
 
   const handleBack = useCallback((from: OnboardingStep) => {
