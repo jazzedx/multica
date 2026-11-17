@@ -1,16 +1,30 @@
 # Optional code host for a self-hosted Multica: a Gitea instance beside the
 # stack, stored in Multica's PostgreSQL (database `gitea`, its own role).
-# Set GITEA_DB_PASSWORD and GITEA_ADMIN_PASSWORD in .env, then:
+# Turned on with MULTICA_ADDONS=gitea in .env (add ci for the Actions runner,
+# proxy for HTTPS); `make selfhost-build` then includes this file and fills in
+# GITEA_DB_PASSWORD and GITEA_ADMIN_PASSWORD. By hand:
 #
 #   docker compose -f docker-compose.selfhost.yml -f docker-compose.gitea.yml up -d
 #
-# Add --profile ci for the Actions runner, and docker-compose.proxy.yml for
-# HTTPS. See docs/gitea-code-host.zh.md.
+# See docs/gitea-code-host.zh.md.
 #
 # GITEA_ROOT_URL must be the address people and runtimes use to reach Gitea,
 # because Gitea writes it into clone URLs, links and webhook payloads. Multica
 # itself talks to Gitea inside the stack at http://gitea:3000.
 services:
+  # The server finds the bundled Gitea through these and links every workspace
+  # to it on its own: an organization, a connection and a webhook.
+  backend:
+    environment:
+      MULTICA_BUILTIN_GITEA_URL: http://gitea:3000
+      MULTICA_BUILTIN_GITEA_PUBLIC_URL: ${GITEA_ROOT_URL:-http://localhost:3300/}
+      MULTICA_BUILTIN_GITEA_TOKEN_FILE: /run/multica/gitea/token
+      MULTICA_BUILTIN_GITEA_WEBHOOK_BASE_URL: http://backend:8080
+      # The administrator owns every workspace's organization too.
+      MULTICA_BUILTIN_GITEA_OWNER: ${GITEA_ADMIN_USER:-multica-admin}
+    volumes:
+      - gitea_multica_token:/run/multica/gitea:ro
+
   gitea-db-init:
     image: pgvector/pgvector:pg17
     restart: "no"
@@ -38,7 +52,7 @@ services:
     environment:
       USER_UID: "1000"
       USER_GID: "1000"
-      GITEA____APP_NAME: ${GITEA_APP_NAME:-Vertex AI}
+      GITEA____APP_NAME: ${GITEA_APP_NAME:-Multica Code}
       GITEA__database__DB_TYPE: postgres
       GITEA__database__HOST: postgres:5432
       GITEA__database__NAME: ${GITEA_DB_NAME:-gitea}
@@ -88,8 +102,8 @@ services:
       gitea:
         condition: service_healthy
     environment:
-      GITEA_ADMIN_USER: ${GITEA_ADMIN_USER:-vertex-admin}
-      GITEA_ADMIN_EMAIL: ${GITEA_ADMIN_EMAIL:-vertex-admin@vertex.local}
+      GITEA_ADMIN_USER: ${GITEA_ADMIN_USER:-multica-admin}
+      GITEA_ADMIN_EMAIL: ${GITEA_ADMIN_EMAIL:-multica-admin@multica.local}
       GITEA_ADMIN_PASSWORD: ${GITEA_ADMIN_PASSWORD:?set GITEA_ADMIN_PASSWORD in .env}
       GITEA_RUNNER_ORG: ${GITEA_RUNNER_ORG:-}
     entrypoint: ["sh", "/scripts/bootstrap.sh"]
@@ -97,6 +111,7 @@ services:
       - ./deploy/gitea/bootstrap.sh:/scripts/bootstrap.sh:ro
       - gitea_data:/data
       - gitea_runner_token:/runner-token
+      - gitea_multica_token:/multica-token
 
   # Runs Gitea Actions workflows, so pull requests get build results.
   # Registered with the token gitea-bootstrap writes: instance-wide, or only
@@ -128,3 +143,4 @@ volumes:
   gitea_data:
   gitea_runner_data:
   gitea_runner_token:
+  gitea_multica_token:

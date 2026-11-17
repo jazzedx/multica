@@ -24,6 +24,7 @@ Docker 映射端口时会绕过宿主机防火墙（ufw、firewalld 都拦不住
 在 `.env` 里写上（以内网 IP `10.0.0.5` 为例）：
 
 ```sh
+MULTICA_ADDONS=gitea,ci,proxy           # proxy：本页的 nginx；gitea、ci 见 gitea-code-host.zh.md
 PROXY_HOST=10.0.0.5                     # 内网 IP（或内网主机名，此时另设 PROXY_BIND=10.0.0.5）
 FRONTEND_ORIGIN=https://10.0.0.5
 MULTICA_PUBLIC_URL=https://10.0.0.5
@@ -33,9 +34,10 @@ GITEA_SSH_DOMAIN=10.0.0.5
 ```
 
 ```sh
-docker compose -f docker-compose.selfhost.yml -f docker-compose.gitea.yml -f docker-compose.proxy.yml \
-  --profile ci up -d
+make selfhost-build
 ```
+
+不用 `make` 时：`docker compose -f docker-compose.selfhost.yml -f docker-compose.gitea.yml -f docker-compose.proxy.yml --profile ci up -d`。
 
 宿主机端口可以用 `PROXY_HTTP_PORT`、`PROXY_HTTPS_PORT`、`PROXY_GITEA_PORT` 改；改了 HTTPS 端口，上面的地址里要带上端口。
 
@@ -77,5 +79,5 @@ curl -m 5 https://<公网 IP>/health                                    # 应连
 ## 服务之间的调用不经过代理
 
 同一个 compose 里的服务走内部网络：Multica 调 Gitea 用 `http://gitea:3000`，Gitea 的 Webhook 发到
-`http://backend:8080/...`，Actions 作业从 `http://gitea:3000` 拉代码。它们不依赖证书。接入步骤见
-[gitea-code-host.zh.md](gitea-code-host.zh.md)。
+`http://backend:8080/...`，Actions 作业从 `http://gitea:3000` 拉代码。它们不依赖证书，这些关联由服务端自动配好，
+见 [gitea-code-host.zh.md](gitea-code-host.zh.md)。
