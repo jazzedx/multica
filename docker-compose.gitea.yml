@@ -4,7 +4,8 @@
 #
 #   docker compose -f docker-compose.selfhost.yml -f docker-compose.gitea.yml up -d
 #
-# Add --profile ci for the Actions runner. See docs/gitea-code-host.zh.md.
+# Add --profile ci for the Actions runner, and docker-compose.proxy.yml for
+# HTTPS. See docs/gitea-code-host.zh.md.
 #
 # GITEA_ROOT_URL must be the address people and runtimes use to reach Gitea,
 # because Gitea writes it into clone URLs, links and webhook payloads. Multica
@@ -51,8 +52,8 @@ services:
       # No web installer: the database comes from the settings above and the
       # first administrator from gitea-bootstrap.
       GITEA__security__INSTALL_LOCK: "true"
-      # Requests reach Gitea through Docker's port forwarding or a proxy in the
-      # stack, both inside Docker's address range.
+      # Requests reach Gitea from the proxy or Docker's port forwarding, both
+      # inside Docker's address range.
       GITEA__security__REVERSE_PROXY_TRUSTED_PROXIES: 127.0.0.0/8,::1/128,172.16.0.0/12
       # Outgoing requests (webhooks): public hosts are always allowed in lax
       # mode, non-public ones only when listed. Multica is non-public

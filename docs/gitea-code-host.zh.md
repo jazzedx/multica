@@ -10,6 +10,7 @@ Gitea 的数据库放在 Multica 的 PostgreSQL 里（单独的库 `gitea` 和�
 
 ```sh
 # 人和运行时访问 Gitea 用的地址，Gitea 会把它写进克隆地址、页面链接和 Webhook 内容。
+# 经 HTTPS 代理时是 https://<服务器地址>:3443/（见 self-host-https.zh.md）。
 GITEA_ROOT_URL=http://<服务器地址>:3300/
 GITEA_DB_PASSWORD=<openssl rand -hex 24>
 GITEA_ADMIN_PASSWORD=<管理员密码>
@@ -32,13 +33,13 @@ docker compose -f docker-compose.selfhost.yml -f docker-compose.gitea.yml --prof
 | 自助注册 | 开放，带图片验证码 | `GITEA_DISABLE_REGISTRATION`、`GITEA_ENABLE_CAPTCHA` |
 | 注册邮箱域名 | 不限 | `GITEA_EMAIL_DOMAIN_ALLOWLIST`（如 `example.com`） |
 | 未登录访问 | 什么都看不到 | `GITEA_REQUIRE_SIGNIN_VIEW` |
-| HTTP 端口 | 3300，只绑本机 | `GITEA_HTTP_PORT`、`GITEA_BIND`（设为内网 IP 才能从别的机器访问） |
+| HTTP 端口 | 3300，只绑本机（经 nginx 的 3443 访问） | `GITEA_HTTP_PORT`、`GITEA_BIND` |
 | SSH 端口 | 2222，只绑本机 | `GITEA_SSH_PORT`、`GITEA_SSH_BIND`（设为内网 IP 才能 SSH 克隆）、`GITEA_SSH_DOMAIN`、`GITEA_DISABLE_SSH` |
 | Webhook 可投递的内网地址 | `private,loopback` | `GITEA_WEBHOOK_ALLOWED_HOSTS` |
 | 执行器范围 | 整个实例 | `GITEA_RUNNER_ORG`（填组织名，只给这个组织的仓库跑作业） |
 
 端口与 Multica（前端 3000、后端 8080）不冲突。网页安装向导已关闭。服务器有公网 IP 时，绑定地址不要设成
-`0.0.0.0`：Docker 映射的端口会绕过宿主机防火墙。
+`0.0.0.0`：Docker 映射的端口会绕过宿主机防火墙，见 [self-host-https.zh.md](self-host-https.zh.md)。
 
 **开放注册时务必设 `GITEA_RUNNER_ORG`。** 执行器通过宿主机的 Docker 套接字起作业容器，作业里的命令等于宿主机 root
 权限；不限范围时，任何注册用户建个仓库写个工作流就能拿到这台机器。设了组织后，`gitea-bootstrap` 会在组织不存在时
@@ -124,4 +125,4 @@ multica issue create --title "集成测试" --parent MUL-20 --assignee <智能�
 - 用 Gitea 的正式地址访问它。通过 `localhost` 调接口创建的 PR，链接里也会是 `localhost`。
 - 任务里的 PR 链接打开的是 Gitea 的页面。仓库是私有的而浏览器没有登录 Gitea 时，Gitea 返回 404 而不是跳到登录页；
   先在同一个浏览器里登录 Gitea，或者把仓库设为公开。
-- 暴露到公网之前，先给 Multica 和 Gitea 配 HTTPS，并限制来源地址。
+- 给 Multica 和 Gitea 配 HTTPS 见 [self-host-https.zh.md](self-host-https.zh.md)。
