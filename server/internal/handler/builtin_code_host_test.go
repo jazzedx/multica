@@ -434,6 +434,18 @@ func TestBuiltinCodeHostGivesEachAgentItsOwnAccount(t *testing.T) {
 	}
 }
 
+func TestBuiltinCodeHostAccountForANameWithoutLatinLetters(t *testing.T) {
+	f := newBuiltinCodeHostFixture(t)
+	agent := f.agent("评审员")
+	f.reconcile(false)
+
+	username := f.account(agent).Username
+	short := strings.ReplaceAll(uuidToString(agent.ID), "-", "")[:6]
+	if username != "agent-"+short {
+		t.Fatalf("account = %q, want agent-%s rather than a bare \"agent\" another agent could have", username, short)
+	}
+}
+
 func TestBuiltinCodeHostAccountNameAvoidsTakenNames(t *testing.T) {
 	f := newBuiltinCodeHostFixture(t)
 	f.fake.AddUser("dev")
@@ -495,14 +507,18 @@ func TestBuiltinCodeHostCredentialsTravelWithTheTask(t *testing.T) {
 	account := f.account(agent)
 	token, _ := testHandler.openVCSSecret(account.TokenEncrypted)
 	want := map[string]string{
-		"FOO":              "1",
-		"GITEA_URL":        "http://git.example",
-		"GITEA_API_URL":    "http://git.example/api/v1",
-		"GITEA_ORG":        f.ws.Slug,
-		"GITEA_USER":       "late-joiner",
-		"GITEA_TOKEN":      token,
-		"GIT_CONFIG_COUNT": "1",
-		"GIT_CONFIG_KEY_0": "http.http://git.example/.extraheader",
+		"FOO":                 "1",
+		"GITEA_URL":           "http://git.example",
+		"GITEA_API_URL":       "http://git.example/api/v1",
+		"GITEA_ORG":           f.ws.Slug,
+		"GITEA_USER":          "late-joiner",
+		"GITEA_TOKEN":         token,
+		"GIT_AUTHOR_NAME":     "Late Joiner",
+		"GIT_AUTHOR_EMAIL":    builtinCodeHostAgentEmail(agent.ID),
+		"GIT_COMMITTER_NAME":  "Late Joiner",
+		"GIT_COMMITTER_EMAIL": builtinCodeHostAgentEmail(agent.ID),
+		"GIT_CONFIG_COUNT":    "1",
+		"GIT_CONFIG_KEY_0":    "http.http://git.example/.extraheader",
 		"GIT_CONFIG_VALUE_0": "Authorization: Basic " +
 			base64.StdEncoding.EncodeToString([]byte("late-joiner:"+token)),
 	}
@@ -521,10 +537,12 @@ func TestBuiltinCodeHostCredentialsTravelWithTheTask(t *testing.T) {
 	// What the agent configured itself is left alone.
 	own := testHandler.withBuiltinCodeHostEnv(context.Background(), agent, map[string]string{
 		"GITEA_USER":       "mine",
+		"GIT_AUTHOR_NAME":  "Someone",
 		"GIT_CONFIG_COUNT": "1",
 		"GIT_CONFIG_KEY_0": "user.name",
 	})
-	if own["GITEA_USER"] != "mine" || own["GIT_CONFIG_KEY_0"] != "user.name" || own["GIT_CONFIG_VALUE_0"] != "" {
+	if own["GITEA_USER"] != "mine" || own["GIT_AUTHOR_NAME"] != "Someone" ||
+		own["GIT_CONFIG_KEY_0"] != "user.name" || own["GIT_CONFIG_VALUE_0"] != "" {
 		t.Errorf("the agent's own variables were overridden: %v", own)
 	}
 	if own["GITEA_TOKEN"] != token {

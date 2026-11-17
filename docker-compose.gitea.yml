@@ -80,6 +80,9 @@ services:
       GITEA__service__EMAIL_DOMAIN_ALLOWLIST: ${GITEA_EMAIL_DOMAIN_ALLOWLIST:-}
       GITEA__service__REQUIRE_SIGNIN_VIEW: ${GITEA_REQUIRE_SIGNIN_VIEW:-true}
       GITEA__service__DEFAULT_KEEP_EMAIL_PRIVATE: "true"
+      # Show people's and agents' names rather than account names, which for
+      # an agent with a Chinese name is only a number.
+      GITEA__ui__DEFAULT_SHOW_FULL_NAME: "true"
       GITEA__actions__ENABLED: "true"
     # Both ports stay on 127.0.0.1 unless bound to the server's internal
     # address: Docker's port publishing bypasses the host firewall, so 0.0.0.0
