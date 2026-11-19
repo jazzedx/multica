@@ -197,6 +197,32 @@ func (q *Queries) ListAgentsForBuiltinCodeHost(ctx context.Context, workspaceID 
 	return items, nil
 }
 
+const listBuiltinCodeHostAccountUsernames = `-- name: ListBuiltinCodeHostAccountUsernames :many
+SELECT username FROM builtin_code_host_account
+WHERE workspace_id = $1
+ORDER BY username ASC
+`
+
+func (q *Queries) ListBuiltinCodeHostAccountUsernames(ctx context.Context, workspaceID pgtype.UUID) ([]string, error) {
+	rows, err := q.db.Query(ctx, listBuiltinCodeHostAccountUsernames, workspaceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []string{}
+	for rows.Next() {
+		var username string
+		if err := rows.Scan(&username); err != nil {
+			return nil, err
+		}
+		items = append(items, username)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listWorkspacesForBuiltinCodeHost = `-- name: ListWorkspacesForBuiltinCodeHost :many
 SELECT id, name, slug FROM workspace
 ORDER BY created_at ASC
