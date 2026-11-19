@@ -213,29 +213,36 @@ func (h *Handler) reconcileBuiltinCodeHostWorkspace(ctx context.Context, wsID pg
 
 // ensureBuiltinCodeHostOrg returns the workspace's organization, creating it
 // on first use. It is named after the workspace's slug; when Gitea refuses
-// that name (reserved, or taken by a user) a prefixed one is used instead. The
+// that name (reserved, or taken by a user or another organization) a prefixed
+// one is tried, and then one made unique by the workspace's id. The
 // name is stored, so a later slug change does not move the workspace to
 // another organization.
+//
+// A workspace only ever gets an organization it created: one that already
+// exists under its slug belongs to someone else, typically a deleted workspace
+// whose repositories were kept, and linking it would hand those repositories
+// to this workspace's members.
 func (h *Handler) ensureBuiltinCodeHostOrg(ctx context.Context, client *giteaadmin.Client, wsID pgtype.UUID, name, slug string) (string, error) {
 	state, err := h.Queries.GetBuiltinCodeHostWorkspace(ctx, wsID)
-	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+	switch {
+	case err == nil:
+		if err := client.EnsureOrg(ctx, state.OrgName, name); err != nil {
+			return "", fmt.Errorf("ensure organization: %w", err)
+		}
+		return state.OrgName, nil
+	case !errors.Is(err, pgx.ErrNoRows):
 		return "", fmt.Errorf("load state: %w", err)
 	}
-	candidates := []string{slug, "ws-" + slug}
-	if err == nil {
-		candidates = []string{state.OrgName}
-	}
+
 	var lastErr error
-	for _, candidate := range candidates {
-		lastErr = client.EnsureOrg(ctx, candidate, name)
+	for _, candidate := range []string{slug, "ws-" + slug, slug + "-" + uuidToString(wsID)[:8]} {
+		lastErr = client.CreateOrg(ctx, candidate, name)
 		if lastErr == nil {
-			if candidate != state.OrgName {
-				if _, err := h.Queries.UpsertBuiltinCodeHostWorkspace(ctx, db.UpsertBuiltinCodeHostWorkspaceParams{
-					WorkspaceID: wsID,
-					OrgName:     candidate,
-				}); err != nil {
-					return "", fmt.Errorf("save state: %w", err)
-				}
+			if _, err := h.Queries.UpsertBuiltinCodeHostWorkspace(ctx, db.UpsertBuiltinCodeHostWorkspaceParams{
+				WorkspaceID: wsID,
+				OrgName:     candidate,
+			}); err != nil {
+				return "", fmt.Errorf("save state: %w", err)
 			}
 			return candidate, nil
 		}

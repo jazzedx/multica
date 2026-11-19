@@ -628,3 +628,70 @@ func TestBuiltinCodeHostKeepsTheTokenWhenTheInstanceIsDown(t *testing.T) {
 		t.Errorf("token with the instance unreachable = %q, want the stored %q", after, before)
 	}
 }
+
+func TestBuiltinCodeHostDoesNotTakeOverAnExistingOrganization(t *testing.T) {
+	f := newBuiltinCodeHostFixture(t)
+	// What a deleted workspace of the same slug leaves behind.
+	f.fake.AddOrg(f.ws.Slug)
+	f.fake.AddRepo(f.ws.Slug, "theirs", "")
+	f.fake.AddOrg("ws-" + f.ws.Slug)
+	f.reconcile(false)
+
+	state, err := testHandler.Queries.GetBuiltinCodeHostWorkspace(context.Background(), f.ws.ID)
+	if err != nil {
+		t.Fatalf("load state: %v", err)
+	}
+	if state.OrgName == f.ws.Slug || state.OrgName == "ws-"+f.ws.Slug || !f.fake.HasOrg(state.OrgName) {
+		t.Fatalf("linked to %q, want an organization of its own", state.OrgName)
+	}
+	if urls := f.repoURLs(); slices.Contains(urls, f.cloneURL(f.ws.Slug, "theirs")) {
+		t.Errorf("repositories = %v, must not include the existing organization's", urls)
+	}
+	if hooks := f.fake.Hooks(f.ws.Slug); len(hooks) != 0 {
+		t.Errorf("hooks on the existing organization = %+v, want none", hooks)
+	}
+}
+
+func TestBuiltinCodeHostReleasesADeletedWorkspace(t *testing.T) {
+	ctx := context.Background()
+	f := newBuiltinCodeHostFixture(t)
+	f.agent("Sunset")
+	f.fake.AddRepo(f.ws.Slug, "app", "")
+	f.reconcile(false)
+	org, reader := f.ws.Slug, f.ws.Slug+"-reader"
+	if !f.fake.HasUser(reader) || len(f.fake.Hooks(org)) != 1 {
+		t.Fatalf("fixture: want a read-only account and a webhook before the release")
+	}
+
+	held, ok := testHandler.builtinCodeHostHoldingsOf(ctx, f.ws.ID)
+	if !ok {
+		t.Fatal("a linked workspace has something to release")
+	}
+	testHandler.releaseBuiltinCodeHost(ctx, held)
+
+	if !f.fake.HasOrg(org) {
+		t.Fatal("the organization and its repositories must stay")
+	}
+	if hooks := f.fake.Hooks(org); len(hooks) != 0 {
+		t.Errorf("hooks = %+v, want the workspace's webhook removed", hooks)
+	}
+	if f.fake.HasUser(reader) {
+		t.Error("the read-only account must be removed")
+	}
+	if !f.fake.HasUser("sunset") {
+		t.Error("the agent's account must stay, so what it wrote keeps its author")
+	}
+	if slices.Contains(f.fake.TeamMembers(org, builtinCodeHostTeam), "sunset") || !f.fake.LoginProhibited("sunset") {
+		t.Error("the agent's account must lose write access and be blocked")
+	}
+
+	// Releasing again, as a retry would, is harmless.
+	testHandler.releaseBuiltinCodeHost(ctx, held)
+}
+
+func TestBuiltinCodeHostHasNothingToReleaseForAnUnlinkedWorkspace(t *testing.T) {
+	newBuiltinCodeHostFixture(t)
+	if _, ok := testHandler.builtinCodeHostHoldingsOf(context.Background(), parseUUID(testWorkspaceID)); ok {
+		t.Fatal("a workspace that was never linked has nothing to release")
+	}
+}

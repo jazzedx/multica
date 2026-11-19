@@ -1190,6 +1190,9 @@ func (h *Handler) DeleteWorkspace(w http.ResponseWriter, r *http.Request) {
 	// delete window would otherwise slip in a session nobody locked, and its
 	// restore would outlive the cascade the same way. Holding the workspace row
 	// FOR UPDATE blocks that insert on its workspace FK (FOR KEY SHARE).
+	// Read before the teardown deletes the only record of it.
+	codeHostHoldings, releaseCodeHost := h.builtinCodeHostHoldingsOf(r.Context(), requester.WorkspaceID)
+
 	tx, err := h.TxStarter.Begin(r.Context())
 	if err != nil {
 		slog.Warn("begin workspace delete tx failed", append(logger.RequestAttrs(r), "error", err, "workspace_id", workspaceID)...)
@@ -1457,6 +1460,9 @@ func (h *Handler) DeleteWorkspace(w http.ResponseWriter, r *http.Request) {
 		h.NotifyRuntimeGone(uuidToString(runtimeID))
 	}
 	h.deleteS3Objects(r.Context(), append(sourceContextAttachmentURLs, sourceContextIntentURLs...))
+	if releaseCodeHost {
+		h.releaseBuiltinCodeHostAsync(codeHostHoldings)
+	}
 
 	slog.Info("workspace deleted", append(logger.RequestAttrs(r), "workspace_id", workspaceID)...)
 	h.publish(protocol.EventWorkspaceDeleted, workspaceID, "member", requestUserID(r), map[string]any{

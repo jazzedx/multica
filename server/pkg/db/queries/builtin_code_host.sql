@@ -58,6 +58,11 @@ LEFT JOIN builtin_code_host_account acct ON acct.agent_id = a.id
 WHERE a.workspace_id = $1 AND a.kind = 'user'
 ORDER BY a.created_at ASC;
 
+-- name: ListBuiltinCodeHostAccountUsernames :many
+SELECT username FROM builtin_code_host_account
+WHERE workspace_id = $1
+ORDER BY username ASC;
+
 -- name: DeleteOrphanBuiltinCodeHostAccounts :execrows
 DELETE FROM builtin_code_host_account AS acct
 WHERE NOT EXISTS (SELECT 1 FROM agent a WHERE a.id = acct.agent_id);
