@@ -243,3 +243,58 @@ func TestTokenRejected(t *testing.T) {
 		t.Errorf("unreachable instance: rejected = %v, err = %v; want an error and no verdict", got, err)
 	}
 }
+
+func TestCreateOrgRefusesAnExistingOrganization(t *testing.T) {
+	ctx := context.Background()
+	fake := giteaadmintest.New(t)
+	client := giteaadmin.New(fake.URL, fake.Token)
+
+	if err := client.CreateOrg(ctx, "acme", "Acme"); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if err := client.CreateOrg(ctx, "acme", "Acme"); !errors.Is(err, giteaadmin.ErrNameUnavailable) {
+		t.Fatalf("an organization that exists: err = %v, want ErrNameUnavailable", err)
+	}
+}
+
+func TestDeleteUser(t *testing.T) {
+	ctx := context.Background()
+	fake := giteaadmintest.New(t)
+	client := giteaadmin.New(fake.URL, fake.Token)
+	fake.AddUser("reader")
+
+	for range 2 {
+		if err := client.DeleteUser(ctx, "reader"); err != nil {
+			t.Fatalf("deleting, also when already gone: %v", err)
+		}
+	}
+	if fake.HasUser("reader") {
+		t.Fatal("the account is still there")
+	}
+}
+
+func TestDeleteOrgHook(t *testing.T) {
+	ctx := context.Background()
+	fake := giteaadmintest.New(t)
+	client := giteaadmin.New(fake.URL, fake.Token)
+	if err := client.EnsureOrg(ctx, "acme", "Acme"); err != nil {
+		t.Fatal(err)
+	}
+	for _, url := range []string{"http://backend:8080/one", "http://backend:8080/two"} {
+		if err := client.EnsureOrgHook(ctx, "acme", giteaadmin.Hook{URL: url, Secret: "s"}, false); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	for range 2 {
+		if err := client.DeleteOrgHook(ctx, "acme", "http://backend:8080/one"); err != nil {
+			t.Fatalf("deleting, also when already gone: %v", err)
+		}
+	}
+	if hooks := fake.Hooks("acme"); len(hooks) != 1 || hooks[0].URL != "http://backend:8080/two" {
+		t.Fatalf("hooks = %+v, want only the other one left", hooks)
+	}
+	if err := client.DeleteOrgHook(ctx, "no-such-org", "http://backend:8080/one"); err != nil {
+		t.Errorf("an organization that does not exist: %v", err)
+	}
+}

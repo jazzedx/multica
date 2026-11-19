@@ -97,6 +97,15 @@ func (s *Server) AddUser(login string) {
 	s.users[login] = &account{tokens: map[string][]string{}}
 }
 
+// AddOrg creates an organization, as someone could on the instance's own
+// pages or an earlier workspace could have left behind.
+func (s *Server) AddOrg(name string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.orgs[name] = name
+	s.teams[name] = []string{"Owners"}
+}
+
 // HasUser reports whether the account exists.
 func (s *Server) HasUser(login string) bool {
 	s.mu.Lock()
@@ -254,6 +263,24 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 		}
 		writeJSON(w, http.StatusOK, map[string]string{"login": parts[2]})
 
+	case len(parts) == 3 && parts[0] == "admin" && parts[1] == "users" && r.Method == http.MethodDelete:
+		if s.users[parts[2]] == nil {
+			http.Error(w, `{"message":"not found"}`, http.StatusNotFound)
+			return
+		}
+		// Like Gitea, an account that still belongs to an organization
+		// cannot be deleted.
+		for _, members := range s.members {
+			for _, member := range members {
+				if member == parts[2] {
+					http.Error(w, `{"message":"user still has membership of organizations"}`, http.StatusUnprocessableEntity)
+					return
+				}
+			}
+		}
+		delete(s.users, parts[2])
+		w.WriteHeader(http.StatusNoContent)
+
 	case path == "/user" && r.Method == http.MethodGet:
 		writeJSON(w, http.StatusOK, map[string]string{"login": s.Login})
 
@@ -263,8 +290,9 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 			FullName string `json:"full_name"`
 		}
 		_ = json.NewDecoder(r.Body).Decode(&body)
-		if s.taken[body.Username] {
-			http.Error(w, `{"message":"name is reserved"}`, http.StatusUnprocessableEntity)
+		_, exists := s.orgs[body.Username]
+		if s.taken[body.Username] || exists || s.users[body.Username] != nil {
+			http.Error(w, `{"message":"name is reserved or already used"}`, http.StatusUnprocessableEntity)
 			return
 		}
 		s.orgs[body.Username] = body.FullName
@@ -337,6 +365,17 @@ func (s *Server) serveOrg(w http.ResponseWriter, r *http.Request, org string, re
 			}
 		}
 		http.Error(w, `{"message":"not found"}`, http.StatusNotFound)
+
+	case len(rest) == 2 && rest[0] == "hooks" && r.Method == http.MethodDelete:
+		id, _ := strconv.ParseInt(rest[1], 10, 64)
+		kept := s.hooks[org][:0]
+		for _, hook := range s.hooks[org] {
+			if hook.ID != id {
+				kept = append(kept, hook)
+			}
+		}
+		s.hooks[org] = kept
+		w.WriteHeader(http.StatusNoContent)
 
 	case len(rest) == 1 && rest[0] == "repos" && r.Method == http.MethodGet:
 		page, _ := strconv.Atoi(r.URL.Query().Get("page"))

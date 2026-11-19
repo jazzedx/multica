@@ -160,7 +160,15 @@ func (c *Client) EnsureOrg(ctx context.Context, name, fullName string) error {
 	if err == nil || !errors.Is(err, ErrNotFound) {
 		return err
 	}
-	err = c.do(ctx, http.MethodPost, "/orgs", map[string]any{
+	return c.CreateOrg(ctx, name, fullName)
+}
+
+// CreateOrg creates an organization called name. It returns
+// ErrNameUnavailable when the name is reserved or already belongs to a user
+// or to another organization, so the caller never ends up holding an
+// organization it did not create.
+func (c *Client) CreateOrg(ctx context.Context, name, fullName string) error {
+	err := c.do(ctx, http.MethodPost, "/orgs", map[string]any{
 		"username":  name,
 		"full_name": fullName,
 		// Visible to signed-in accounts only, like everything else on an
@@ -340,6 +348,44 @@ func (c *Client) EnsureTeamMember(ctx context.Context, org, team, user string) e
 		return err
 	}
 	return c.do(ctx, http.MethodPut, member, nil, nil)
+}
+
+// DeleteUser removes an account. One that does not exist is not an error.
+// What the account wrote on the instance stays, attributed to nobody. The
+// instance refuses while the account still belongs to an organization.
+func (c *Client) DeleteUser(ctx context.Context, username string) error {
+	err := c.do(ctx, http.MethodDelete, "/admin/users/"+url.PathEscape(username), nil, nil)
+	if errors.Is(err, ErrNotFound) {
+		return nil
+	}
+	return err
+}
+
+// DeleteOrgHook removes the organization's webhooks that deliver to hookURL.
+// An organization or a webhook that is not there is not an error.
+func (c *Client) DeleteOrgHook(ctx context.Context, org, hookURL string) error {
+	base := "/orgs/" + url.PathEscape(org) + "/hooks"
+	var hooks []struct {
+		ID     int64 `json:"id"`
+		Config struct {
+			URL string `json:"url"`
+		} `json:"config"`
+	}
+	if err := c.do(ctx, http.MethodGet, base+"?limit=50", nil, &hooks); err != nil {
+		if errors.Is(err, ErrNotFound) {
+			return nil
+		}
+		return err
+	}
+	for _, hook := range hooks {
+		if hook.Config.URL != hookURL {
+			continue
+		}
+		if err := c.do(ctx, http.MethodDelete, fmt.Sprintf("%s/%d", base, hook.ID), nil, nil); err != nil && !errors.Is(err, ErrNotFound) {
+			return err
+		}
+	}
+	return nil
 }
 
 // EnsureOrgHook makes sure the organization delivers hook.Events to hook.URL.
