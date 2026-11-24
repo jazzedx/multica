@@ -19,6 +19,12 @@ Multica 按工作區連線自託管的 Git 程式碼託管：Forgejo、Gitea 或
 與 GitHub 不同，這些程式碼託管沒有 App 模型。每個工作區儲存自己的例項地址和訪問令牌，並在其倉庫或組織上註冊 Webhook。令牌和 Webhook 金鑰均加密儲存。
 </Callout>
 
+## 隨部署自帶的 Gitea
+
+Multica 存取不到現有的程式碼託管時，自部署的這一套可以自帶一個 Gitea。在 `.env` 裡設定 `MULTICA_ADDONS=gitea`（加上 `ci` 還會啟動 Gitea Actions 執行器）和 `GITEA_ROOT_URL`，再用 `make selfhost` 或 `make selfhost-build` 啟動。
+
+這樣就不需要做下面的任何步驟。服務端會給每個工作區在這個 Gitea 上建一個組織、在 **設定 → 程式碼** 裡建一條標為**內建**的連線和一個 Webhook，並把組織下建立的儲存庫加入工作區。守護程序用服務端下發的唯讀帳號複製，每個 AI 代理用自己的帳號推送和建立 Pull Request，所以任何機器上都不用設定 Git 憑證。刪除工作區時儲存庫會保留，這些帳號的存取權限會被收回。
+
 ## 前置條件（服務端）
 
 先為該部署開啟此整合。它預設關閉，未開啟時該板塊不會出現：
