@@ -19,6 +19,7 @@ import { useDefaultLayout, usePanelRef } from "react-resizable-panels";
 import { AppLink, useBackOrReplace } from "../../navigation";
 import { IssueRelationsSection } from "./issue-blockers";
 import { IssueDuplicateBanner, isDuplicateIssue } from "./issue-duplicates";
+import { SubIssueGraph } from "./sub-issue-graph";
 import {
   AlertTriangle,
   Calendar,
@@ -4326,6 +4327,8 @@ export function IssueDetail({ issueId, onDelete, inbox, defaultSidebarOpen = tru
                   placement="inline"
                   clearSelectionOnApply
                 />
+
+                {!subIssuesCollapsed && <SubIssueGraph issues={childIssues} />}
 
                 {/* List */}
                 <IssueSidebarCollapsible open={!subIssuesCollapsed}>

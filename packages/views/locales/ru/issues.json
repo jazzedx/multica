@@ -1,4 +1,10 @@
 {
+  "dependencies": {
+    "marker": "Waiting for {{identifiers}}",
+    "graph_title": "Dependency graph",
+    "graph_external": "Not a sub-issue of this issue",
+    "graph_expand": "Expand"
+  },
   "web": {
     "open_in_desktop": "Открыть в приложении"
   },

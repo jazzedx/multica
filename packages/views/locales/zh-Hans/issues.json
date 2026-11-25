@@ -1,4 +1,10 @@
 {
+  "dependencies": {
+    "marker": "等待 {{identifiers}}",
+    "graph_title": "依赖图",
+    "graph_external": "不是本任务的子任务",
+    "graph_expand": "展开"
+  },
   "web": {
     "open_in_desktop": "在桌面端打开"
   },
