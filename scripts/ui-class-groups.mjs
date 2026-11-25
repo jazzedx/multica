@@ -22,7 +22,6 @@ export const tailwindV4Roots = [
   "apps/storybook",
   "packages/ui",
   "packages/views",
-  "packages/ee",
 ];
 
 const extensions = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".mdx"]);

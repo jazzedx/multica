@@ -14,6 +14,7 @@ func init() {
 	}
 	for _, key := range []string{
 		"checkout-sessions/{sessionId}",
+		"project-folders/{id}",
 		"groups/{conversationId}",
 		"logins/{loginId}",
 	} {

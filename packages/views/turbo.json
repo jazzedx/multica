@@ -11,13 +11,10 @@
         "$TURBO_ROOT$/apps/web/app/**/*.{ts,tsx}",
         "$TURBO_ROOT$/apps/web/components/**/*.{ts,tsx}",
         "$TURBO_ROOT$/docs/theming.md",
-        // locales/copy-hygiene.test.ts holds the EE locale files to the same rules.
-        "$TURBO_ROOT$/packages/ee/project-folders/locales/*.json",
         // rich-content/package-exports.test.ts checks every workspace's export
-        // targets; ee's are the only ones outside views' dependencies.
+        // targets.
         "$TURBO_ROOT$/apps/*/package.json",
-        "$TURBO_ROOT$/packages/*/package.json",
-        "$TURBO_ROOT$/packages/ee/index.ts"
+        "$TURBO_ROOT$/packages/*/package.json"
       ]
     }
   }

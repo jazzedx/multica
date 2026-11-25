@@ -43,7 +43,7 @@ const nextConfig: NextConfig = {
   // Otherwise `next dev` writes a generic apps/web/AGENTS.md; agent guidance
   // lives in the root AGENTS.md.
   agentRules: false,
-  transpilePackages: ["@multica/core", "@multica/ui", "@multica/views", "@multica/ee"],
+  transpilePackages: ["@multica/core", "@multica/ui", "@multica/views"],
   experimental: {
     // Workspace pages are client components over TanStack Query, so a route's
     // RSC payload is the same on every visit. Reusing a visited or prefetched
