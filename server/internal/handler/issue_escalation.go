@@ -15,17 +15,19 @@ import (
 	"github.com/multica-ai/multica/server/pkg/protocol"
 )
 
-// Escalation of a stuck sub-issue to whoever runs its parent.
+// Escalation of a sub-issue to whoever runs its parent.
 //
 // A parent's assignee is woken when its sub-issues finish. Nothing woke it
 // when one of them stopped without finishing: a sub-issue set to blocked left
 // the rest of the graph waiting, and one cancelled released the issues that
-// waited for it without their input, with nobody told. The parent's assignee is the one who planned the
-// work and can re-plan it, so it is told first; a person is only needed when
-// it cannot decide either.
+// waited for it without their input, with nobody told. Nor when a finished one
+// was reopened: whatever had started or finished on its result kept going on
+// an input that no longer stood. The parent's assignee is the one who planned
+// the work and can re-plan it, so it is told first; a person is only needed
+// when it cannot decide either.
 
 // RegisterIssueEscalationListeners wakes a parent's assignee when a sub-issue
-// gets stuck.
+// gets stuck or is reopened under work that depends on it.
 func (h *Handler) RegisterIssueEscalationListeners() {
 	h.Bus.Subscribe(protocol.EventIssueUpdated, func(e events.Event) {
 		payload, ok := e.Payload.(map[string]any)
@@ -46,19 +48,23 @@ func (h *Handler) RegisterIssueEscalationListeners() {
 		if err != nil {
 			return
 		}
-		h.escalateStuckSubIssue(context.Background(), issueID, e.ActorType, e.ActorID)
+		prevStatus, _ := payload["prev_status"].(string)
+		h.escalateStuckSubIssue(context.Background(), issueID, prevStatus, e.ActorType, e.ActorID)
 	})
 }
 
 // escalateStuckSubIssue starts a run for the parent's assignee when the
-// sub-issue just became stuck. It reads the stored row, so a status that has
-// moved on again decides.
-func (h *Handler) escalateStuckSubIssue(ctx context.Context, issueID pgtype.UUID, actorType, actorID string) {
+// sub-issue just became stuck or was reopened. It reads the stored row, so a
+// status that has moved on again decides.
+func (h *Handler) escalateStuckSubIssue(ctx context.Context, issueID pgtype.UUID, prevStatus, actorType, actorID string) {
 	issue, err := h.Queries.GetIssue(ctx, issueID)
 	if err != nil || !issue.ParentIssueID.Valid {
 		return
 	}
-	note := h.stuckSubIssueNote(ctx, issue)
+	note := h.reopenedSubIssueNote(ctx, issue, prevStatus)
+	if note == "" {
+		note = h.stuckSubIssueNote(ctx, issue)
+	}
 	if note == "" {
 		return
 	}
@@ -107,14 +113,13 @@ func (h *Handler) stuckSubIssueNote(ctx context.Context, issue db.Issue) string 
 			return ""
 		}
 		var released []string
-		seen := map[string]bool{}
+		seen := map[pgtype.UUID]bool{}
 		for _, d := range dependents {
-			dependent := prefix + "-" + strconv.Itoa(int(d.Number))
-			if seen[dependent] || issuestatus.Category(ctx, h.Queries, issue.WorkspaceID, d.Status) != issuestatus.CategoryUnstarted {
+			if seen[d.ID] || issuestatus.Category(ctx, h.Queries, issue.WorkspaceID, d.Status) != issuestatus.CategoryUnstarted {
 				continue
 			}
-			seen[dependent] = true
-			released = append(released, dependent)
+			seen[d.ID] = true
+			released = append(released, prefix+"-"+strconv.Itoa(int(d.Number)))
 		}
 		if len(released) == 0 {
 			return ""
@@ -124,4 +129,47 @@ func (h *Handler) stuckSubIssueNote(ctx context.Context, issue db.Issue) string 
 			"Check whether they can still go ahead: replace the cancelled work and make them wait for it, or stop or cancel what depended on it."
 	}
 	return ""
+}
+
+// reopenedSubIssueNote names the work a reopened sub-issue leaves standing on
+// an input that no longer holds, or returns "" when the sub-issue was not
+// reopened or nothing had started on it. Issues still waiting for it need no
+// one: they simply wait again.
+//
+// Nothing is stopped or undone here. Whether work built on the old result is
+// wasted depends on why the issue was reopened, which only whoever planned it
+// can judge.
+func (h *Handler) reopenedSubIssueNote(ctx context.Context, issue db.Issue, prevStatus string) string {
+	if prevStatus == "" ||
+		issuestatus.Effective(ctx, h.Queries, issue.WorkspaceID, prevStatus) != "done" ||
+		issuestatus.Effective(ctx, h.Queries, issue.WorkspaceID, issue.Status) == "done" {
+		return ""
+	}
+	dependents, err := h.Queries.ListIssueDependents(ctx, db.ListIssueDependentsParams{WorkspaceID: issue.WorkspaceID, IssueID: issue.ID})
+	if err != nil {
+		return ""
+	}
+	prefix := h.getIssuePrefix(ctx, issue.WorkspaceID)
+	var affected []string
+	seen := map[pgtype.UUID]bool{}
+	for _, d := range dependents {
+		// An issue can wait for this one both by hand and by stage.
+		if seen[d.ID] {
+			continue
+		}
+		seen[d.ID] = true
+		name := prefix + "-" + strconv.Itoa(int(d.Number))
+		switch issuestatus.Category(ctx, h.Queries, issue.WorkspaceID, d.Status) {
+		case issuestatus.CategoryStarted:
+			affected = append(affected, name+" (in progress)")
+		case issuestatus.CategoryDone:
+			affected = append(affected, name+" (done)")
+		}
+	}
+	if len(affected) == 0 {
+		return ""
+	}
+	return "Sub-issue " + prefix + "-" + strconv.Itoa(int(issue.Number)) + " was reopened after it was done. " +
+		strings.Join(affected, ", ") + " built on its earlier result, and nothing was stopped or undone. " +
+		"Read why it was reopened, then decide for each whether it stops, is redone or stands."
 }
