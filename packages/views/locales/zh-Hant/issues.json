@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "marker": "等待 {{identifiers}}",
+    "stale_marker": "上游未完成：{{identifiers}}",
     "graph_title": "相依圖",
     "graph_external": "不是本任務的子任務",
     "graph_expand": "展開"

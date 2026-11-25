@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "marker": "Waiting for {{identifiers}}",
+    "stale_marker": "Upstream not done: {{identifiers}}",
     "graph_title": "Dependency graph",
     "graph_external": "Not a sub-issue of this issue",
     "graph_expand": "Expand"

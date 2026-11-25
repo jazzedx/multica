@@ -114,6 +114,34 @@ describe("SubIssueGraph", () => {
     expect(states(graph)).toEqual({ "MUL-1": "ready", "MUL-2": "waiting" });
   });
 
+  // A reopened upstream: what was built on it is not waiting, it went ahead.
+  it("marks work that went ahead while what it depends on is not done", async () => {
+    renderGraph([
+      issue(1, "in_progress", "Contract"),
+      issue(2, "in_progress", "Server", [ref(1, "in_progress")]),
+      issue(3, "done", "Client", [ref(1, "in_progress")]),
+      issue(4, "todo", "Docs", [ref(1, "in_progress")]),
+    ]);
+
+    const graph = await screen.findByRole("region", { name: "Dependency graph" });
+    expect(states(graph)).toEqual({ "MUL-1": "active", "MUL-2": "stale", "MUL-3": "stale", "MUL-4": "waiting" });
+    expect(within(graph).getByRole("link", { name: /MUL-3\s*Client/ })).toHaveAttribute(
+      "title",
+      "Upstream not done: MUL-1",
+    );
+    expect(graph.querySelectorAll('[data-edge="stale"]')).toHaveLength(2);
+    expect(graph.querySelectorAll('[data-edge="pending"]')).toHaveLength(1);
+  });
+
+  // Starting after a cancelled blocker is what the release is for.
+  it("does not mark work that went ahead after its blocker was cancelled", async () => {
+    renderGraph([issue(1, "cancelled", "Contract"), issue(2, "in_progress", "Server", [ref(1, "cancelled")])]);
+
+    const graph = await screen.findByRole("region", { name: "Dependency graph" });
+    expect(states(graph)).toEqual({ "MUL-1": "cancelled", "MUL-2": "active" });
+    expect(graph.querySelectorAll('[data-edge="broken"]')).toHaveLength(1);
+  });
+
   it("draws an issue from elsewhere that a sub-issue waits for", async () => {
     renderGraph([issue(2, "todo", "API", [ref(90, "todo", "Shared library")])], "zh-Hans");
 
