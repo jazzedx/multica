@@ -21,12 +21,6 @@ export interface VCSConnection {
   webhook_url: string;
   webhook_path: string;
   created_at: string;
-  /** True for the connection the server keeps for the Gitea deployed beside
-   * it. It cannot be rotated or removed. Older backends omit it. */
-  builtin?: boolean;
-  /** For a built-in connection: the workspace's organization on that
-   * instance, as a page people can open. */
-  web_url?: string;
 }
 
 export interface ListVCSConnectionsResponse {

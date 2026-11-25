@@ -75,7 +75,7 @@ const COPY: Record<"en" | "zh", GuideCopy> = {
       "Open **Runtimes** in the sidebar. the AI coding tool on this computer should show as online, and the page offers **Start with Mika**: it creates Mika and opens the first chat. Mika turns one real goal into issues and hands them to the right agent.\n\nAn AI coding tool installed later is picked up within a few minutes. To apply it right away, run `multica daemon restart`.",
     notesHeading: "## More",
     notes: [
-      "**Code repositories**: if **Settings → Code** lists **Gitea · Built-in**, repositories created in its Gitea organization join this workspace automatically. Each agent gets its own Gitea account and signs its commits and pull requests with its own name, so runtime computers need no Git credentials.",
+      "**Code repositories**: agents clone and push with the Git credentials of the runtime computer, so sign it in to your code host first. To link pull requests to issues, connect the code host in **Settings → Code**.",
       "**Upstream docs**: the original Multica guide to installing a runtime, including every supported AI coding tool, is at https://multica.ai/docs/install-agent-runtime (source: https://github.com/multica-ai/multica).",
     ],
     beforeRuntime:
@@ -104,7 +104,7 @@ const COPY: Record<"en" | "zh", GuideCopy> = {
       "打开左侧的**运行时**页面，应该能看到这台电脑上的 AI 编程工具显示在线。页面上会出现**和 Mika 开始**，点击后会创建 Mika 并进入首次对话：Mika 会把一个真实目标拆成任务，交给合适的智能体执行。\n\n之后再装的 AI 编程工具，守护进程几分钟内会自动识别；想立刻生效，运行 `multica daemon restart`。",
     notesHeading: "## 更多",
     notes: [
-      "**代码仓库**：如果**设置 → 代码**里有 **Gitea · 内置**，在它对应的 Gitea 组织下建的仓库会自动加入这个工作区。每个智能体有自己的 Gitea 账号，提交和 PR 都署它自己的名字，运行时电脑上不用配置任何 Git 凭据。",
+      "**代码仓库**：智能体用运行时电脑上的 Git 凭据克隆和推送，先在这台电脑上登录你的代码托管。想让 PR 关联到任务，在**设置 → 代码**里连接代码托管。",
       "**上游原版文档**：Multica 官方的运行时安装说明，包括支持的全部 AI 编程工具，见 https://multica.ai/docs/install-agent-runtime （源码仓库 https://github.com/multica-ai/multica）。",
     ],
     beforeRuntime:

@@ -13,8 +13,6 @@ const listing = vi.hoisted(() => ({
       provider: "forgejo" | "gitea" | "gitlab";
       instance_url: string;
       account_login: string;
-      builtin?: boolean;
-      web_url?: string;
     }[],
     configured: true,
     can_manage: true,
@@ -95,30 +93,6 @@ describe("VCSConnectionRows", () => {
     expect(screen.getByRole("menuitem", { name: "Disconnect" })).toBeInTheDocument();
     // Another instance can still be added.
     expect(screen.getByRole("button", { name: "Connect another" })).toBeInTheDocument();
-  });
-
-  it("shows the deployment's own Gitea as built-in, with a way in and no way to remove it", () => {
-    listing.current.connections = [
-      {
-        ...CONNECTION,
-        instance_url: "http://gitea:3000",
-        builtin: true,
-        web_url: "https://git.acme.dev/acme/",
-      },
-    ];
-    renderWithI18n(<VCSConnectionRows />);
-
-    expect(screen.getByText("Gitea · Built-in")).toBeInTheDocument();
-    // The address inside the deployment means nothing to a member.
-    expect(screen.queryByText(/gitea:3000/)).toBeNull();
-    expect(
-      screen.getByText("Repositories created under the acme organization are added to this workspace."),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Open" })).toHaveAttribute(
-      "href",
-      "https://git.acme.dev/acme/",
-    );
-    expect(screen.queryByRole("button", { name: /Actions for/ })).toBeNull();
   });
 
   it("explains the missing server key instead of offering a dead connect", () => {

@@ -3,14 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import {
-  ExternalLink,
-  FolderGit2,
-  GitBranch,
-  MoreHorizontal,
-  RefreshCw,
-  Unplug,
-} from "@multica/ui/icons";
+import { FolderGit2, GitBranch, MoreHorizontal, RefreshCw, Unplug } from "@multica/ui/icons";
 import { Button } from "@multica/ui/components/ui/button";
 import { CopyCheckIcon } from "@multica/ui/components/common/copy-check-icon";
 import { IconButton } from "@multica/ui/components/common/icon-button";
@@ -66,12 +59,6 @@ const PROVIDER_OPTIONS = PROVIDERS.map((p) => ({
   value: p,
   label: PROVIDER_LABELS[p],
 }));
-
-/** The organization a built-in connection's page URL points at. */
-function builtinOrg(webUrl: string | undefined): string {
-  if (!webUrl) return "";
-  return webUrl.replace(/\/+$/, "").split("/").pop() ?? "";
-}
 
 /**
  * Self-hosted Forgejo / Gitea / GitLab connections, rendered as rows of the
@@ -187,9 +174,7 @@ export function VCSConnectionRows() {
               </HostMark>
               <span className="flex min-w-0 flex-wrap items-center gap-x-2">
                 <span className="break-all">
-                  {`${PROVIDER_LABELS[c.provider] ?? c.provider} · ${
-                    c.builtin === true ? t(($) => $.vcs.builtin_label) : c.instance_url
-                  }`}
+                  {`${PROVIDER_LABELS[c.provider] ?? c.provider} · ${c.instance_url}`}
                 </span>
                 <HostStatus tone="success" label={t(($) => $.integrations.status_connected)} />
               </span>
@@ -197,27 +182,11 @@ export function VCSConnectionRows() {
           }
           description={
             <span className="block break-all pl-12">
-              {c.builtin === true
-                ? builtinOrg(c.web_url)
-                  ? t(($) => $.vcs.builtin_hint, { org: builtinOrg(c.web_url) })
-                  : undefined
-                : t(($) => $.vcs.connected_as, { login: c.account_login })}
+              {t(($) => $.vcs.connected_as, { login: c.account_login })}
             </span>
           }
         >
-          {c.builtin === true ? (
-            c.web_url ? (
-              <Button
-                variant="outline"
-                size="sm"
-                nativeButton={false}
-                render={<a href={c.web_url} target="_blank" rel="noreferrer noopener" />}
-              >
-                <ExternalLink />
-                {t(($) => $.vcs.builtin_open)}
-              </Button>
-            ) : null
-          ) : canManage ? (
+          {canManage ? (
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={

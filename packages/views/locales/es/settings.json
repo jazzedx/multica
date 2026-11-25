@@ -1107,9 +1107,6 @@
     }
   },
   "vcs": {
-    "builtin_label": "Built-in",
-    "builtin_hint": "Repositories created under the {{org}} organization are added to this workspace.",
-    "builtin_open": "Open",
     "section_title": "Proveedores de Git (self-hosted)",
     "page_description": "Conecta una instancia self-hosted de Forgejo, Gitea o GitLab para reflejar pull requests en tareas. Cada conexión usa un token de acceso; los agentes suben ramas y abren PRs con las credenciales Git del propio runtime.",
     "connect_title": "Conectar una instancia de proveedor",

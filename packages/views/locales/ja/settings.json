@@ -1097,9 +1097,6 @@
     }
   },
   "vcs": {
-    "builtin_label": "Built-in",
-    "builtin_hint": "Repositories created under the {{org}} organization are added to this workspace.",
-    "builtin_open": "Open",
     "section_title": "セルフホスト Git",
     "page_description": "セルフホストの Forgejo、Gitea、GitLab インスタンスを接続し、Pull request をタスクにミラーリングします。接続ごとにアクセストークンを使用し、エージェントはランタイム自身の Git 認証情報でブランチを push して PR を作成します。",
     "connect_title": "Connect a provider instance",

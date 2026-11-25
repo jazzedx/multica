@@ -1097,9 +1097,6 @@
     }
   },
   "vcs": {
-    "builtin_label": "Built-in",
-    "builtin_hint": "Repositories created under the {{org}} organization are added to this workspace.",
-    "builtin_open": "Open",
     "section_title": "셀프 호스팅 Git",
     "page_description": "셀프 호스팅 Forgejo, Gitea, GitLab 인스턴스를 연결해 Pull request를 태스크에 미러링합니다. 연결마다 액세스 토큰을 사용하며, 에이전트는 런타임 자체의 Git 자격 증명으로 브랜치를 푸시하고 PR을 엽니다.",
     "connect_title": "Connect a provider instance",
