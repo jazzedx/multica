@@ -6,6 +6,24 @@
     "graph_external": "不是本任務的子任務",
     "graph_expand": "展開"
   },
+  "delivery_overview": {
+    "title": "交付概覽",
+    "sub_issues": "子任務",
+    "cancelled": "已取消 {{count}} 個",
+    "runs": "執行",
+    "failed": "{{count}} 次失敗",
+    "rework": "返工",
+    "rework_hint": "任務被退回到更早狀態的次數",
+    "human": "人工介入",
+    "human_hint": "任務建立之後，成員發表的留言和做出的變更",
+    "merged": "合併的 PR",
+    "took": "歷時",
+    "running_for": "已進行",
+    "under_minute": "不到 1 分鐘",
+    "minutes": "{{minutes}} 分鐘",
+    "hours": "{{hours}} 小時 {{minutes}} 分鐘",
+    "days": "{{days}} 天 {{hours}} 小時"
+  },
   "web": {
     "open_in_desktop": "在桌面版開啟"
   },

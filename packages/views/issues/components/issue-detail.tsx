@@ -20,6 +20,7 @@ import { AppLink, useBackOrReplace } from "../../navigation";
 import { IssueRelationsSection } from "./issue-blockers";
 import { IssueDuplicateBanner, isDuplicateIssue } from "./issue-duplicates";
 import { SubIssueGraph } from "./sub-issue-graph";
+import { DeliveryOverview } from "./delivery-overview";
 import {
   AlertTriangle,
   Calendar,
@@ -4328,6 +4329,9 @@ export function IssueDetail({ issueId, onDelete, inbox, defaultSidebarOpen = tru
                   clearSelectionOnApply
                 />
 
+                {!subIssuesCollapsed && (
+                  <DeliveryOverview issueId={issue.id} revision={childIssues.map((c) => c.status).join(",")} />
+                )}
                 {!subIssuesCollapsed && <SubIssueGraph issues={childIssues} />}
 
                 {/* List */}

@@ -6,6 +6,24 @@
     "graph_external": "Not a sub-issue of this issue",
     "graph_expand": "Expand"
   },
+  "delivery_overview": {
+    "title": "Delivery overview",
+    "sub_issues": "Sub-issues",
+    "cancelled": "{{count}} cancelled",
+    "runs": "Runs",
+    "failed": "{{count}} failed",
+    "rework": "Rework",
+    "rework_hint": "Times an issue was sent back to an earlier status",
+    "human": "Human actions",
+    "human_hint": "Comments and changes people made after the issue was filed",
+    "merged": "Merged PRs",
+    "took": "Took",
+    "running_for": "Running for",
+    "under_minute": "Under a minute",
+    "minutes": "{{minutes}} min",
+    "hours": "{{hours}} h {{minutes}} min",
+    "days": "{{days}} d {{hours}} h"
+  },
   "web": {
     "open_in_desktop": "Open in Desktop"
   },
