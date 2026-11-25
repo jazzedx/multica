@@ -3670,7 +3670,6 @@ func (d *Daemon) refreshWorkspaceRepos(ctx context.Context, workspaceID string) 
 		return nil, err
 	}
 	d.applyGitCACerts(resp.CACerts)
-	d.applyGitCredentials(resp.GitCredentials)
 
 	d.mu.Lock()
 	if ws, ok := d.workspaces[workspaceID]; ok {
@@ -4557,7 +4556,6 @@ func (d *Daemon) syncWorkspacesFromAPI(ctx context.Context, reconcileProfiles bo
 		}
 
 		d.applyGitCACerts(resp.CACerts)
-		d.applyGitCredentials(resp.GitCredentials)
 		if d.repoCache != nil && len(resp.Repos) > 0 {
 			go d.syncWorkspaceRepos(id, resp.Repos)
 		}

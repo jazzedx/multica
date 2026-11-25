@@ -45,15 +45,28 @@ import (
 // and breaks CI environments where the runner UID differs from the
 // directory owner.
 func gitEnv() []string {
-	env := append(os.Environ(),
+	base := os.Environ()
+
+	// Find the existing GIT_CONFIG_COUNT so we append at the next index
+	// rather than overwriting any env-scoped git config (auth, URL
+	// rewrites, extra headers, etc.).
+	existing := 0
+	for _, e := range base {
+		if strings.HasPrefix(e, "GIT_CONFIG_COUNT=") {
+			if n, err := strconv.Atoi(strings.TrimPrefix(e, "GIT_CONFIG_COUNT=")); err == nil {
+				existing = n
+			}
+		}
+	}
+
+	idx := strconv.Itoa(existing)
+	return append(base,
 		"GIT_TERMINAL_PROMPT=0",
 		"GCM_INTERACTIVE=never",
+		"GIT_CONFIG_COUNT="+strconv.Itoa(existing+1),
+		"GIT_CONFIG_KEY_"+idx+"=safe.directory",
+		"GIT_CONFIG_VALUE_"+idx+"=*",
 	)
-	// Appended after the existing GIT_CONFIG_COUNT rather than overwriting
-	// any env-scoped git config (auth, URL rewrites, extra headers, etc.).
-	// Credentials the server handed out for its own code host come last.
-	settings := append([][2]string{{"safe.directory", "*"}}, credentialConfig()...)
-	return appendGitConfigEnv(env, settings)
 }
 
 var agentGitExcludePatterns = []string{
