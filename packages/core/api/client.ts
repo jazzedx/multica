@@ -46,6 +46,7 @@ import type {
   BatchIssueLabelOps,
   BatchIssuePropertyOps,
   BatchUpdateIssuesResponse,
+  IssueDeliveryOverview,
   IssueDuplicates,
   ListIssuesResponse,
   SearchIssuesResponse,
@@ -360,6 +361,7 @@ import {
   SendChatMessageResponseSchema,
   StartMikaOnboardingResponseSchema,
   ChildIssuesResponseSchema,
+  IssueDeliveryOverviewSchema,
   IssueDuplicatesResponseSchema,
   ChildIssueProgressResponseSchema,
   CommentsListSchema,
@@ -2043,6 +2045,25 @@ export class ApiClient {
       IssueDuplicatesResponseSchema,
       { duplicate_of: null, duplicates: [] },
       { endpoint: "GET /api/issues/:id/duplicates" },
+    );
+  }
+
+  /** What it took to deliver an issue and everything under it. */
+  async getIssueDeliveryOverview(id: string): Promise<IssueDeliveryOverview> {
+    const raw = await this.fetch<unknown>(`/api/issues/${id}/delivery-overview`);
+    return parseWithFallback(
+      raw,
+      IssueDeliveryOverviewSchema,
+      {
+        sub_issues: { total: 0, done: 0, cancelled: 0 },
+        runs: { total: 0, failed: 0, active: 0 },
+        rework_rounds: 0,
+        human_actions: 0,
+        pull_requests_merged: 0,
+        started_at: "",
+        finished_at: null,
+      },
+      { endpoint: "GET /api/issues/:id/delivery-overview" },
     );
   }
 
