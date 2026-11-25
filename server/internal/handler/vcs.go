@@ -35,11 +35,6 @@ type VCSConnectionResponse struct {
 	WebhookURL   string `json:"webhook_url"`
 	WebhookPath  string `json:"webhook_path"`
 	CreatedAt    string `json:"created_at"`
-	// Builtin marks the connection this server keeps for the Gitea deployed
-	// beside it: its token and webhook are managed, so it cannot be rotated or
-	// removed. WebURL is the workspace's organization there, for people.
-	Builtin bool   `json:"builtin"`
-	WebURL  string `json:"web_url,omitempty"`
 }
 
 // VCSConnectResponse embeds the stored connection plus the one-time plaintext
@@ -82,7 +77,6 @@ func (h *Handler) vcsConnectionToResponse(c db.VcsConnection) VCSConnectionRespo
 		WebhookURL:   h.vcsWebhookURL(id),
 		WebhookPath:  h.vcsWebhookPath(id),
 		CreatedAt:    timestampToString(c.CreatedAt),
-		Builtin:      h.isBuiltinCodeHostConnection(c),
 	}
 }
 
@@ -141,12 +135,9 @@ func (h *Handler) ListVCSConnections(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "failed to list connections")
 		return
 	}
-	orgs := h.builtinCodeHostOrgs(r.Context(), rows)
 	out := make([]VCSConnectionResponse, 0, len(rows))
 	for _, row := range rows {
-		resp := h.vcsConnectionToResponse(row)
-		resp.WebURL = h.builtinCodeHostOrgURL(orgs[resp.ID])
-		out = append(out, resp)
+		out = append(out, h.vcsConnectionToResponse(row))
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"connections": out,
@@ -294,11 +285,6 @@ func (h *Handler) DeleteVCSConnection(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if existing, err := h.Queries.GetVCSConnectionByID(r.Context(), idUUID); err == nil &&
-		uuidToString(existing.WorkspaceID) == uuidToString(wsUUID) && h.isBuiltinCodeHostConnection(existing) {
-		writeError(w, http.StatusConflict, "the built-in code host connection is managed by the deployment")
-		return
-	}
 	if err := h.Queries.DeleteVCSConnection(r.Context(), db.DeleteVCSConnectionParams{
 		ID:          idUUID,
 		WorkspaceID: wsUUID,
@@ -338,10 +324,6 @@ func (h *Handler) RotateVCSConnectionWebhook(w http.ResponseWriter, r *http.Requ
 	conn, err := h.Queries.GetVCSConnectionByID(r.Context(), connUUID)
 	if err != nil || uuidToString(conn.WorkspaceID) != uuidToString(wsUUID) {
 		writeError(w, http.StatusNotFound, "vcs connection not found")
-		return
-	}
-	if h.isBuiltinCodeHostConnection(conn) {
-		writeError(w, http.StatusConflict, "the built-in code host connection is managed by the deployment")
 		return
 	}
 

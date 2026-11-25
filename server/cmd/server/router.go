@@ -476,7 +476,6 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 		ServerVersion:                  normalizeServerVersion(version),
 		GitExtraCACerts:                gitca.Load(slog.Default()),
 	}
-	signupConfig.BuiltinCodeHost = builtinCodeHostFromEnv()
 	h := handler.New(queries, pool, hub, bus, emailSvc, store, cfSigner, analyticsClient, signupConfig, daemonHub)
 	h.RegisterIssueEscalationListeners()
 	invitationRateLimits := handler.DefaultInvitationRateLimits()

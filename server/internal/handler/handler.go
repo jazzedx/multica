@@ -100,8 +100,6 @@ type Config struct {
 	// "missing key" message a cloud user cannot act on. Populated from
 	// MULTICA_VCS_INTEGRATION_ENABLED; the self-host compose defaults it on.
 	VCSIntegrationEnabled bool
-	// BuiltinCodeHost is the Gitea deployed beside this server, if any.
-	BuiltinCodeHost BuiltinCodeHostConfig
 	// PublicURL is the absolute base URL the API is reachable at from the
 	// public internet, with no trailing slash (e.g. "https://multica.ai").
 	// Used to build webhook_url responses and the fixed Remote MCP OAuth
