@@ -264,13 +264,6 @@ services:
       FF_ISSUE_DESCRIPTION_LIVE:
       FF_LOCAL_SEARCH_INDEX:
       FF_DASHBOARD_HISTORY_365D:
-      # A Gitea deployed some other way, treated as the bundled one. The gitea
-      # add-on (docker-compose.gitea.yml) sets these itself.
-      MULTICA_BUILTIN_GITEA_URL: ${MULTICA_BUILTIN_GITEA_URL:-}
-      MULTICA_BUILTIN_GITEA_PUBLIC_URL: ${MULTICA_BUILTIN_GITEA_PUBLIC_URL:-}
-      MULTICA_BUILTIN_GITEA_TOKEN: ${MULTICA_BUILTIN_GITEA_TOKEN:-}
-      MULTICA_BUILTIN_GITEA_WEBHOOK_BASE_URL: ${MULTICA_BUILTIN_GITEA_WEBHOOK_BASE_URL:-}
-      MULTICA_BUILTIN_GITEA_OWNER: ${MULTICA_BUILTIN_GITEA_OWNER:-}
       # Live co-editing for Workspace Docs, served by the optional collab
       # service below. Setting COLLAB_SECRET turns it on and points the API at
       # that service; enable the service with COMPOSE_PROFILES=collab.

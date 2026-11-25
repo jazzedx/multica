@@ -38,15 +38,11 @@ MULTICA_ARGS ?= $(ARGS)
 COMPOSE := docker compose
 SELFHOST_BUILD_COMPOSE_FILES ?= -f docker-compose.selfhost.yml -f docker-compose.selfhost.build.yml
 # MULTICA_ADDONS (.env) lists the optional parts of the self-hosted stack,
-# comma-separated: gitea, ci, proxy. Each name adds docker-compose.<name>.yml
+# comma-separated: proxy. Each name adds docker-compose.<name>.yml
 # when that file exists and turns on the compose profile of the same name.
 comma := ,
 SELFHOST_ADDONS := $(strip $(subst $(comma), ,$(MULTICA_ADDONS)))
 SELFHOST_ADDON_ARGS := $(strip $(foreach addon,$(SELFHOST_ADDONS),$(if $(wildcard docker-compose.$(addon).yml),-f docker-compose.$(addon).yml)) $(foreach addon,$(SELFHOST_ADDONS),--profile $(addon)))
-# Compose reads these from .env itself: scripts/selfhost-addon-secrets.sh may
-# have written them after make read the file, and an exported empty value
-# would win over the file.
-unexport GITEA_DB_PASSWORD GITEA_ADMIN_PASSWORD
 
 define REQUIRE_ENV
 	@if [ ! -f "$(ENV_FILE)" ]; then \
@@ -122,7 +118,6 @@ selfhost: ## Create .env if needed, then pull and start the official self-hosted
 # is included before Compose reads POSTGRES_PASSWORD from the environment.
 # ENV_FILE is pinned because Compose reads .env even when .env.worktree exists.
 selfhost-start:
-	@bash scripts/selfhost-addon-secrets.sh "$(MULTICA_ADDONS)"
 	@echo "==> Pulling official Multica images..."
 	@if ! $(COMPOSE) -f docker-compose.selfhost.yml $(SELFHOST_ADDON_ARGS) pull; then \
 		echo ""; \
@@ -160,7 +155,6 @@ selfhost-build: ## Build backend/web from the current checkout and start the sel
 
 # Internal: see selfhost-start.
 selfhost-build-start:
-	@bash scripts/selfhost-addon-secrets.sh "$(MULTICA_ADDONS)"
 	@echo "==> Building Multica from the current checkout..."
 	$(COMPOSE) $(SELFHOST_BUILD_COMPOSE_FILES) $(SELFHOST_ADDON_ARGS) up -d --build
 	@bash scripts/selfhost-wait.sh build

@@ -4,17 +4,15 @@
 #
 #   docker compose -f docker-compose.selfhost.yml -f docker-compose.proxy.yml up -d
 #
-# Add docker-compose.gitea.yml to serve Gitea on port 3443 as well. Point the
-# stack's addresses at the proxy, e.g. for PROXY_HOST=10.0.0.5:
+# Point the stack's addresses at the proxy, e.g. for PROXY_HOST=10.0.0.5:
 #
 #   FRONTEND_ORIGIN=https://10.0.0.5
 #   MULTICA_PUBLIC_URL=https://10.0.0.5
-#   GITEA_ROOT_URL=https://10.0.0.5:3443/
 #
 # The proxy publishes its ports on PROXY_HOST only, so on a server that also
 # has a public address nothing is reachable from outside; Docker's port
 # publishing bypasses the host firewall, so the bind address is what keeps it
-# internal. Frontend, backend and Gitea's HTTP port stay on 127.0.0.1.
+# internal. Frontend and backend stay on 127.0.0.1.
 #
 # PROXY_TLS picks the certificate: selfsigned (the default; clients trust
 # data/proxy-certs/ca.pem) or provided (your fullchain.pem and privkey.pem in
@@ -34,7 +32,6 @@ services:
     ports:
       - "${PROXY_BIND:-${PROXY_HOST}}:${PROXY_HTTP_PORT:-80}:80"
       - "${PROXY_BIND:-${PROXY_HOST}}:${PROXY_HTTPS_PORT:-443}:443"
-      - "${PROXY_BIND:-${PROXY_HOST}}:${PROXY_GITEA_PORT:-3443}:3443"
     volumes:
       - ./deploy/nginx/entrypoint.sh:/proxy-entrypoint.sh:ro
       - ./deploy/nginx/templates:/etc/nginx/templates:ro

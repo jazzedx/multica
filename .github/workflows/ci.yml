@@ -1153,9 +1153,6 @@ jobs:
       - name: Test self-host env derivation
         run: bash scripts/selfhost-config.test.sh
 
-      - name: Test self-host add-on secrets
-        run: bash scripts/selfhost-addon-secrets.test.sh
-
       - name: Test check script
         run: bash scripts/check.test.sh
 

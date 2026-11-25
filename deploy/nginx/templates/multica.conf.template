@@ -1,6 +1,5 @@
 # HTTPS entry for the self-hosted stack (docker-compose.proxy.yml).
 #   :443  Multica (frontend; its WebSockets go straight to the backend)
-#   :3443 Gitea, when docker-compose.gitea.yml is part of the stack
 #   :80   redirects to Multica over HTTPS
 # The container always listens on these ports; PROXY_*_PORT only change the
 # host side of the mapping.
@@ -11,7 +10,7 @@ map $http_upgrade $connection_upgrade {
 }
 
 # Docker's DNS, queried per request through the variables below: a recreated
-# container's new address is picked up, and nginx starts without Gitea.
+# container's new address is picked up.
 resolver 127.0.0.11 valid=10s ipv6=off;
 
 ssl_certificate     /etc/nginx/certs/fullchain.pem;
@@ -59,22 +58,5 @@ server {
         proxy_pass $backend;
         proxy_read_timeout 1d;
         proxy_send_timeout 1d;
-    }
-}
-
-server {
-    listen 3443 ssl;
-    http2 on;
-
-    client_max_body_size 1g;
-
-    location / {
-        set $gitea http://gitea:3000;
-        proxy_pass $gitea;
-        proxy_read_timeout 1h;
-        proxy_send_timeout 1h;
-        # Stream clones and pushes instead of spooling them to disk.
-        proxy_buffering off;
-        proxy_request_buffering off;
     }
 }
