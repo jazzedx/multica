@@ -19,12 +19,6 @@ These providers run alongside GitHub, and a workspace can connect several of the
 Unlike GitHub, these providers have no App model. Each workspace stores its own instance URL plus an access token, and registers a webhook on its repository or organisation. The token and webhook secret are encrypted at rest.
 </Callout>
 
-## A Gitea that comes with the stack
-
-When Multica cannot reach an existing code host, the self-hosted stack can run a Gitea of its own. Set `MULTICA_ADDONS=gitea` (add `ci` for a Gitea Actions runner) and `GITEA_ROOT_URL` in `.env`, then start the stack with `make selfhost` or `make selfhost-build`.
-
-None of the steps below are needed for it. The server gives every workspace an organisation on that Gitea, a connection labelled **Built-in** under **Settings → Code**, and a webhook, and adds the repositories created in the organisation to the workspace. Daemons clone with a read-only account the server hands them, and each agent pushes and opens pull requests with an account of its own, so no machine needs Git credentials. Deleting a workspace keeps its repositories and takes back those accounts' access.
-
 ## Prerequisites (server)
 
 Turn the integration on for this deployment. It is off by default, so the section stays hidden until you set:

@@ -6,17 +6,14 @@
 | 端口 | 内容 |
 | --- | --- |
 | 443 | Multica。浏览器和守护进程的 WebSocket 由 nginx 直接转给后端 |
-| 3443 | Gitea（叠加了 `docker-compose.gitea.yml` 时） |
 | 80 | 跳转到 443 |
-| 2222 | Gitea SSH，不经过 nginx（可选） |
 
 ## 只监听内网地址
 
 Docker 映射端口时会绕过宿主机防火墙（ufw、firewalld 都拦不住），所以端口绑在哪个地址上，决定了它是否暴露到公网：
 
 - nginx 的端口默认绑在 `PROXY_HOST`，也就是内网 IP，公网 IP 上什么都不监听。
-- 前端、后端、Gitea 的 HTTP 端口只绑 `127.0.0.1`，只有 nginx 能访问。
-- Gitea SSH 默认也只绑 `127.0.0.1`；需要 SSH 克隆时把 `GITEA_SSH_BIND` 设为内网 IP。
+- 前端、后端的端口只绑 `127.0.0.1`，只有 nginx 能访问。
 - 不要把任何端口改成 `0.0.0.0`。云安全组再额外拦掉公网入站，作为第二道防线。
 
 ## 1. 配置
@@ -24,22 +21,19 @@ Docker 映射端口时会绕过宿主机防火墙（ufw、firewalld 都拦不住
 在 `.env` 里写上（以内网 IP `10.0.0.5` 为例）：
 
 ```sh
-MULTICA_ADDONS=gitea,ci,proxy           # proxy：本页的 nginx；gitea、ci 见 gitea-code-host.zh.md
+MULTICA_ADDONS=proxy                    # 本页的 nginx
 PROXY_HOST=10.0.0.5                     # 内网 IP（或内网主机名，此时另设 PROXY_BIND=10.0.0.5）
 FRONTEND_ORIGIN=https://10.0.0.5
 MULTICA_PUBLIC_URL=https://10.0.0.5
-GITEA_ROOT_URL=https://10.0.0.5:3443/
-GITEA_SSH_BIND=10.0.0.5                 # 不需要 SSH 克隆就不写
-GITEA_SSH_DOMAIN=10.0.0.5
 ```
 
 ```sh
 make selfhost-build
 ```
 
-不用 `make` 时：`docker compose -f docker-compose.selfhost.yml -f docker-compose.gitea.yml -f docker-compose.proxy.yml --profile ci up -d`。
+不用 `make` 时：`docker compose -f docker-compose.selfhost.yml -f docker-compose.proxy.yml up -d`。
 
-宿主机端口可以用 `PROXY_HTTP_PORT`、`PROXY_HTTPS_PORT`、`PROXY_GITEA_PORT` 改；改了 HTTPS 端口，上面的地址里要带上端口。
+宿主机端口可以用 `PROXY_HTTP_PORT`、`PROXY_HTTPS_PORT` 改；改了 HTTPS 端口，上面的地址里要带上端口。
 
 运行时主机改用新地址：`multica setup self-host --server-url https://10.0.0.5 --app-url https://10.0.0.5`，然后重启守护进程。
 运行时主机要能访问服务器的内网 IP；不在同一内网的机器先接入 VPN。
@@ -70,14 +64,13 @@ WSL 和 Windows 的证书库是分开的，两边都要装。改完重启守护�
 
 ```sh
 curl --cacert data/proxy-certs/ca.pem https://10.0.0.5/health          # Multica 后端
-curl --cacert data/proxy-certs/ca.pem -o /dev/null -w '%{http_code}\n' https://10.0.0.5:3443/user/login
 curl -m 5 https://<公网 IP>/health                                    # 应连不上
 ```
 
 浏览器里打开 Multica 后，开发者工具 → 网络 → WS 里 `/ws` 应为 `101`。
 
-## 服务之间的调用不经过代理
+## 代码托管
 
-同一个 compose 里的服务走内部网络：Multica 调 Gitea 用 `http://gitea:3000`，Gitea 的 Webhook 发到
-`http://backend:8080/...`，Actions 作业从 `http://gitea:3000` 拉代码。它们不依赖证书，这些关联由服务端自动配好，
-见 [gitea-code-host.zh.md](gitea-code-host.zh.md)。
+代码托管（Gitea、Forgejo、GitLab）单独部署，不在这套 compose 里。在 **设置 → 代码** 里连接它，见
+[自托管 Git 代码托管](https://multica.ai/docs/vcs-integration)。它的证书如果来自内部 CA，后端和运行时主机都要信任这个 CA，
+见 [SELF_HOSTING_ADVANCED.md](../SELF_HOSTING_ADVANCED.md#private-ca-certificates-optional)。
