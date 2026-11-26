@@ -103,6 +103,10 @@ GitLab also supports an instance-wide **System Hook** under the administrator ar
 
 Multica authenticates every delivery against the stored secret, so a webhook without the matching secret is rejected.
 
+<Callout type="info">
+When Multica and the provider are both on an internal network, the provider refuses by default to send webhooks to internal addresses. On Gitea / Forgejo, add Multica's address to `ALLOWED_HOST_LIST` under `[webhook]` in `app.ini` (for example `ALLOWED_HOST_LIST = private`, or only Multica's host name). On GitLab, an administrator allows webhook requests to the local network under **Admin → Settings → Network → Outbound requests**.
+</Callout>
+
 
 ## What gets mirrored
 
@@ -113,3 +117,20 @@ Multica authenticates every delivery against the stored secret, so a webhook wit
 ## Agents opening pull requests
 
 Agents need no provider configuration in Multica to open PRs. They check out repositories in the runtime and push branches and open PRs using the runtime host's own Git credentials. To let agents work against a provider, ensure the daemon host can authenticate to it (for example with an SSH deploy key, or a token in the host's Git credential helper) and add the repository URL as usual. Repository checkout works with any Git URL, so no provider-specific wiring is required.
+
+### One account per agent
+
+To have commits and PRs carry an agent's own name, or to let one agent approve another agent's PR, create an account for each agent on the provider with a token limited to repository write access, then set these in the agent's [environment variables](/agents-create):
+
+```sh
+GIT_AUTHOR_NAME=<agent name>
+GIT_AUTHOR_EMAIL=<account email>
+GIT_COMMITTER_NAME=<agent name>
+GIT_COMMITTER_EMAIL=<account email>
+# Send this account to git for the instance; <credential> is `printf '<account>:<token>' | base64`
+GIT_CONFIG_COUNT=1
+GIT_CONFIG_KEY_0=http.https://gitea.example.com/.extraheader
+GIT_CONFIG_VALUE_0=Authorization: Basic <credential>
+```
+
+Environment variables are stored in plain text in Multica's database, so give the token the least access it needs. Agents without these variables keep using the runtime host's Git credentials.

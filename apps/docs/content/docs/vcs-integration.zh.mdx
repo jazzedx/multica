@@ -105,6 +105,10 @@ GitLab 管理员也可以配置实例级 **System Hook**：使用同一 Webhook 
 
 Multica 会用存储的密钥校验每次投递，因此没有匹配密钥的 Webhook 会被拒绝。
 
+<Callout type="info">
+Multica 和代码托管都在内网时，代码托管默认会拒绝向内网地址发送 Webhook。Gitea / Forgejo 在 `app.ini` 的 `[webhook]` 里把 Multica 的地址加入 `ALLOWED_HOST_LIST`（例如 `ALLOWED_HOST_LIST = private`，或只写 Multica 的主机名）；GitLab 管理员在 **管理 → 设置 → 网络 → 出站请求** 里允许 Webhook 访问本地网络。
+</Callout>
+
 ## 镜像的内容
 
 - **Pull / Merge Request** —— open、closed、merged、draft 状态，以及作者、分支和（在代码托管提供时）diff 统计。
@@ -114,3 +118,20 @@ Multica 会用存储的密钥校验每次投递，因此没有匹配密钥的 We
 ## 智能体创建 Pull Request
 
 智能体创建 PR 不需要在 Multica 中做任何代码托管配置。智能体在运行时中检出仓库，用运行时主机自己的 Git 凭据推送分支和创建 PR。要让智能体在某个代码托管上工作，只要守护进程所在的主机能通过它的认证（例如 SSH 部署密钥，或主机 Git 凭据助手里的令牌），再像往常一样添加仓库地址。仓库检出支持任意 Git URL，不需要按提供方单独配置。
+
+### 每个智能体用自己的账号
+
+想让提交和 PR 署智能体自己的名字，或让一个智能体审批另一个智能体的 PR，就在代码托管上给每个智能体建一个账号和一个只授予仓库写权限的令牌，再在智能体的[环境变量](/agents-create)里填入：
+
+```sh
+GIT_AUTHOR_NAME=<智能体名字>
+GIT_AUTHOR_EMAIL=<账号邮箱>
+GIT_COMMITTER_NAME=<智能体名字>
+GIT_COMMITTER_EMAIL=<账号邮箱>
+# 让 git 对这个实例使用该账号，<凭据> 为 `printf '<账号>:<令牌>' | base64` 的结果
+GIT_CONFIG_COUNT=1
+GIT_CONFIG_KEY_0=http.https://gitea.example.com/.extraheader
+GIT_CONFIG_VALUE_0=Authorization: Basic <凭据>
+```
+
+环境变量在 Multica 数据库里明文保存，只给令牌最小的权限。没有填这些变量的智能体仍然使用运行时主机的 Git 凭据。

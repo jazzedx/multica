@@ -103,6 +103,10 @@ GitLab 管理員也可以設定實例級 [System Hook](https://docs.gitlab.com/a
 
 Multica 會用儲存的金鑰校驗每次投遞，因此沒有匹配金鑰的 Webhook 會被拒絕。
 
+<Callout type="info">
+Multica 和程式碼託管都在內網時，程式碼託管預設會拒絕向內網地址傳送 Webhook。Gitea / Forgejo 在 `app.ini` 的 `[webhook]` 裡把 Multica 的地址加入 `ALLOWED_HOST_LIST`（例如 `ALLOWED_HOST_LIST = private`，或只寫 Multica 的主機名）；GitLab 管理員在 **管理 → 設定 → 網路 → 出站請求** 裡允許 Webhook 存取本地網路。
+</Callout>
+
 ## 映象的內容
 
 - **Pull / Merge Request** —— open、closed、merged、draft 狀態，以及作者、分支和（在程式碼託管提供時）diff 統計。
@@ -112,3 +116,20 @@ Multica 會用儲存的金鑰校驗每次投遞，因此沒有匹配金鑰的 We
 ## AI 代理建立 Pull Request
 
 AI 代理建立 PR 不需要在 Multica 中做任何程式碼託管配置。AI 代理在執行時中檢出倉庫，用執行時主機自己的 Git 憑據推送分支和建立 PR。要讓 AI 代理在某個程式碼託管上工作，只要守護程序所在的主機能透過它的認證（例如 SSH 部署金鑰，或主機 Git 憑據助手裡的令牌），再像往常一樣新增倉庫地址。倉庫檢出支援任意 Git URL，不需要按提供方單獨配置。
+
+### 每個 AI 代理用自己的帳號
+
+想讓提交和 PR 署 AI 代理自己的名字，或讓一個 AI 代理審核另一個 AI 代理的 PR，就在程式碼託管上給每個 AI 代理建一個帳號和一個只授予倉庫寫入權限的令牌，再在 AI 代理的[環境變數](/agents-create)裡填入：
+
+```sh
+GIT_AUTHOR_NAME=<AI 代理名字>
+GIT_AUTHOR_EMAIL=<帳號信箱>
+GIT_COMMITTER_NAME=<AI 代理名字>
+GIT_COMMITTER_EMAIL=<帳號信箱>
+# 讓 git 對這個實例使用該帳號，<憑據> 為 `printf '<帳號>:<令牌>' | base64` 的結果
+GIT_CONFIG_COUNT=1
+GIT_CONFIG_KEY_0=http.https://gitea.example.com/.extraheader
+GIT_CONFIG_VALUE_0=Authorization: Basic <憑據>
+```
+
+環境變數在 Multica 資料庫裡明文儲存，只給令牌最小的權限。沒有填這些變數的 AI 代理仍然使用執行時主機的 Git 憑據。
